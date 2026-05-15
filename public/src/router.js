@@ -22,7 +22,24 @@ export const router = {
       const app = document.getElementById('app');
       if (!app) return;
       app.innerHTML = '';
-      if (mount) currentCleanup = mount(app) || null;
+      if (!mount) return;
+      try {
+        currentCleanup = mount(app) || null;
+      } catch (err) {
+        app.innerHTML = '';
+        const main = document.createElement('main');
+        main.className = 'error-page';
+        const h1 = document.createElement('h1');
+        h1.textContent = 'Seite konnte nicht geladen werden';
+        const detail = document.createElement('p');
+        detail.className = 'error-detail';
+        detail.textContent = err.message;
+        const back = document.createElement('a');
+        back.href = '#/';
+        back.textContent = '← Zurück zur Eingabe';
+        main.append(h1, detail, back);
+        app.appendChild(main);
+      }
     };
     window.addEventListener('hashchange', handle);
     handle();

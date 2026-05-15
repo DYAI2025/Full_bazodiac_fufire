@@ -660,7 +660,9 @@ async function serveStatic(req, res, pathname) {
     'content-type': MIME_TYPES[ext] || 'application/octet-stream',
     'cache-control': ext === '.html' ? 'no-cache' : 'public, max-age=3600',
   });
-  createReadStream(filePath).pipe(res);
+  const stream = createReadStream(filePath);
+  stream.on('error', () => { if (!res.writableEnded) res.end(); });
+  stream.pipe(res);
 }
 
 // ── Main request handler ──────────────────────────────────────────────────
@@ -707,6 +709,7 @@ export async function handleRequest(req, res) {
       return sendJson(res, 502, {
         error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
         detail: error.message,
+        hint: 'Check FUFIRE_BASE_URL and FUFIRE_API_KEY environment variables.',
       }, requestOrigin);
     }
   }

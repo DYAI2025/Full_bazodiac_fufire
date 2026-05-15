@@ -94,14 +94,26 @@ export function GeoInput({ onSelect }) {
     items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
   });
 
+  function showGeoError(msg) {
+    dropdown.innerHTML = `<div class="geo-error">${msg}</div>`;
+    dropdown.hidden = false;
+  }
+
   input.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     const q = input.value.trim();
     if (q.length < 2) { dropdown.hidden = true; return; }
     debounceTimer = setTimeout(async () => {
       const res = await geocodePlace(q);
-      if (res.ok && Array.isArray(res.data)) showDropdown(res.data);
-      else showDropdown([]);
+      if (res.ok && Array.isArray(res.data)) {
+        showDropdown(res.data);
+      } else if (res.status === 429) {
+        showGeoError('Zu viele Anfragen — bitte kurz warten.');
+      } else if (res.status >= 500 || res.status === 0) {
+        showGeoError('Ortsuche momentan nicht verfügbar.');
+      } else {
+        showDropdown([]);
+      }
     }, 300);
   });
 
