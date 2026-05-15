@@ -17,6 +17,8 @@ const PLANET_LABELS_DE = {
   jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptun', pluto: 'Pluto',
 };
 
+const PLANET_ORDER = Object.keys(PLANET_SYMBOLS);
+
 function signDE(s) {
   return s ? (SIGN_DE[s.toLowerCase()] || s) : '—';
 }
@@ -44,7 +46,6 @@ function renderNow(planets, sectorIntensity) {
   `;
 
   const grid = el.querySelector('.transit-planets-grid');
-  const PLANET_ORDER = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
   PLANET_ORDER.forEach((name) => {
     const p = planets[name];
     if (!p) return;
