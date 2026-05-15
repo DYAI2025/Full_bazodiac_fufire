@@ -70,6 +70,7 @@ export function OverviewPage(app, { profile, onNavigate }) {
         <a href="#/dashboard" class="nav-link">Dashboard</a>
         <a href="#/synastry" class="nav-link">Synastrie</a>
         <a href="#/transit-calendar" class="nav-link">Transitkalender</a>
+        <a href="#/daily" class="nav-link">Tagespuls</a>
       </nav>
       <section class="core-statement-section" aria-label="Kernsatz"></section>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">
