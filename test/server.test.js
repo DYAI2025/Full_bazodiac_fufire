@@ -270,3 +270,24 @@ test('/api/azodiac/profile: returns 400 when body is empty', async () => {
     assert.ok(body.errors.length >= 3);
   });
 });
+
+test('/api/azodiac/daily: returns 400 when date is missing', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ lat: 48.137, lon: 11.576 }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.errors));
+    assert.ok(body.errors.some(e => e.includes('date')));
+  });
+});
+
+test('/api/azodiac/daily: returns 405 for GET', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`);
+    assert.equal(res.status, 405);
+  });
+});

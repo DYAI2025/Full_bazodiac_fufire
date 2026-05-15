@@ -471,6 +471,71 @@ async function orchestrateFullProfile(rawBody) {
   }
 }
 
+// ── Daily experience aggregator ───────────────────────────────────────────
+async function orchestrateDailyExperience(rawBody) {
+  const obj = typeof rawBody === 'string' ? (rawBody ? JSON.parse(rawBody) : {}) : (rawBody || {});
+
+  const date = (obj.date || obj.datetime || '').split('T')[0];
+  let time = obj.time || '12:00';
+  if (time.length === 5) time = `${time}:00`;
+  const lat = Number(obj.lat ?? obj.latitude ?? 0);
+  const lon = Number(obj.lon ?? obj.longitude ?? 0);
+  const tz = obj.tz || obj.timezone || 'UTC';
+
+  const birth = { date, time, lat, lon, tz };
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const bootstrapUrl = new URL('experience/bootstrap', getFuFireBaseUrl());
+    const bootstrapRes = await fetch(bootstrapUrl, {
+      method: 'POST',
+      headers: getFuFireHeaders(false),
+      body: JSON.stringify({ birth }),
+      signal: controller.signal,
+    });
+    if (!bootstrapRes.ok) {
+      const errText = await bootstrapRes.text();
+      return { httpStatus: 502, body: { error: 'Experience bootstrap failed', detail: errText } };
+    }
+    const bootstrap = await bootstrapRes.json();
+    const soulprintSectors = bootstrap.soulprint_sectors || new Array(12).fill(0);
+
+    const today = new Date().toISOString().split('T')[0];
+    const dailyUrl = new URL('experience/daily', getFuFireBaseUrl());
+    const dailyRes = await fetch(dailyUrl, {
+      method: 'POST',
+      headers: getFuFireHeaders(false),
+      body: JSON.stringify({
+        birth,
+        soulprint_sectors: soulprintSectors,
+        quiz_sectors: new Array(12).fill(0),
+        target_date: obj.target_date || today,
+      }),
+      signal: controller.signal,
+    });
+    if (!dailyRes.ok) {
+      const errText = await dailyRes.text();
+      return { httpStatus: 502, body: { error: 'Experience daily failed', detail: errText } };
+    }
+    const daily = await dailyRes.json();
+
+    return {
+      httpStatus: 200,
+      body: {
+        ...daily,
+        _meta: {
+          bootstrap_profile: bootstrap.profile,
+          computed_at: new Date().toISOString(),
+        },
+      },
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── Response helpers ──────────────────────────────────────────────────────
 function endpointCatalog() {
   return FUFIRE_ENDPOINTS.map(({ method, path, category, description }) => ({
@@ -805,6 +870,35 @@ export async function handleRequest(req, res) {
   // ── Geocoder ──
   if (url.pathname === '/api/geocode') {
     return handleGeocodeRequest(req, res, requestOrigin);
+  }
+
+  // ── Daily experience aggregator ──
+  if (url.pathname === '/api/azodiac/daily') {
+    if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
+    if (req.method !== 'POST') {
+      return sendJson(res, 405, { error: 'Method not allowed', allowed: ['POST'] }, requestOrigin);
+    }
+    let body = '';
+    try {
+      body = await readRequestBody(req);
+      if (body) JSON.parse(body);
+    } catch (error) {
+      return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
+    }
+    const validation = validatePayload(body || '{}');
+    if (!validation.valid) {
+      return sendJson(res, 400, { error: 'Invalid request payload', errors: validation.errors }, requestOrigin);
+    }
+    try {
+      const result = await orchestrateDailyExperience(body || '{}');
+      return sendJson(res, result.httpStatus, result.body, requestOrigin);
+    } catch (error) {
+      const isAbort = error.name === 'AbortError';
+      return sendJson(res, 502, {
+        error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
+        detail: error.message,
+      }, requestOrigin);
+    }
   }
 
   // ── Proxy (allowlist) ──
