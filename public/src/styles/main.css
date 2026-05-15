@@ -79,6 +79,7 @@ input:focus { border-color: var(--accent); }
 .geo-option { padding: 10px 12px; cursor: pointer; }
 .geo-option:hover, .geo-option.active { background: var(--panel); color: var(--accent); }
 .geo-no-result { padding: 10px 12px; color: var(--muted); }
+.geo-error { padding: 10px 12px; color: var(--warn); font-size: .85rem; }
 .geo-selected { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
 .geo-selected-name { font-weight: 600; }
 .geo-selected-coords { color: var(--muted); font-size: .8rem; }
@@ -236,6 +237,12 @@ input:focus { border-color: var(--accent); }
 .contradiction-note h4 { font-size: .82rem; font-weight: 700; color: var(--accent2); }
 .contradiction-note p { font-size: .82rem; color: var(--muted); line-height: 1.5; }
 .missing-content { display: flex; flex-direction: column; gap: 8px; }
+
+/* ── Router error boundary ── */
+.error-page { display: flex; flex-direction: column; gap: 16px; padding: 40px 24px; max-width: 480px; }
+.error-page h1 { font-size: 1.2rem; color: var(--warn); }
+.error-page .error-detail { font-size: .82rem; color: var(--muted); font-family: monospace; background: var(--panel2); padding: 8px 12px; border-radius: var(--radius); word-break: break-word; }
+.error-page a { color: var(--accent); font-size: .9rem; }
 
 /* ── Mobile (375px) ── */
 @media (max-width: 480px) {
