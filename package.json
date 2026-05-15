@@ -1,0 +1,20 @@
+{
+  "name": "full-bazodiac-fufire",
+  "version": "1.0.0",
+  "description": "Railway-deployable FuFirE dashboard and proxy connected to the FuFirE API.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "fufire",
+    "railway",
+    "bazi",
+    "astrology"
+  ],
+  "license": "UNLICENSED"
+}

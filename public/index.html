@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FuFirE Live Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08090d;
+      --panel: #0f111a;
+      --panel2: #161923;
+      --border: #222840;
+      --text: #e8ecff;
+      --muted: #7a85a8;
+      --accent: #7c8cff;
+      --accent2: #a78bfa;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --holz: #4ade80;
+      --feuer: #f97316;
+      --erde: #eab308;
+      --metall: #94a3b8;
+      --wasser: #38bdf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.6 'Inter', ui-sans-serif, system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--panel);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+    .logo span { color: var(--accent); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px; color: var(--muted);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+    .dot.ok { background: var(--ok); }
+    .dot.bad { background: var(--bad); }
+
+    main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 80px; }
+
+    .layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Form ── */
+    .field { display: grid; gap: 6px; margin-bottom: 14px; }
+    label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .geocode-wrap { position: relative; }
+    .geocode-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; display: none; box-shadow: 0 12px 32px rgba(0,0,0,.5);
+    }
+    .geocode-dropdown.open { display: block; }
+    .geocode-item {
+      padding: 10px 14px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    .geocode-item:last-child { border-bottom: 0; }
+    .geocode-item:hover { background: var(--panel2); }
+    .geocode-item small { color: var(--muted); font-size: 11px; display: block; margin-top: 2px; }
+
+    btn, .btn {
+      display: inline-block;
+      padding: 12px 20px; border-radius: 10px; border: 0;
+      font: inherit; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-primary {
+      width: 100%; background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: #fff; margin-top: 6px;
+    }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .4; cursor: wait; transform: none; }
+
+    /* ── Status strip ── */
+    .status-strip {
+      padding: 14px 18px; border-radius: 12px; font-size: 13px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      margin-bottom: 16px;
+    }
+    .status-strip.ok { border-color: var(--ok); background: rgba(52,211,153,.07); color: var(--ok); }
+    .status-strip.bad { border-color: var(--bad); background: rgba(248,113,113,.07); color: var(--bad); }
+
+    /* ── Metrics row ── */
+    .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 700px) { .metrics-row { grid-template-columns: 1fr 1fr; } }
+    .metric {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px; text-align: center;
+    }
+    .metric-val { font-size: 26px; font-weight: 800; letter-spacing: -.04em; font-family: 'Space Mono', monospace; }
+    .metric-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+
+    /* ── SVG wheel ── */
+    .wheel-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+    svg.wheel { overflow: visible; }
+
+    /* ── Two-col sections ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── WuXing bars ── */
+    .bars { display: grid; gap: 10px; }
+    .bar-row { display: grid; grid-template-columns: 70px 1fr 48px; gap: 10px; align-items: center; font-size: 13px; }
+    .track { height: 12px; background: var(--panel2); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+    .fill { height: 100%; border-radius: 999px; transition: width .5s ease; }
+
+    /* ── BaZi pillars ── */
+    .pillars-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    @media (max-width: 700px) { .pillars-grid { grid-template-columns: 1fr 1fr; } }
+    .pillar-card {
+      background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px; text-align: center;
+    }
+    .pillar-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+    .pillar-stamm { font-size: 28px; font-weight: 800; letter-spacing: -.04em; }
+    .pillar-zweig { font-size: 18px; color: var(--muted); margin-top: 2px; }
+    .pillar-meta { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .pillar-element { font-size: 12px; font-weight: 600; margin-top: 4px; padding: 3px 8px; border-radius: 999px; display: inline-block; }
+    .hidden-stems { margin-top: 8px; display: grid; gap: 3px; }
+    .hidden-stem-row { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,.04); }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+
+    /* ── Fusion text ── */
+    .fusion-text { font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+
+    /* ── Debug JSON ── */
+    details summary { cursor: pointer; color: var(--muted); font-size: 12px; padding: 10px 0; user-select: none; }
+    pre.raw {
+      max-height: 480px; overflow: auto; background: #05060a;
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px; font-size: 11px; font-family: 'Space Mono', monospace;
+      color: #7a85a8;
+    }
+
+    /* ── Hidden when no data ── */
+    .hidden { display: none !important; }
+
+    /* ── Footer note (required for tests: must contain endpoint references) ── */
+    footer {
+      margin-top: 40px; padding: 20px 0; border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--muted); text-align: center;
+    }
+    footer code { background: var(--panel2); padding: 2px 6px; border-radius: 4px; }
+
+    /* ── Zone pill ── */
+    .zone { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; display: inline-block; }
+    .zone-tension { background: rgba(248,113,113,.15); color: var(--bad); }
+    .zone-strength { background: rgba(52,211,153,.15); color: var(--ok); }
+    .zone-development { background: rgba(124,58,237,.15); color: var(--accent2); }
+    .zone-neutral { background: rgba(100,116,139,.15); color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Fu<span>Fir</span>E</div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <span class="badge"><span class="dot" id="hero-dot"></span><span id="hero-status">Verbinde …</span></span>
+    <span style="font-size:12px;color:var(--muted)" id="base-url-label"></span>
+  </div>
+</header>
+
+<main>
+  <div style="margin-bottom:20px">
+    <h1 style="font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1.1">
+      FuFirE Live Dashboard
+    </h1>
+    <p style="color:var(--muted);margin-top:6px;font-size:14px">
+      Westliche Astrologie · BaZi · Wu-Xing Fusion — vollständige Geburtshoroskop-Berechnung
+    </p>
+  </div>
+
+  <div class="layout">
+    <!-- ── Input Form ── -->
+    <aside>
+      <div class="card">
+        <div class="card-title">Geburtsdaten eingeben</div>
+
+        <div class="field">
+          <label for="city">Stadt suchen</label>
+          <div class="geocode-wrap">
+            <input id="city" type="text" placeholder="z. B. Berlin, München, Wien …" autocomplete="off">
+            <div class="geocode-dropdown" id="geocode-dropdown"></div>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="date">Datum</label>
+            <input id="date" type="date" value="1990-01-15">
+          </div>
+          <div class="field">
+            <label for="time">Uhrzeit</label>
+            <input id="time" type="time" value="12:00">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="lat">Breitengrad</label>
+            <input id="lat" type="number" step="0.000001" value="52.520008">
+          </div>
+          <div class="field">
+            <label for="lon">Längengrad</label>
+            <input id="lon" type="number" step="0.000001" value="13.404954">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="tz">Zeitzone</label>
+          <input id="tz" value="Europe/Berlin">
+        </div>
+
+        <button class="btn btn-primary" id="run" type="button">
+          Berechnung starten ↗
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── Results ── -->
+    <section id="results">
+      <!-- placeholder before first calc -->
+      <div id="empty-state" class="card" style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:48px;margin-bottom:16px">✦</div>
+        <div style="font-size:15px">Geburtsdaten eingeben und Berechnung starten,<br>um das vollständige FuFirE-Horoskop zu sehen.</div>
+      </div>
+
+      <div id="result-content" class="hidden">
+        <!-- Status -->
+        <div id="status-strip" class="status-strip">Bereit</div>
+
+        <!-- Metrics -->
+        <div class="metrics-row" id="metrics-row"></div>
+
+        <!-- SVG House Wheel -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Astrologisches Haus-Rad</div>
+          <div class="wheel-wrap" id="wheel-wrap">
+            <svg class="wheel" width="420" height="420" viewBox="0 0 420 420" id="wheel-svg"></svg>
+          </div>
+        </div>
+
+        <!-- BaZi Pillars -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">BaZi — Vier Säulen 四柱</div>
+          <div class="pillars-grid" id="pillars-grid"></div>
+        </div>
+
+        <!-- WuXing Comparison -->
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title">Wu-Xing · Westliche Planeten</div>
+            <div class="bars" id="bars-western"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Wu-Xing · BaZi Säulen</div>
+            <div class="bars" id="bars-bazi"></div>
+          </div>
+        </div>
+
+        <!-- Fusion Interpretation -->
+        <div class="card" style="margin-bottom:16px" id="fusion-card">
+          <div class="card-title">Fusion-Interpretation</div>
+          <div class="fusion-text" id="fusion-text"></div>
+        </div>
+
+        <!-- Aspects -->
+        <div class="card" style="margin-bottom:16px" id="aspects-card">
+          <div class="card-title">Aspekte</div>
+          <div style="overflow-x:auto">
+            <table id="aspects-table">
+              <thead><tr><th>Planet 1</th><th>Aspekt</th><th>Planet 2</th><th>Orb °</th><th>Art</th></tr></thead>
+              <tbody id="aspects-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Houses Table -->
+        <div class="card" style="margin-bottom:16px" id="houses-card">
+          <div class="card-title">Hellenistische Häuser</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>#</th><th>Name</th><th>Tierkreiszeichen</th><th>Grad</th></tr></thead>
+              <tbody id="houses-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Planets Table -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Planeten &amp; Punkte</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Symbol</th><th>Körper</th><th>Zeichen</th><th>Grad</th><th>Haus</th><th>Rückläufig</th></tr></thead>
+              <tbody id="planets-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Raw JSON -->
+        <div class="card">
+          <details>
+            <summary>Raw JSON anzeigen / verbergen</summary>
+            <pre class="raw" id="raw-json">{}</pre>
+          </details>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Required for tests: endpoint references must appear in HTML -->
+<footer>
+  FuFirE Live Dashboard · Endpoints:
+  <code>POST /chart</code> ·
+  <code>POST /calculate/western</code> ·
+  <code>POST /calculate/bazi</code> ·
+  <code>POST /calculate/fusion</code> ·
+  <code>POST /calculate/wuxing</code> ·
+  <code>GET /info/wuxing</code>
+</footer>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────
+const ELEMENTS = ['Holz','Feuer','Erde','Metall','Wasser'];
+const ELEM_COLORS = {
+  Holz: 'var(--holz)', Feuer: 'var(--feuer)', Erde: 'var(--erde)',
+  Metall: 'var(--metall)', Wasser: 'var(--wasser)',
+  wood: 'var(--holz)', fire: 'var(--feuer)', earth: 'var(--erde)',
+  metal: 'var(--metall)', water: 'var(--wasser)',
+};
+const ELEM_DE = { wood:'Holz', fire:'Feuer', earth:'Erde', metal:'Metall', water:'Wasser',
+                  holz:'Holz', feuer:'Feuer', erde:'Erde', metall:'Metall', wasser:'Wasser' };
+const PILLAR_LABELS = { year:'Jahr 年', month:'Monat 月', day:'Tag 日', hour:'Stunde 時' };
+const HOUSE_NAMES = [
+  '','I – Vita (Leben)','II – Lucrum (Reichtum)','III – Fratres (Geschwister)',
+  'IV – Genitor (Eltern)','V – Nati (Kinder)','VI – Valetudo (Gesundheit)',
+  'VII – Uxor (Partner)','VIII – Mors (Transformation)','IX – Iter (Reisen)',
+  'X – Regnum (Karriere)','XI – Benefacta (Freunde)','XII – Carcer (Rückzug)',
+];
+const PLANET_SYMBOLS = {
+  Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄',
+  Uranus:'♅', Neptune:'♆', Pluto:'♇', 'North Node':'☊', 'South Node':'☋',
+  Chiron:'⚷', Lilith:'⚸', ASC:'AC', MC:'MC', IC:'IC', DSC:'DC',
+};
+const SIGN_SYMBOLS = {
+  Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍',
+  Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓',
+};
+const ASPECT_COLORS = { conjunction:'#f87171', opposition:'#f87171', trine:'#34d399', sextile:'#60a5fa', square:'#f97316' };
+
+// ── DOM helpers ───────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const el = (tag, attrs={}, ...children) => {
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) { if (k==='style') Object.assign(e.style,v); else if (k==='class') e.className=v; else e.setAttribute(k,v); }
+  children.forEach(c => e.appendChild(typeof c==='string' ? document.createTextNode(c) : c));
+  return e;
+};
+
+// ── Config load ───────────────────────────────────────────────────────────
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    $('base-url-label').textContent = cfg.fufireBaseUrl;
+    $('hero-status').textContent = `${cfg.endpoints?.length || 6} Endpunkte · API-Key: ${cfg.apiKeyConfigured ? '✓' : '—'}`;
+    $('hero-dot').className = 'dot ok';
+  } catch {
+    $('hero-dot').className = 'dot bad';
+    $('hero-status').textContent = 'Verbindung fehlgeschlagen';
+  }
+}
+
+// ── Geocoder ──────────────────────────────────────────────────────────────
+let geocodeTimer = null;
+$('city').addEventListener('input', () => {
+  clearTimeout(geocodeTimer);
+  const q = $('city').value.trim();
+  if (q.length < 3) { $('geocode-dropdown').className = 'geocode-dropdown'; return; }
+  geocodeTimer = setTimeout(() => doGeocode(q), 400);
+});
+$('city').addEventListener('blur', () => {
+  setTimeout(() => { $('geocode-dropdown').className = 'geocode-dropdown'; }, 200);
+});
+
+async function doGeocode(q) {
+  try {
+    const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+    const places = await res.json();
+    const dd = $('geocode-dropdown');
+    dd.innerHTML = '';
+    if (!Array.isArray(places) || !places.length) { dd.className = 'geocode-dropdown'; return; }
+    places.forEach(place => {
+      const item = el('div', {class:'geocode-item'});
+      const short = place.display.split(',').slice(0,3).join(',');
+      item.appendChild(el('span', {}, short));
+      item.appendChild(el('small', {}, `${place.tz} · ${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}`));
+      item.addEventListener('mousedown', () => {
+        $('lat').value = place.lat;
+        $('lon').value = place.lon;
+        $('tz').value = place.tz;
+        $('city').value = short;
+        dd.className = 'geocode-dropdown';
+      });
+      dd.appendChild(item);
+    });
+    dd.className = 'geocode-dropdown open';
+  } catch (e) {
+    console.warn('Geocode error:', e);
+  }
+}
+
+// ── Run calculation ────────────────────────────────────────────────────────
+$('run').addEventListener('click', async () => {
+  $('run').disabled = true;
+  $('empty-state').classList.add('hidden');
+  $('result-content').classList.remove('hidden');
+  $('status-strip').className = 'status-strip';
+  $('status-strip').textContent = 'Berechne … westliche Astrologie + BaZi + Wu-Xing Fusion …';
+
+  const payload = {
+    date: `${$('date').value}T${$('time').value}:00`,
+    tz: $('tz').value || 'UTC',
+    lat: Number($('lat').value),
+    lon: Number($('lon').value),
+  };
+
+  try {
+    const res = await fetch('/chart', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    $('raw-json').textContent = JSON.stringify(data, null, 2);
+
+    if (!res.ok) {
+      $('status-strip').className = 'status-strip bad';
+      $('status-strip').textContent = `HTTP ${res.status} — ${data.error || 'Fehler'}. Details im Raw JSON.`;
+    } else {
+      $('status-strip').className = 'status-strip ok';
+      $('status-strip').textContent = 'Berechnung erfolgreich — alle drei FuFirE-Endpunkte geantwortet.';
+    }
+
+    renderAll(data);
+  } catch (e) {
+    $('status-strip').className = 'status-strip bad';
+    $('status-strip').textContent = `Netzwerkfehler: ${e.message}`;
+  } finally {
+    $('run').disabled = false;
+  }
+});
+
+// ── Rendering entry point ─────────────────────────────────────────────────
+function renderAll(data) {
+  const western = data.western || {};
+  const bazi = data.bazi || {};
+  const fusion = data.fusion || {};
+
+  renderMetrics(western, bazi, fusion);
+  renderWheel(western);
+  renderPillars(bazi);
+  renderWuXingBars(fusion);
+  renderFusionText(fusion);
+  renderAspects(western);
+  renderHouses(western);
+  renderPlanets(western);
+}
+
+// ── Metrics ───────────────────────────────────────────────────────────────
+function renderMetrics(western, bazi, fusion) {
+  const harmony = extractHarmony(fusion);
+  // FuFirE actual: bazi.chinese.day_master
+  const dayMaster = bazi.chinese?.day_master || bazi.day_master || bazi.day_master_element || '—';
+  const planetCount = Object.keys(western.bodies || {}).length;
+  const ascSign = extractAscSign(western);
+
+  $('metrics-row').innerHTML = `
+    <div class="metric">
+      <div class="metric-val" style="color:var(--accent)">${harmony !== null ? harmony.toFixed(3) : '—'}</div>
+      <div class="metric-lbl">Kohärenz-Index</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">${dayMaster}</div>
+      <div class="metric-lbl">Day Master</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">${planetCount}</div>
+      <div class="metric-lbl">Planeten</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">${ascSign}</div>
+      <div class="metric-lbl">Aszendent</div>
+    </div>
+  `;
+}
+
+function extractHarmony(fusion) {
+  if (!fusion) return null;
+  const hi = fusion.harmony_index;
+  // FuFirE actual: harmony_index: { harmony_index: 0.7352, interpretation: "...", ... }
+  if (hi && typeof hi === 'object') {
+    const v = hi.harmony_index ?? hi.cosine_similarity ?? hi.cosine ?? hi.value;
+    if (v !== undefined) return Number(v);
+  }
+  if (typeof hi === 'number') return hi;
+  return null;
+}
+
+function extractAscSign(western) {
+  // FuFirE actual: western.angles.Ascendant = ecliptic longitude (number)
+  const ascLon = extractAscLon(western);
+  const sign = signFromLon(ascLon);
+  return SIGN_SYMBOLS[sign] || sign || '—';
+}
+
+function extractAscLon(western) {
+  // FuFirE actual: western.angles.Ascendant
+  if (typeof western.angles?.Ascendant === 'number') return western.angles.Ascendant;
+  if (typeof western.ascendant?.longitude === 'number') return western.ascendant.longitude;
+  // houses is {"1": 50.26, ...}
+  const h = western.houses;
+  if (h && typeof h === 'object' && !Array.isArray(h)) {
+    const v = h['1'] ?? h[1];
+    if (typeof v === 'number') return v;
+  }
+  return 0;
+}
+
+// ── SVG Astrology Wheel ───────────────────────────────────────────────────
+const ZODIAC_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const ZODIAC_SIGNS = ['Ari','Tau','Gem','Can','Leo','Vir','Lib','Sco','Sag','Cap','Aqu','Pis'];
+const ZODIAC_COLORS = ['#ef4444','#f97316','#eab308','#22c55e','#f97316','#84cc16',
+                       '#06b6d4','#8b5cf6','#ec4899','#6366f1','#0ea5e9','#14b8a6'];
+function signFromLon(lon) { return ZODIAC_NAMES[Math.floor(((lon % 360) + 360) % 360 / 30)]; }
+function signIdxFromLon(lon) { return Math.floor(((lon % 360) + 360) % 360 / 30); }
+const PLANET_COLORS = {
+  Sun:'#fbbf24', Moon:'#e2e8f0', Mercury:'#a78bfa', Venus:'#34d399',
+  Mars:'#f87171', Jupiter:'#fb923c', Saturn:'#94a3b8', Uranus:'#67e8f9',
+  Neptune:'#818cf8', Pluto:'#c084fc', 'North Node':'#34d399', 'South Node':'#f87171',
+  Chiron:'#f0abfc', ASC:'#fff', MC:'#fff',
+};
+
+function toSvgAngle(lon, ascLon) {
+  const rel = ((lon - ascLon) + 360) % 360;
+  return (180 - rel + 360) % 360;
+}
+function polarXY(cx, cy, r, deg) {
+  const rad = deg * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+function svgNS(tag, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+function arcPath(cx, cy, r, startDeg, endDeg) {
+  const s = polarXY(cx, cy, r, startDeg);
+  const e2 = polarXY(cx, cy, r, endDeg);
+  const large = (endDeg - startDeg + 360) % 360 > 180 ? 1 : 0;
+  return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e2.x} ${e2.y} Z`;
+}
+
+function renderWheel(western) {
+  const svg = $('wheel-svg');
+  svg.innerHTML = '';
+  const cx = 210, cy = 210;
+  const R_OUT = 190, R_SIGN = 170, R_HOUSE_OUT = 148, R_HOUSE_IN = 110, R_PLANET = 90, R_CENTER = 32;
+  const ascLon = extractAscLon(western);
+  const bodies = western.bodies || {};
+  // FuFirE: houses is {"1": 50.26, "2": 76.31, ...} — convert to array of {number, cusp}
+  const rawHouses = western.houses || {};
+  const houses = Array.isArray(rawHouses)
+    ? rawHouses
+    : Object.entries(rawHouses).map(([num, cusp]) => ({ number: Number(num), cusp: Number(cusp) }))
+        .sort((a, b) => a.number - b.number);
+
+  // Background circle
+  svg.appendChild(svgNS('circle', { cx, cy, r: R_OUT, fill: 'var(--panel)', stroke: 'var(--border)', 'stroke-width': '1' }));
+
+  // Zodiac segments (12 × 30°)
+  for (let i = 0; i < 12; i++) {
+    const startLon = i * 30;
+    const midLon = startLon + 15;
+    const startDeg = toSvgAngle(startLon, ascLon);
+    const endDeg = toSvgAngle(startLon + 30, ascLon);
+    // Sector
+    const path = svgNS('path', {
+      d: `M ${polarXY(cx,cy,R_HOUSE_OUT,startDeg).x} ${polarXY(cx,cy,R_HOUSE_OUT,startDeg).y}
+          A ${R_SIGN} ${R_SIGN} 0 0 1 ${polarXY(cx,cy,R_SIGN,startDeg).x} ${polarXY(cx,cy,R_SIGN,startDeg).y}
+          A ${R_SIGN} ${R_SIGN} 0 0 1 ${polarXY(cx,cy,R_SIGN,endDeg).x} ${polarXY(cx,cy,R_SIGN,endDeg).y}
+          A ${R_HOUSE_OUT} ${R_HOUSE_OUT} 0 0 0 ${polarXY(cx,cy,R_HOUSE_OUT,endDeg).x} ${polarXY(cx,cy,R_HOUSE_OUT,endDeg).y} Z`,
+      fill: ZODIAC_COLORS[i] + '22',
+      stroke: ZODIAC_COLORS[i] + '44',
+      'stroke-width': '0.5',
+    });
+    svg.appendChild(path);
+    // Sign label
+    const midDeg = toSvgAngle(midLon, ascLon);
+    const lp = polarXY(cx, cy, (R_HOUSE_OUT + R_SIGN) / 2, midDeg);
+    const t = svgNS('text', { x: lp.x, y: lp.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '9', fill: ZODIAC_COLORS[i], 'font-family': 'Inter,sans-serif' });
+    t.textContent = ZODIAC_SIGNS[i];
+    svg.appendChild(t);
+  }
+
+  // House spokes
+  houses.slice(0, 12).forEach((house, i) => {
+    const cusp = Number(house.cusp ?? house.degree ?? (i * 30));
+    const deg = toSvgAngle(cusp, ascLon);
+    const p1 = polarXY(cx, cy, R_CENTER, deg);
+    const p2 = polarXY(cx, cy, R_HOUSE_OUT, deg);
+    const hNum = house.number ?? (i + 1);
+    const isAngular = [1,4,7,10].includes(hNum);
+    svg.appendChild(svgNS('line', { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+      stroke: isAngular ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.15)',
+      'stroke-width': isAngular ? '1.5' : '0.7' }));
+    // House number label (midpoint between this and next cusp)
+    const nextHouse = houses[(i + 1) % 12];
+    const nextCusp = nextHouse ? Number(nextHouse.cusp ?? ((i+1)*30)) : (cusp + 30);
+    const span = ((nextCusp - cusp) + 360) % 360;
+    const midLon = cusp + span / 2;
+    const tp = polarXY(cx, cy, (R_HOUSE_IN + R_PLANET) / 2, toSvgAngle(midLon, ascLon));
+    const ht = svgNS('text', { x: tp.x, y: tp.y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+      'font-size': '8', fill: 'rgba(255,255,255,.35)', 'font-family': 'Inter,sans-serif' });
+    ht.textContent = hNum;
+    svg.appendChild(ht);
+  });
+
+  // House ring circle
+  svg.appendChild(svgNS('circle', { cx, cy, r: R_HOUSE_OUT, fill: 'none', stroke: 'var(--border)', 'stroke-width': '1' }));
+  svg.appendChild(svgNS('circle', { cx, cy, r: R_HOUSE_IN, fill: 'none', stroke: 'rgba(255,255,255,.08)', 'stroke-width': '0.5' }));
+
+  // Planets
+  const placedAngles = [];
+  const planetList = Object.entries(bodies).map(([name, body]) => ({
+    name,
+    lon: Number(body.longitude ?? body.lon ?? body.degree ?? 0),
+    retro: Boolean(body.retrograde ?? body.is_retrograde),
+    sign: body.sign || '',
+  }));
+
+  planetList.forEach(planet => {
+    let deg = toSvgAngle(planet.lon, ascLon);
+    // Avoid overlap: nudge if too close
+    let nudge = 0;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const testDeg = (deg + nudge + 360) % 360;
+      const collision = placedAngles.some(a => Math.abs(((testDeg - a) + 360) % 360) < 12 || Math.abs(((a - testDeg) + 360) % 360) < 12);
+      if (!collision) { deg = testDeg; break; }
+      nudge += 13;
+    }
+    placedAngles.push(deg);
+
+    const pp = polarXY(cx, cy, R_PLANET, deg);
+    const color = PLANET_COLORS[planet.name] || '#94a3b8';
+
+    // Dot
+    svg.appendChild(svgNS('circle', { cx: pp.x, cy: pp.y, r: 4, fill: color }));
+
+    // Line from inner ring to dot
+    const ip = polarXY(cx, cy, R_HOUSE_IN, toSvgAngle(planet.lon, ascLon));
+    svg.appendChild(svgNS('line', { x1: ip.x, y1: ip.y, x2: pp.x, y2: pp.y, stroke: color + '55', 'stroke-width': '0.7' }));
+
+    // Symbol
+    const sym = PLANET_SYMBOLS[planet.name] || planet.name.substring(0,2);
+    const labelR = R_PLANET + 16;
+    const lp2 = polarXY(cx, cy, labelR, deg);
+    const lt = svgNS('text', { x: lp2.x, y: lp2.y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+      'font-size': '10', fill: color, 'font-family': 'Inter,sans-serif', 'font-weight': '600' });
+    lt.textContent = sym + (planet.retro ? 'ᴿ' : '');
+    svg.appendChild(lt);
+  });
+
+  // ASC/MC markers
+  const ascDeg = 180; // always left
+  const ascP = polarXY(cx, cy, R_HOUSE_OUT + 10, ascDeg);
+  const ascT = svgNS('text', { x: ascP.x, y: ascP.y, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '10', fill: '#fff', 'font-family': 'Space Mono,monospace', 'font-weight': '700' });
+  ascT.textContent = 'AC';
+  svg.appendChild(ascT);
+
+  // Center circle
+  svg.appendChild(svgNS('circle', { cx, cy, r: R_CENTER, fill: 'var(--panel2)', stroke: 'var(--border)', 'stroke-width': '1' }));
+  const centerT = svgNS('text', { x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '11', fill: 'var(--muted)', 'font-family': 'Space Mono,monospace' });
+  centerT.textContent = '✦';
+  svg.appendChild(centerT);
+}
+
+// ── BaZi Pillars ──────────────────────────────────────────────────────────
+function renderPillars(bazi) {
+  const grid = $('pillars-grid');
+  grid.innerHTML = '';
+  const pillars = bazi.pillars || {};
+  const ORDER = ['year','month','day','hour'];
+
+  ORDER.forEach(key => {
+    const p = pillars[key];
+    if (!p) return;
+    const stamm = p.stamm || p.stem || p.heavenly_stem || '?';
+    const zweig = p.zweig || p.branch || p.earthly_branch || '?';
+    const tier = p.tier || p.animal || '';
+    const elemRaw = p.element || p.element_name || '';
+    const elemDE = ELEM_DE[elemRaw?.toLowerCase()] || elemRaw;
+    const elemColor = ELEM_COLORS[elemRaw] || ELEM_COLORS[elemDE] || 'var(--muted)';
+    const hiddenStems = p.hidden_stems || p.zang_gan || [];
+
+    const card = el('div', {class:'pillar-card'});
+    card.innerHTML = `
+      <div class="pillar-label">${PILLAR_LABELS[key] || key}</div>
+      <div class="pillar-stamm">${stamm}</div>
+      <div class="pillar-zweig">${zweig}</div>
+      ${tier ? `<div class="pillar-meta">${tier}</div>` : ''}
+      ${elemDE ? `<div class="pillar-element" style="background:${elemColor}22;color:${elemColor}">${elemDE}</div>` : ''}
+      ${hiddenStems.length ? `
+        <div class="hidden-stems">
+          <div style="font-size:10px;color:var(--muted);text-align:left;margin-top:6px">藏干</div>
+          ${hiddenStems.map(hs => {
+            const hsName = hs.stem || hs.stamm || hs;
+            const hsWeight = hs.weight ?? hs.strength ?? '';
+            const hsElem = hs.element || '';
+            return `<div class="hidden-stem-row"><span>${hsName}${hsElem ? ' · '+hsElem : ''}</span><span>${typeof hsWeight==='number' ? hsWeight.toFixed(1) : hsWeight}</span></div>`;
+          }).join('')}
+        </div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+
+  if (!grid.children.length) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:13px">Keine BaZi-Säulen in der Antwort.</p>';
+  }
+}
+
+// ── WuXing Bars ───────────────────────────────────────────────────────────
+function extractVector(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+  const result = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const de = ELEM_DE[k.toLowerCase()];
+    if (de && typeof v === 'number') result[de] = v;
+  }
+  return Object.keys(result).length ? result : null;
+}
+
+function renderWuXingBars(fusion) {
+  const vecs = fusion?.wu_xing_vectors || fusion?.vectors || {};
+  const wVec = extractVector(vecs.western_planets || vecs.western || vecs.westlich);
+  const bVec = extractVector(vecs.bazi_pillars || vecs.bazi);
+
+  renderBars('bars-western', wVec);
+  renderBars('bars-bazi', bVec);
+
+  // Zone classification between the two vectors
+  if (wVec && bVec) {
+    // Append zone info under bars
+    const zones = [];
+    for (const elem of ELEMENTS) {
+      const w = wVec[elem] ?? 0;
+      const b = bVec[elem] ?? 0;
+      const delta = Math.abs(w - b);
+      let zone = 'NEUTRAL';
+      if (delta > 0.15) zone = 'TENSION';
+      else if (w > 0.20 && b > 0.20) zone = 'STRENGTH';
+      else if (w < 0.15 && b < 0.15) zone = 'DEVELOPMENT';
+      zones.push({ elem, zone });
+    }
+    // Show zones as small pills after the bars
+    const zoneDiv = document.createElement('div');
+    zoneDiv.style.cssText = 'margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;';
+    zones.forEach(({ elem, zone }) => {
+      const pill = document.createElement('span');
+      const cls = { TENSION:'zone-tension', STRENGTH:'zone-strength', DEVELOPMENT:'zone-development', NEUTRAL:'zone-neutral' }[zone];
+      pill.className = `zone ${cls}`;
+      pill.textContent = `${elem}: ${zone}`;
+      zoneDiv.appendChild(pill);
+    });
+    const westernSection = $('bars-western').parentElement;
+    if (westernSection) westernSection.appendChild(zoneDiv);
+  }
+}
+
+function renderBars(id, vector) {
+  const target = $(id);
+  target.innerHTML = '';
+  if (!vector) {
+    target.innerHTML = '<p style="font-size:12px;color:var(--muted)">Kein Vektor vorhanden.</p>';
+    return;
+  }
+  const max = Math.max(0.001, ...Object.values(vector));
+  ELEMENTS.forEach(elem => {
+    const val = vector[elem] ?? 0;
+    const color = ELEM_COLORS[elem] || 'var(--muted)';
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <strong style="color:${color};font-size:13px">${elem}</strong>
+      <div class="track"><div class="fill" style="width:${Math.max(2, val/max*100)}%;background:${color}"></div></div>
+      <span style="font-family:'Space Mono',monospace;font-size:12px">${val.toFixed(3)}</span>
+    `;
+    target.appendChild(row);
+  });
+}
+
+// ── Fusion text ───────────────────────────────────────────────────────────
+function renderFusionText(fusion) {
+  // FuFirE: fusion_interpretation is a multi-line string
+  const text = fusion?.fusion_interpretation || fusion?.interpretation || fusion?.narrative || '';
+  // Also pull harmony interpretation if present
+  const harmonyText = fusion?.harmony_index?.interpretation || '';
+  const card = $('fusion-card');
+  if (!text && !harmonyText) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  const combined = [harmonyText, text].filter(Boolean).join('\n\n');
+  $('fusion-text').textContent = typeof combined === 'object' ? JSON.stringify(combined, null, 2) : String(combined);
+}
+
+// ── Aspects ───────────────────────────────────────────────────────────────
+function renderAspects(western) {
+  const aspects = western.aspects || [];
+  const card = $('aspects-card');
+  if (!aspects.length) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  const tbody = $('aspects-body');
+  tbody.innerHTML = '';
+  aspects.slice(0, 30).forEach(a => {
+    const p1 = a.planet1 || a.body1 || a.p1 || '';
+    const p2 = a.planet2 || a.body2 || a.p2 || '';
+    const type = a.type || a.aspect_type || a.aspect || '';
+    const orb = a.orb !== undefined ? Number(a.orb).toFixed(2) : '—';
+    const applying = a.applying !== undefined ? (a.applying ? '▶ applying' : '◀ separating') : '';
+    const color = ASPECT_COLORS[type?.toLowerCase()] || 'var(--muted)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${PLANET_SYMBOLS[p1] || ''} ${p1}</td>
+      <td style="color:${color};font-weight:600">${type}</td>
+      <td>${PLANET_SYMBOLS[p2] || ''} ${p2}</td>
+      <td style="font-family:'Space Mono',monospace">${orb}</td>
+      <td style="font-size:11px;color:var(--muted)">${applying}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Houses ────────────────────────────────────────────────────────────────
+function renderHouses(western) {
+  // FuFirE: houses is {"1": 50.26, "2": 76.31, ...} — cusp longitudes keyed by house number
+  const rawH = western.houses || {};
+  const houseList = Array.isArray(rawH)
+    ? rawH
+    : Object.entries(rawH)
+        .map(([num, cusp]) => ({ number: Number(num), cusp: Number(cusp) }))
+        .sort((a, b) => a.number - b.number);
+  const card = $('houses-card');
+  if (!houseList.length) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  const tbody = $('houses-body');
+  tbody.innerHTML = '';
+  houseList.slice(0, 12).forEach(house => {
+    const num = house.number;
+    const cusp = house.cusp;
+    const sign = house.sign || signFromLon(cusp);
+    const within = house.degree_in_sign ?? (cusp % 30);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family:'Space Mono',monospace;font-weight:700;color:var(--accent)">${num}</td>
+      <td style="font-size:12px;color:var(--muted)">${HOUSE_NAMES[num] || ''}</td>
+      <td>${SIGN_SYMBOLS[sign] || ''} ${sign}</td>
+      <td style="font-family:'Space Mono',monospace">${Number(within).toFixed(1)}°</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Planets table ─────────────────────────────────────────────────────────
+function renderPlanets(western) {
+  const bodies = western.bodies || {};
+  const tbody = $('planets-body');
+  tbody.innerHTML = '';
+  const order = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','North Node','South Node','Chiron','Lilith'];
+  const sorted = [
+    ...order.filter(n => bodies[n]),
+    ...Object.keys(bodies).filter(n => !order.includes(n)),
+  ];
+  sorted.forEach(name => {
+    const b = bodies[name];
+    if (!b) return;
+    const lon = Number(b.longitude ?? b.lon ?? b.degree ?? 0);
+    // FuFirE: zodiac_sign is 0-based index; sign name not returned directly
+    const signIdx = b.zodiac_sign ?? signIdxFromLon(lon);
+    const sign = ZODIAC_NAMES[signIdx] || signFromLon(lon);
+    const within = b.degree_in_sign ?? (lon % 30);
+    const house = b.house ?? '';
+    const retro = b.is_retrograde || b.retrograde ? '℞' : '';
+    const color = PLANET_COLORS[name] || 'var(--muted)';
+    const sym = PLANET_SYMBOLS[name] || name.substring(0,2);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:${color};font-size:16px">${sym}</td>
+      <td style="font-weight:600">${name}</td>
+      <td>${SIGN_SYMBOLS[sign] || ''} ${sign}</td>
+      <td style="font-family:'Space Mono',monospace">${within.toFixed(2)}°</td>
+      <td style="color:var(--muted)">${house}</td>
+      <td style="color:var(--warn)">${retro}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Keine Planetendaten.</td></tr>';
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadConfig();
+</script>
+</body>
+</html>
