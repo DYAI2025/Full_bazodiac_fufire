@@ -111,7 +111,13 @@ function signDE(s) { return s ? (SIGN_DE[s] || s) : null; }
 function getBody(profile, name) { return profile?.western?.bodies?.[name] || null; }
 
 function getHouseSign(profile, houseNum) {
-  return profile?.western?.houses?.[houseNum - 1]?.sign || null;
+  const houses = profile?.western?.houses;
+  if (!houses) return null;
+  // houses may be an array [{sign,...}, ...] or an object {"1":{sign,...}, ...}
+  const entry = Array.isArray(houses)
+    ? houses[houseNum - 1]
+    : houses[String(houseNum)];
+  return entry?.sign || null;
 }
 
 function getDayElement(profile) { return profile?.bazi?.pillars?.day?.element || null; }
