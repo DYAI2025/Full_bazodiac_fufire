@@ -1,7 +1,8 @@
 import { router } from './router.js';
-import { InputPage } from './pages/InputPage.js';
-import { OverviewPage }   from './pages/OverviewPage.js';
-import { DashboardPage }  from './pages/DashboardPage.js';
+import { InputPage }          from './pages/InputPage.js';
+import { OverviewPage }       from './pages/OverviewPage.js';
+import { DashboardPage }      from './pages/DashboardPage.js';
+import { LovePage }           from './pages/LovePage.js';
 
 let currentProfile = null;
 
@@ -17,6 +18,13 @@ router
   .register('/overview', (app) => {
     if (!currentProfile) { router.navigate('/'); return; }
     OverviewPage(app, {
+      profile: currentProfile,
+      onNavigate: (path) => router.navigate(path),
+    });
+  })
+  .register('/love', (app) => {
+    if (!currentProfile) { router.navigate('/'); return; }
+    LovePage(app, {
       profile: currentProfile,
       onNavigate: (path) => router.navigate(path),
     });
