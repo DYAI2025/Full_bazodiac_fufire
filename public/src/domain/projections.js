@@ -1,0 +1,576 @@
+// Domain Projection Layer — Love, Career, Finance, Personality
+// All functions return: { primaryFactors, supportingFactors, missingFactors, sourceTrace, confidence }
+// Rules: no LLM values, no financial advice, no diagnoses, confidence drops on missing key factors
+
+const SIGN_DE = {
+  Aries: 'Widder', Taurus: 'Stier', Gemini: 'Zwillinge', Cancer: 'Krebs',
+  Leo: 'Löwe', Virgo: 'Jungfrau', Libra: 'Waage', Scorpio: 'Skorpion',
+  Sagittarius: 'Schütze', Capricorn: 'Steinbock', Aquarius: 'Wassermann', Pisces: 'Fische',
+};
+
+const VENUS_LOVE = {
+  Aries: 'Direkt und leidenschaftlich — sie geht mutig auf Verbindung zu',
+  Taurus: 'Sinnlich und beständig — sie sucht verlässliche Nähe',
+  Gemini: 'Lebendig und neugierig — sie liebt geistige Berührung',
+  Cancer: 'Fürsorglich und tief — sie bindet durch emotionale Geborgenheit',
+  Leo: 'Großzügig und strahlend — sie schenkt Wärme und Aufmerksamkeit',
+  Virgo: 'Aufmerksam und feinfühlig — sie zeigt Liebe durch Präzision',
+  Libra: 'Harmonisch und ausgleichend — sie sucht echte Partnerschaft',
+  Scorpio: 'Intensiv und transformativ — sie liebt mit voller Tiefe',
+  Sagittarius: 'Frei und abenteuerlustig — sie braucht Raum zum Wachsen',
+  Capricorn: 'Treu und verbindlich — sie baut langsam, aber solide',
+  Aquarius: 'Unabhängig und originell — sie liebt auf unkonventionelle Weise',
+  Pisces: 'Mitfühlend und träumerisch — sie liebt mit dem ganzen Herzen',
+};
+
+const MOON_NEED = {
+  Aries: 'Eigenständigkeit und Initiative in Beziehungen',
+  Taurus: 'Sicherheit und sinnliche Beständigkeit',
+  Gemini: 'Kommunikation und geistige Stimulation',
+  Cancer: 'Tiefe Zugehörigkeit und emotionale Sicherheit',
+  Leo: 'Anerkennung, Wärme und herzliches Miteinander',
+  Virgo: 'Ordnung, Verlässlichkeit und praktische Fürsorge',
+  Libra: 'Harmonie, Fairness und Balance im Kontakt',
+  Scorpio: 'Tiefe Verbundenheit und ehrliche Intimität',
+  Sagittarius: 'Freiheit und gemeinsames Wachstum',
+  Capricorn: 'Verlässlichkeit, Struktur und Zielorientierung',
+  Aquarius: 'Freundschaft, Geist und persönliche Freiheit',
+  Pisces: 'Empathie, Stille und spirituelle Tiefe',
+};
+
+const MARS_INITIATIVE = {
+  Aries: 'direkt und ohne Umwege auf Verbindung zugehend',
+  Taurus: 'geduldig und beharrlich in der Annäherung',
+  Gemini: 'durch Gespräch und geistige Funken',
+  Cancer: 'fürsorglich und schützend',
+  Leo: 'mit Ausstrahlung und selbstsicherer Präsenz',
+  Virgo: 'durch Details und aufmerksame Gesten',
+  Libra: 'charmant, diplomatisch und ausgleichend',
+  Scorpio: 'magnetisch, intensiv und mit Tiefgang',
+  Sagittarius: 'begeisternd, offen und mit Schwung',
+  Capricorn: 'ausdauernd, zielorientiert und zuverlässig',
+  Aquarius: 'originell, überraschend und unkonventionell',
+  Pisces: 'sanft, intuitiv und einfühlsam',
+};
+
+const SUN_CAREER = {
+  Aries: 'Pioniergeist und Eigeninitiative prägen die Berufsrichtung',
+  Taurus: 'Beständigkeit und praktisches Talent sind Kernstärken',
+  Gemini: 'Vielseitigkeit und Kommunikationsgabe öffnen Türen',
+  Cancer: 'Fürsorge und Empathie als berufliche Kraft',
+  Leo: 'Führungsqualität und kreative Ausstrahlung',
+  Virgo: 'Präzision, Analyse und methodisches Vorgehen',
+  Libra: 'Ausgleich, Kooperation und ästhetisches Gespür',
+  Scorpio: 'Tiefgang, Transformation und strategischer Fokus',
+  Sagittarius: 'Weitsicht, Bildungsdrang und Expansionswille',
+  Capricorn: 'Ehrgeiz, Disziplin und langfristiger Aufbau',
+  Aquarius: 'Innovation, Unabhängigkeit und Systemdenken',
+  Pisces: 'Kreativität, Mitgefühl und ganzheitliches Denken',
+};
+
+const SATURN_STRUCTURE = {
+  Aries: 'Struktur durch Eigenverantwortung und schnelle Entscheidungen',
+  Taurus: 'Ausdauer und materielle Stabilität als Fundament',
+  Gemini: 'Disziplin beim Lernen und kommunikativer Fokus',
+  Cancer: 'Verlässlichkeit und emotionale Reife als Basis',
+  Leo: 'Selbstdisziplin und verantwortungsvolles Führen',
+  Virgo: 'Perfektion und methodische Strenge',
+  Libra: 'Ausgewogenheit und faire Entscheidungsprozesse',
+  Scorpio: 'Tiefgehende Fokussierung und Durchhaltevermögen',
+  Sagittarius: 'Strukturiertes Wachstum und Zielorientierung',
+  Capricorn: 'Hohes Verantwortungsgefühl und langfristige Planung',
+  Aquarius: 'Systematisches Denken und gesellschaftliche Verantwortung',
+  Pisces: 'Spirituelle Reife und intuitiv gesteuerte Grenzen',
+};
+
+const JUPITER_EXPAND = {
+  Aries: 'Expansion durch Mut und neue Impulse',
+  Taurus: 'Wachstum durch Beständigkeit und materielle Sorgfalt',
+  Gemini: 'Erweiterung durch Wissen und Netzwerke',
+  Cancer: 'Gedeihen in fürsorgendem, familiärem Kontext',
+  Leo: 'Erfolg durch Kreativität und Selbstausdruck',
+  Virgo: 'Wachstum durch Exzellenz und präzise Methodik',
+  Libra: 'Expansion durch Kooperation und Harmonie',
+  Scorpio: 'Tiefe Ressourcen durch Transformation und Fokus',
+  Sagittarius: 'Natürliche Erweiterung durch Philosophie und Reise',
+  Capricorn: 'Solides Wachstum durch Disziplin und Struktur',
+  Aquarius: 'Innovation und gesellschaftlicher Einfluss',
+  Pisces: 'Großzügigkeit und spirituelles Wachstum',
+};
+
+const ELEMENT_PERSONALITY = {
+  Holz: 'Wachstum, Vision und das Streben nach Entfaltung',
+  Feuer: 'Leidenschaft, Ausstrahlung und inneres Feuer',
+  Erde: 'Beständigkeit, Nährung und praktische Substanz',
+  Metall: 'Klarheit, Präzision und strukturierte Kraft',
+  Wasser: 'Tiefe, Intuition und fließende Anpassungsfähigkeit',
+};
+
+function signDE(s) { return s ? (SIGN_DE[s] || s) : null; }
+
+function getBody(profile, name) { return profile?.western?.bodies?.[name] || null; }
+
+function getHouseSign(profile, houseNum) {
+  return profile?.western?.houses?.[houseNum - 1]?.sign || null;
+}
+
+function getDayElement(profile) { return profile?.bazi?.pillars?.day?.element || null; }
+function getMonthElement(profile) { return profile?.bazi?.pillars?.month?.element || null; }
+
+function getDominantFusionElement(profile) {
+  const v = profile?.fusion?.wu_xing_vectors?.fusion
+         || profile?.fusion?.wu_xing_vectors?.western_planets;
+  if (!v) return null;
+  let max = -Infinity, el = null;
+  for (const [k, val] of Object.entries(v)) {
+    if (val > max) { max = val; el = k; }
+  }
+  return el;
+}
+
+function buildProjection() {
+  return {
+    primaryFactors: [],
+    supportingFactors: [],
+    missingFactors: [],
+    sourceTrace: [],
+    _deduction: 0,
+  };
+}
+
+function finalize(proj) {
+  return {
+    primaryFactors:    proj.primaryFactors,
+    supportingFactors: proj.supportingFactors,
+    missingFactors:    proj.missingFactors,
+    sourceTrace:       proj.sourceTrace,
+    confidence:        Math.max(0, Math.round((1 - proj._deduction) * 100) / 100),
+  };
+}
+
+// ── Love ─────────────────────────────────────────────────────────────────────
+
+export function createLoveProjection(profile) {
+  const proj = buildProjection();
+
+  const venus = getBody(profile, 'Venus');
+  if (venus?.sign) {
+    proj.primaryFactors.push({
+      label: `Venus im ${signDE(venus.sign)}`,
+      value: VENUS_LOVE[venus.sign] || signDE(venus.sign),
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Wie du in Liebe und Beziehung wirkst',
+    });
+    proj.sourceTrace.push('western.bodies.Venus.sign');
+  } else {
+    proj.missingFactors.push('Venus-Zeichen (Geburtsmoment erforderlich)');
+    proj.sourceTrace.push('western.bodies.Venus — nicht verfügbar');
+    proj._deduction += 0.30;
+  }
+
+  const moon = getBody(profile, 'Moon');
+  if (moon?.sign) {
+    proj.primaryFactors.push({
+      label: `Mond im ${signDE(moon.sign)}`,
+      value: `Emotionales Bedürfnis: ${MOON_NEED[moon.sign] || signDE(moon.sign)}`,
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Was du in einer Beziehung emotional brauchst',
+    });
+    proj.sourceTrace.push('western.bodies.Moon.sign');
+  } else {
+    proj.missingFactors.push('Mond-Zeichen');
+    proj.sourceTrace.push('western.bodies.Moon — nicht verfügbar');
+    proj._deduction += 0.20;
+  }
+
+  const dayEl = getDayElement(profile);
+  if (dayEl) {
+    proj.primaryFactors.push({
+      label: `BaZi Tag-Säule: ${dayEl}`,
+      value: ELEMENT_PERSONALITY[dayEl] || dayEl,
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Emotionale Grundschwingung laut BaZi',
+    });
+    proj.sourceTrace.push('bazi.pillars.day.element');
+  } else {
+    proj.missingFactors.push('BaZi Tag-Säule');
+    proj.sourceTrace.push('bazi.pillars.day — nicht verfügbar');
+    proj._deduction += 0.15;
+  }
+
+  const mars = getBody(profile, 'Mars');
+  if (mars?.sign) {
+    proj.supportingFactors.push({
+      label: `Mars im ${signDE(mars.sign)}`,
+      value: `Initiative: ${MARS_INITIATIVE[mars.sign] || signDE(mars.sign)}`,
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+    });
+    proj.sourceTrace.push('western.bodies.Mars.sign');
+  } else {
+    proj.missingFactors.push('Mars-Zeichen');
+    proj.sourceTrace.push('western.bodies.Mars — nicht verfügbar');
+    proj._deduction += 0.10;
+  }
+
+  const h5 = getHouseSign(profile, 5);
+  if (h5) {
+    proj.supportingFactors.push({
+      label: `5. Haus im ${signDE(h5)}`,
+      value: 'Ausdruck in Romantik und persönlichem Liebesstil',
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+    });
+    proj.sourceTrace.push('western.houses[4].sign');
+  } else {
+    proj.missingFactors.push('5. Haus (Geburtszeit für Häuser erforderlich)');
+    proj.sourceTrace.push('western.houses[4] — nicht verfügbar');
+    proj._deduction += 0.025;
+  }
+
+  const h7 = getHouseSign(profile, 7);
+  if (h7) {
+    proj.supportingFactors.push({
+      label: `7. Haus im ${signDE(h7)}`,
+      value: 'Partnerschaftsprinzip — was du im Gegenüber suchst',
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+    });
+    proj.sourceTrace.push('western.houses[6].sign');
+  } else {
+    proj.missingFactors.push('7. Haus (Geburtszeit für Häuser erforderlich)');
+    proj.sourceTrace.push('western.houses[6] — nicht verfügbar');
+    proj._deduction += 0.025;
+  }
+
+  const wxEl = getDominantFusionElement(profile);
+  if (wxEl) {
+    proj.supportingFactors.push({
+      label: `Wu-Xing Dominanz: ${wxEl}`,
+      value: ELEMENT_PERSONALITY[wxEl] || wxEl,
+      source: 'api_aggregated',
+      endpoint: '/api/azodiac/profile',
+      note: 'Dominantes Fusions-Element der kombinierten Signatur',
+    });
+    proj.sourceTrace.push('fusion.wu_xing_vectors');
+  } else {
+    proj.sourceTrace.push('fusion.wu_xing_vectors — nicht verfügbar');
+  }
+
+  return finalize(proj);
+}
+
+// ── Career ───────────────────────────────────────────────────────────────────
+
+export function createCareerProjection(profile) {
+  const proj = buildProjection();
+
+  const h10 = getHouseSign(profile, 10);
+  if (h10) {
+    proj.primaryFactors.push({
+      label: `10. Haus (MC) im ${signDE(h10)}`,
+      value: 'Öffentliche Wirkung und berufliche Ausrichtung',
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Das Mitthimmel-Zeichen symbolisiert deine gesellschaftliche Rolle',
+    });
+    proj.sourceTrace.push('western.houses[9].sign');
+  } else {
+    proj.missingFactors.push('10. Haus / MC (Geburtszeit für Häuser erforderlich)');
+    proj.sourceTrace.push('western.houses[9] — nicht verfügbar');
+    proj._deduction += 0.25;
+  }
+
+  const sun = getBody(profile, 'Sun');
+  if (sun?.sign) {
+    proj.primaryFactors.push({
+      label: `Sonne im ${signDE(sun.sign)}`,
+      value: SUN_CAREER[sun.sign] || signDE(sun.sign),
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Dein Kernantrieb und Selbstausdruck',
+    });
+    proj.sourceTrace.push('western.bodies.Sun.sign');
+  } else {
+    proj.missingFactors.push('Sonnenzeichen');
+    proj.sourceTrace.push('western.bodies.Sun — nicht verfügbar');
+    proj._deduction += 0.20;
+  }
+
+  const saturn = getBody(profile, 'Saturn');
+  if (saturn?.sign) {
+    proj.primaryFactors.push({
+      label: `Saturn im ${signDE(saturn.sign)}`,
+      value: SATURN_STRUCTURE[saturn.sign] || signDE(saturn.sign),
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Deine Struktur, Disziplin und Wachstumsaufgaben',
+    });
+    proj.sourceTrace.push('western.bodies.Saturn.sign');
+  } else {
+    proj.missingFactors.push('Saturn-Zeichen');
+    proj.sourceTrace.push('western.bodies.Saturn — nicht verfügbar');
+    proj._deduction += 0.15;
+  }
+
+  const h6 = getHouseSign(profile, 6);
+  if (h6) {
+    proj.supportingFactors.push({
+      label: `6. Haus im ${signDE(h6)}`,
+      value: 'Arbeitsstil, Routine und Alltagsenergie',
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+    });
+    proj.sourceTrace.push('western.houses[5].sign');
+  } else {
+    proj.missingFactors.push('6. Haus (Geburtszeit für Häuser erforderlich)');
+    proj.sourceTrace.push('western.houses[5] — nicht verfügbar');
+    proj._deduction += 0.10;
+  }
+
+  const monthEl = getMonthElement(profile);
+  if (monthEl) {
+    proj.supportingFactors.push({
+      label: `BaZi Monats-Säule: ${monthEl}`,
+      value: ELEMENT_PERSONALITY[monthEl] || monthEl,
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Soziale Energie und berufliche Interaktionsstärke laut BaZi',
+    });
+    proj.sourceTrace.push('bazi.pillars.month.element');
+  } else {
+    proj.missingFactors.push('BaZi Monats-Säule');
+    proj.sourceTrace.push('bazi.pillars.month — nicht verfügbar');
+    proj._deduction += 0.10;
+  }
+
+  const wxEl = getDominantFusionElement(profile);
+  if (wxEl) {
+    proj.supportingFactors.push({
+      label: `Wu-Xing Dominanz: ${wxEl}`,
+      value: ELEMENT_PERSONALITY[wxEl] || wxEl,
+      source: 'api_aggregated',
+      endpoint: '/api/azodiac/profile',
+    });
+    proj.sourceTrace.push('fusion.wu_xing_vectors');
+  } else {
+    proj.sourceTrace.push('fusion.wu_xing_vectors — nicht verfügbar');
+  }
+
+  return finalize(proj);
+}
+
+// ── Finance ──────────────────────────────────────────────────────────────────
+// Hinweis: Diese Projektion enthält keine Finanzberatung.
+// Alle Aussagen sind symbolischer Natur und ersetzen keine professionelle Beratung.
+
+export function createFinanceProjection(profile) {
+  const proj = buildProjection();
+
+  const h2 = getHouseSign(profile, 2);
+  if (h2) {
+    proj.primaryFactors.push({
+      label: `2. Haus im ${signDE(h2)}`,
+      value: 'Symbolischer Ausdruck deines Verhältnisses zu Ressourcen und Werten',
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Astrologisches Haus der persönlichen Ressourcen — kein Finanzratschlag',
+    });
+    proj.sourceTrace.push('western.houses[1].sign');
+  } else {
+    proj.missingFactors.push('2. Haus (Geburtszeit für Häuser erforderlich)');
+    proj.sourceTrace.push('western.houses[1] — nicht verfügbar');
+    proj._deduction += 0.25;
+  }
+
+  const venus = getBody(profile, 'Venus');
+  if (venus?.sign) {
+    proj.primaryFactors.push({
+      label: `Venus im ${signDE(venus.sign)}`,
+      value: `Wertvorstellungen: ${VENUS_LOVE[venus.sign] || signDE(venus.sign)}`,
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Was du als wertvoll und erstrebenswert wahrnimmst',
+    });
+    proj.sourceTrace.push('western.bodies.Venus.sign');
+  } else {
+    proj.missingFactors.push('Venus-Zeichen');
+    proj.sourceTrace.push('western.bodies.Venus — nicht verfügbar');
+    proj._deduction += 0.20;
+  }
+
+  const jupiter = getBody(profile, 'Jupiter');
+  if (jupiter?.sign) {
+    proj.primaryFactors.push({
+      label: `Jupiter im ${signDE(jupiter.sign)}`,
+      value: JUPITER_EXPAND[jupiter.sign] || signDE(jupiter.sign),
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Symbolisches Erweiterungsprinzip — kein Anlageratschlag',
+    });
+    proj.sourceTrace.push('western.bodies.Jupiter.sign');
+  } else {
+    proj.missingFactors.push('Jupiter-Zeichen');
+    proj.sourceTrace.push('western.bodies.Jupiter — nicht verfügbar');
+    proj._deduction += 0.20;
+  }
+
+  const h8 = getHouseSign(profile, 8);
+  if (h8) {
+    proj.supportingFactors.push({
+      label: `8. Haus im ${signDE(h8)}`,
+      value: 'Symbolisches Prinzip von Transformation und gemeinsamen Ressourcen',
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Kein Finanzratschlag — nur symbolische Einordnung',
+    });
+    proj.sourceTrace.push('western.houses[7].sign');
+  } else {
+    proj.missingFactors.push('8. Haus (Geburtszeit für Häuser erforderlich)');
+    proj.sourceTrace.push('western.houses[7] — nicht verfügbar');
+    proj._deduction += 0.10;
+  }
+
+  const wxEl = getDominantFusionElement(profile);
+  if (wxEl) {
+    const wxNote = wxEl === 'Metall' || wxEl === 'Erde'
+      ? `${wxEl} — symbolisches Ressourcenprinzip`
+      : `${wxEl} — dominantes Fusions-Element`;
+    proj.supportingFactors.push({
+      label: `Wu-Xing: ${wxEl}`,
+      value: wxNote,
+      source: 'api_aggregated',
+      endpoint: '/api/azodiac/profile',
+    });
+    proj.sourceTrace.push('fusion.wu_xing_vectors');
+  } else {
+    proj.sourceTrace.push('fusion.wu_xing_vectors — nicht verfügbar');
+  }
+
+  return finalize(proj);
+}
+
+// ── Personality ───────────────────────────────────────────────────────────────
+
+export function createPersonalityProjection(profile) {
+  const proj = buildProjection();
+
+  const sun = getBody(profile, 'Sun');
+  if (sun?.sign) {
+    proj.primaryFactors.push({
+      label: `Sonne im ${signDE(sun.sign)}`,
+      value: SUN_CAREER[sun.sign] || signDE(sun.sign),
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Kern-Identität und bewusster Selbstausdruck',
+    });
+    proj.sourceTrace.push('western.bodies.Sun.sign');
+  } else {
+    proj.missingFactors.push('Sonnenzeichen');
+    proj.sourceTrace.push('western.bodies.Sun — nicht verfügbar');
+    proj._deduction += 0.20;
+  }
+
+  const moon = getBody(profile, 'Moon');
+  if (moon?.sign) {
+    proj.primaryFactors.push({
+      label: `Mond im ${signDE(moon.sign)}`,
+      value: `Emotionale Innenwelt: ${MOON_NEED[moon.sign] || signDE(moon.sign)}`,
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Das emotionale Fundament der Persönlichkeit',
+    });
+    proj.sourceTrace.push('western.bodies.Moon.sign');
+  } else {
+    proj.missingFactors.push('Mond-Zeichen');
+    proj.sourceTrace.push('western.bodies.Moon — nicht verfügbar');
+    proj._deduction += 0.15;
+  }
+
+  const dm = profile?.bazi?.day_master;
+  if (dm?.element) {
+    proj.primaryFactors.push({
+      label: `Day Master: ${dm.stem || ''} ${dm.element}`,
+      value: ELEMENT_PERSONALITY[dm.element] || dm.element,
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'BaZi-Kernenergie — das ostasiatische Gegenstück zum Sonnenzeichen',
+    });
+    proj.sourceTrace.push('bazi.day_master.element');
+  } else {
+    proj.missingFactors.push('BaZi Day Master');
+    proj.sourceTrace.push('bazi.day_master — nicht verfügbar');
+    proj._deduction += 0.15;
+  }
+
+  const ci = profile?.fusion?.coherence_index;
+  if (ci !== null && ci !== undefined) {
+    const cohNote = ci >= 0.7
+      ? 'Hohe Deckungsgleichheit — östliches und westliches Selbstbild ergänzen sich harmonisch'
+      : ci <= 0.35
+      ? 'Kreative Spannung — ein Kontrast und Widerspruch zwischen BaZi und westlichem Chart, der zur bewussten Integration einlädt'
+      : 'Ausgewogene Mischung aus Stabilität und Entwicklung';
+    proj.supportingFactors.push({
+      label: 'Fusions-Kohärenz',
+      value: `${Math.round(ci * 100)}% Deckungsgleichheit`,
+      source: 'api_aggregated',
+      endpoint: '/api/azodiac/profile',
+      note: cohNote,
+    });
+    proj.sourceTrace.push('fusion.coherence_index');
+  } else {
+    proj.sourceTrace.push('fusion.coherence_index — nicht verfügbar');
+  }
+
+  const venus = getBody(profile, 'Venus');
+  if (venus?.sign) {
+    proj.supportingFactors.push({
+      label: `Venus im ${signDE(venus.sign)}`,
+      value: VENUS_LOVE[venus.sign] || signDE(venus.sign),
+      source: 'api',
+      endpoint: '/api/azodiac/profile',
+      note: 'Ästhetik, Beziehungsstil und Wertvorstellungen',
+    });
+    proj.sourceTrace.push('western.bodies.Venus.sign');
+  } else {
+    proj.sourceTrace.push('western.bodies.Venus — nicht verfügbar');
+  }
+
+  const wxEl = getDominantFusionElement(profile);
+  if (wxEl) {
+    proj.supportingFactors.push({
+      label: `Wu-Xing Dominanz: ${wxEl}`,
+      value: ELEMENT_PERSONALITY[wxEl] || wxEl,
+      source: 'api_aggregated',
+      endpoint: '/api/azodiac/profile',
+      note: 'Das dominante Fusions-Element verbindet beide Systeme',
+    });
+    proj.sourceTrace.push('fusion.wu_xing_vectors');
+  } else {
+    proj.sourceTrace.push('fusion.wu_xing_vectors — nicht verfügbar');
+  }
+
+  ['Mercury', 'Mars', 'Jupiter', 'Saturn'].forEach((name) => {
+    const body = getBody(profile, name);
+    if (body?.sign) {
+      proj.supportingFactors.push({
+        label: `${name} im ${signDE(body.sign)}`,
+        value: name === 'Saturn'
+          ? SATURN_STRUCTURE[body.sign] || signDE(body.sign)
+          : name === 'Jupiter'
+          ? JUPITER_EXPAND[body.sign] || signDE(body.sign)
+          : name === 'Mars'
+          ? `Initiative: ${MARS_INITIATIVE[body.sign] || signDE(body.sign)}`
+          : signDE(body.sign),
+        source: 'api',
+        endpoint: '/api/azodiac/profile',
+      });
+      proj.sourceTrace.push(`western.bodies.${name}.sign`);
+    }
+  });
+
+  return finalize(proj);
+}
