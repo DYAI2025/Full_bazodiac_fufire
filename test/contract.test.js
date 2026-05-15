@@ -141,6 +141,7 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   assert.equal(day.sector_intensity.length, 12, 'Each day sector_intensity must have 12 entries');
 });
 
+// Experience endpoints require split date+time (not ISO datetime string like MINIMAL_PAYLOAD)
 const BIRTH_PAYLOAD = {
   date: '1990-03-15',
   time: '14:30:00',
@@ -172,8 +173,9 @@ test('contract: experience/daily responds 200 with western + eastern + fusion', 
     body: JSON.stringify({ birth: BIRTH_PAYLOAD }),
     signal: AbortSignal.timeout(20_000),
   });
-  assert.equal(bootstrapRes.status, 200);
+  assert.equal(bootstrapRes.status, 200, `Expected 200, got ${bootstrapRes.status}`);
   const bootstrap = await bootstrapRes.json();
+  assert.equal(bootstrap.soulprint_sectors?.length, 12, 'bootstrap soulprint_sectors must have 12 entries before daily call');
 
   const today = new Date().toISOString().split('T')[0];
   const dailyRes = await fetch(`${BASE_URL}/experience/daily`, {
@@ -189,7 +191,7 @@ test('contract: experience/daily responds 200 with western + eastern + fusion', 
   });
   assert.equal(dailyRes.status, 200, `Expected 200, got ${dailyRes.status}`);
   const json = await dailyRes.json();
-  assert.ok(json.date, 'date field must exist');
+  assert.equal(typeof json.date, 'string', 'date must be a string');
   assert.ok(json.western, 'western field must exist');
   assert.ok(json.eastern, 'eastern field must exist');
   assert.ok(json.fusion, 'fusion field must exist');
