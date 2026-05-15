@@ -68,6 +68,21 @@ const SUN_CAREER = {
   Pisces: 'Kreativität, Mitgefühl und ganzheitliches Denken',
 };
 
+const SUN_IDENTITY = {
+  Aries:       'Direktheit, Mut und der Antrieb, als Erste voranzugehen',
+  Taurus:      'Geerdetheit, Beständigkeit und Freude am Sinnlichen',
+  Gemini:      'Neugier, Wandlungsfähigkeit und Liebe zur Verbindung',
+  Cancer:      'Tiefe Empathie, Fürsorge und emotionale Intuition',
+  Leo:         'Strahlkraft, Herzlichkeit und das Bedürfnis, gesehen zu werden',
+  Virgo:       'Klarheit, Präzision und der Wunsch, wirklich hilfreich zu sein',
+  Libra:       'Harmoniebedürfnis, Schönheitssinn und Fähigkeit zur Balance',
+  Scorpio:     'Intensität, Tiefgründigkeit und Lust auf Transformation',
+  Sagittarius: 'Weitsicht, Freiheitsdrang und philosophischer Geist',
+  Capricorn:   'Zuverlässigkeit, Ehrgeiz und Sinn für das Wesentliche',
+  Aquarius:    'Unabhängigkeit, visionäres Denken und Gefühl für das Kollektiv',
+  Pisces:      'Feingefühl, Mitgefühl und Zugang zur imaginativen Tiefe',
+};
+
 const SATURN_STRUCTURE = {
   Aries: 'Struktur durch Eigenverantwortung und schnelle Entscheidungen',
   Taurus: 'Ausdauer und materielle Stabilität als Fundament',
@@ -468,7 +483,7 @@ export function createPersonalityProjection(profile) {
   if (sun?.sign) {
     proj.primaryFactors.push({
       label: `Sonne im ${signDE(sun.sign)}`,
-      value: SUN_CAREER[sun.sign] || signDE(sun.sign),
+      value: SUN_IDENTITY[sun.sign] || signDE(sun.sign),
       source: 'api',
       endpoint: '/api/azodiac/profile',
       note: 'Kern-Identität und bewusster Selbstausdruck',
