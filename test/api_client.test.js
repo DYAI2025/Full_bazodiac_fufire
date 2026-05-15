@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateProfile, geocodePlace } from '../public/src/api/client.js';
+import { calculateProfile, geocodePlace, getTransitNow, getTransitTimeline } from '../public/src/api/client.js';
 
 // Helpers to mock and restore globalThis.fetch
 function withFetch(mockFn, fn) {
@@ -51,5 +51,34 @@ test('envelope: ok is false on HTTP 4xx with JSON error body', () =>
       const r = await calculateProfile({ date: '2000-01-01T12:00:00', tz: 'UTC', lat: 0, lon: 0 });
       assert.equal(r.ok, false);
       assert.equal(r.error, 'Bad request');
+    },
+  ));
+
+test('getTransitNow returns envelope with ok=true on 200', () =>
+  withFetch(
+    async (url) => {
+      assert.ok(url.includes('/transit/now'));
+      return { ok: true, status: 200, json: async () => ({ computed_at: '2026-05-16T00:00:00Z', planets: { sun: { longitude: 55.1 } }, sector_intensity: new Array(12).fill(0) }) };
+    },
+    async () => {
+      const r = await getTransitNow();
+      assert.equal(r.ok, true);
+      assert.equal(r.status, 200);
+      assert.ok(r.data.computed_at);
+      assert.ok(r.data.planets.sun);
+    },
+  ));
+
+test('getTransitTimeline returns envelope with days array', () =>
+  withFetch(
+    async (url) => {
+      assert.ok(url.includes('/transit/timeline'));
+      return { ok: true, status: 200, json: async () => ({ days: [{ date: '2026-05-16', planets: {}, sector_intensity: [] }] }) };
+    },
+    async () => {
+      const r = await getTransitTimeline();
+      assert.equal(r.ok, true);
+      assert.ok(Array.isArray(r.data.days));
+      assert.equal(r.data.days.length, 1);
     },
   ));

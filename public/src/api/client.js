@@ -45,6 +45,14 @@ export async function getHealth() {
   return request('GET', '/health');
 }
 
+export async function getTransitNow() {
+  return request('GET', '/transit/now');
+}
+
+export async function getTransitTimeline() {
+  return request('GET', '/transit/timeline');
+}
+
 export function noFakeDataGuard(data, label = '') {
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'development') return;
   const DUMMY_SIGNATURES = ['Lorem', 'dummy', 'fake', 'random', 'placeholder', 'test123'];
