@@ -1,0 +1,105 @@
+// Contract tests against the live FuFirE upstream.
+// Run with: FUFIRE_CONTRACT_TEST=true node --test test/contract.test.js
+// Or:       npm run test:contract
+//
+// These tests are opt-in only — they make real network calls.
+// They detect silent path drift between this proxy and the upstream API.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+const ENABLED  = process.env.FUFIRE_CONTRACT_TEST === 'true';
+const BASE_URL = (process.env.FUFIRE_BASE_URL || '').replace(/\/+$/, '');
+const API_KEY  = process.env.FUFIRE_API_KEY || '';
+
+const headers = {
+  'content-type': 'application/json',
+  'accept': 'application/json',
+  ...(API_KEY ? { 'x-api-key': API_KEY } : {}),
+};
+
+const MINIMAL_PAYLOAD = {
+  date: '1990-06-15T12:00:00',
+  tz: 'Europe/Berlin',
+  lat: 48.137,
+  lon: 11.576,
+};
+
+function skipIfDisabled(t) {
+  if (!ENABLED || !BASE_URL) {
+    t.skip('Set FUFIRE_CONTRACT_TEST=true and FUFIRE_BASE_URL to run contract tests');
+  }
+}
+
+test('contract: calculate/western responds 200 with bodies field', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/calculate/western`, {
+    method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
+    signal: AbortSignal.timeout(15_000),
+  });
+  assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
+  const json = await res.json();
+  assert.ok(json.bodies || json.planets, 'Response must contain bodies or planets field');
+});
+
+test('contract: calculate/bazi responds 200 with pillars field', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/calculate/bazi`, {
+    method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
+    signal: AbortSignal.timeout(15_000),
+  });
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.ok(json.pillars || json.bazi, 'Response must contain pillars field');
+});
+
+test('contract: calculate/fusion responds 200 with wu_xing_vectors', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/calculate/fusion`, {
+    method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
+    signal: AbortSignal.timeout(15_000),
+  });
+  assert.equal(res.status, 200);
+  const json = await res.json();
+  assert.ok(json.wu_xing_vectors ?? json.vectors, 'Response must contain wu_xing_vectors');
+});
+
+test('contract: info/wuxing responds 200 — path drift detection', async (t) => {
+  skipIfDisabled(t);
+  // This test exists specifically to catch silent path renames
+  const getHeaders = { accept: 'application/json', ...(API_KEY ? { 'x-api-key': API_KEY } : {}) };
+  const res = await fetch(`${BASE_URL}/info/wuxing`, {
+    method: 'GET', headers: getHeaders,
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (res.status === 404) {
+    // Check alternate path to diagnose the drift
+    const res2 = await fetch(`${BASE_URL}/info/wuxing-mapping`, {
+      method: 'GET', headers: getHeaders,
+      signal: AbortSignal.timeout(10_000),
+    });
+    assert.fail(
+      `Path drift detected: /info/wuxing → 404, /info/wuxing-mapping → ${res2.status}. ` +
+      `Update FUFIRE_ENDPOINTS in server.js: upstreamPath: 'info/wuxing-mapping'`,
+    );
+  }
+  assert.equal(res.status, 200, `Expected 200 from /info/wuxing, got ${res.status}`);
+  const json = await res.json();
+  assert.ok(
+    json.planet_mapping ?? json.planets ?? json.mapping ?? json.elements,
+    'Response must contain a planet mapping field',
+  );
+});
+
+test('contract: response shape stability — Sun longitude is a number', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/calculate/western`, {
+    method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const json = await res.json();
+  const bodies = json.bodies || json.planets || {};
+  const sun = bodies.Sun || bodies.sun || null;
+  assert.ok(sun, 'Sun must be present in bodies');
+  const lon = sun.longitude ?? sun.lon ?? sun.degree;
+  assert.equal(typeof lon, 'number', `Sun longitude must be number, got ${typeof lon}`);
+});

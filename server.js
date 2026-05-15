@@ -11,6 +11,21 @@ const API_TIMEOUT_MS = Number.parseInt(process.env.API_TIMEOUT_MS || '20000', 10
 const MAX_BODY_BYTES = Number.parseInt(process.env.MAX_BODY_BYTES || '1000000', 10);
 const FUFIRE_API_KEY = process.env.FUFIRE_API_KEY || '';
 
+// ── CORS allowlist ────────────────────────────────────────────────────────
+// Unset → wildcard (dev). Set → restrict to explicit origins.
+// Read env dynamically so tests can override process.env at runtime.
+function getAllowedOrigins() {
+  const raw = process.env.FUFIRE_ALLOWED_ORIGINS || '';
+  return raw ? new Set(raw.split(',').map(o => o.trim()).filter(Boolean)) : null;
+}
+
+function corsOrigin(requestOrigin) {
+  const allowed = getAllowedOrigins();
+  if (!allowed) return '*';
+  if (!requestOrigin) return null;
+  return allowed.has(requestOrigin) ? requestOrigin : null;
+}
+
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -114,6 +129,138 @@ function translatePayload(raw) {
   };
 }
 
+// ── Element key normalizer ────────────────────────────────────────────────
+const ELEM_DE_MAP = {
+  wood:'Holz', fire:'Feuer', earth:'Erde', metal:'Metall', water:'Wasser',
+  holz:'Holz', feuer:'Feuer', erde:'Erde', metall:'Metall', wasser:'Wasser',
+};
+function toDE(key) { return ELEM_DE_MAP[(key||'').toLowerCase()] || key; }
+
+function normalizeVector(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  const result = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const de = toDE(k);
+    if (['Holz','Feuer','Erde','Metall','Wasser'].includes(de)) result[de] = Number(v) || 0;
+  }
+  return result;
+}
+
+// ── Hidden Stems Tabelle (Zàng Gān 藏干) ─────────────────────────────────
+// Quelle: klassische BaZi-Literatur (unveränderlich)
+// Format: branch → [ { stem, element, weight, polarity } ]
+const HIDDEN_STEMS = {
+  '子': [{ stem:'癸', element:'Wasser', weight:10.0, polarity:'Yin'  }],
+  '丑': [{ stem:'己', element:'Erde',   weight:6.0,  polarity:'Yin'  },
+         { stem:'癸', element:'Wasser', weight:3.0,  polarity:'Yin'  },
+         { stem:'辛', element:'Metall', weight:1.0,  polarity:'Yin'  }],
+  '寅': [{ stem:'甲', element:'Holz',   weight:7.0,  polarity:'Yang' },
+         { stem:'丙', element:'Feuer',  weight:2.0,  polarity:'Yang' },
+         { stem:'戊', element:'Erde',   weight:1.0,  polarity:'Yang' }],
+  '卯': [{ stem:'乙', element:'Holz',   weight:10.0, polarity:'Yin'  }],
+  '辰': [{ stem:'戊', element:'Erde',   weight:6.0,  polarity:'Yang' },
+         { stem:'乙', element:'Holz',   weight:3.0,  polarity:'Yin'  },
+         { stem:'癸', element:'Wasser', weight:1.0,  polarity:'Yin'  }],
+  '巳': [{ stem:'丙', element:'Feuer',  weight:7.0,  polarity:'Yang' },
+         { stem:'庚', element:'Metall', weight:2.0,  polarity:'Yang' },
+         { stem:'戊', element:'Erde',   weight:1.0,  polarity:'Yang' }],
+  '午': [{ stem:'丁', element:'Feuer',  weight:7.0,  polarity:'Yin'  },
+         { stem:'己', element:'Erde',   weight:3.0,  polarity:'Yin'  }],
+  '未': [{ stem:'己', element:'Erde',   weight:6.0,  polarity:'Yin'  },
+         { stem:'丁', element:'Feuer',  weight:3.0,  polarity:'Yin'  },
+         { stem:'乙', element:'Holz',   weight:1.0,  polarity:'Yin'  }],
+  '申': [{ stem:'庚', element:'Metall', weight:7.0,  polarity:'Yang' },
+         { stem:'壬', element:'Wasser', weight:2.0,  polarity:'Yang' },
+         { stem:'戊', element:'Erde',   weight:1.0,  polarity:'Yang' }],
+  '酉': [{ stem:'辛', element:'Metall', weight:10.0, polarity:'Yin'  }],
+  '戌': [{ stem:'戊', element:'Erde',   weight:6.0,  polarity:'Yang' },
+         { stem:'辛', element:'Metall', weight:3.0,  polarity:'Yin'  },
+         { stem:'丁', element:'Feuer',  weight:1.0,  polarity:'Yin'  }],
+  '亥': [{ stem:'壬', element:'Wasser', weight:7.0,  polarity:'Yang' },
+         { stem:'甲', element:'Holz',   weight:3.0,  polarity:'Yang' }],
+};
+
+function deriveHiddenStems(branch) {
+  const table = HIDDEN_STEMS[branch];
+  if (!table) return [];
+  return table.map(hs => ({ ...hs, source: 'derived_from_branch_table' }));
+}
+
+function normalizePillar(raw) {
+  if (!raw) return null;
+  const branch = raw.zweig ?? raw.branch ?? raw.earthly_branch ?? null;
+  const apiHiddenStems = raw.hidden_stems ?? raw.zang_gan ?? null;
+  return {
+    stem:         raw.stamm   ?? raw.stem   ?? raw.heavenly_stem ?? null,
+    branch,
+    element:      toDE(raw.element ?? raw.element_name ?? ''),
+    hidden_stems: apiHiddenStems && apiHiddenStems.length > 0
+                    ? apiHiddenStems
+                    : deriveHiddenStems(branch),
+  };
+}
+
+// ── ViewModel normalizer ──────────────────────────────────────────────────
+export function normalizeAzodiacResult(raw) {
+  const w = raw?.western || {};
+  const b = raw?.bazi    || {};
+  const f = raw?.fusion  || {};
+  const meta = raw?._meta || {};
+
+  // Western
+  const bodies = {};
+  for (const [name, body] of Object.entries(w.bodies || {})) {
+    bodies[name] = {
+      longitude:      Number(body.longitude ?? body.lon ?? body.degree ?? 0),
+      sign:           body.sign ?? null,
+      zodiac_sign:    body.zodiac_sign ?? null,
+      house:          body.house ?? null,
+      retrograde:     Boolean(body.is_retrograde ?? body.retrograde),
+      degree_in_sign: body.degree_in_sign ?? null,
+    };
+  }
+
+  // BaZi
+  const pillars = {};
+  const rawPillars = b.pillars || {};
+  for (const key of ['year','month','day','hour']) {
+    if (rawPillars[key]) pillars[key] = normalizePillar(rawPillars[key]);
+  }
+  const dm = b.day_master ?? b.dayMaster ?? null;
+
+  // Fusion vectors
+  const vecs = f.wu_xing_vectors || f.vectors || {};
+  const westernVec = normalizeVector(vecs.western_planets ?? vecs.western);
+  const baziVec    = normalizeVector(vecs.bazi_pillars    ?? vecs.bazi);
+  const fusionVec  = normalizeVector(vecs.fusion ?? vecs.fused);
+
+  return {
+    western: {
+      bodies,
+      houses:    Array.isArray(w.houses)  ? w.houses  : [],
+      aspects:   Array.isArray(w.aspects) ? w.aspects : [],
+      ascendant: w.ascendant ?? null,
+    },
+    bazi: {
+      pillars,
+      day_master: dm ? normalizePillar(dm) : null,
+    },
+    fusion: {
+      wu_xing_vectors: {
+        western_planets: westernVec,
+        bazi_pillars:    baziVec,
+        ...(Object.keys(fusionVec).length ? { fusion: fusionVec } : {}),
+      },
+      coherence_index:       f.coherence_index ?? f.harmony ?? f.harmony_score ?? null,
+      fusion_interpretation: f.fusion_interpretation ?? f.interpretation ?? '',
+    },
+    _meta: {
+      ...meta,
+      view_model_version: '1',
+    },
+  };
+}
+
 // ── Low-level FuFirE call (single endpoint) ───────────────────────────────
 async function callFuFire(upstreamPath, payload, signal) {
   const url = new URL(upstreamPath, getFuFireBaseUrl());
@@ -141,17 +288,77 @@ async function orchestrateChart(rawBody) {
       callFuFire('calculate/fusion', payload, controller.signal),
     ]);
     const allOk = w.ok && b.ok && f.ok;
+    const rawResult = {
+      western: w.data,
+      bazi:    b.data,
+      fusion:  f.data,
+      _meta: {
+        input: payload,
+        upstream_status: { western: w.status, bazi: b.status, fusion: f.status },
+      },
+    };
     return {
       httpStatus: allOk ? 200 : 502,
-      body: {
-        western: w.data,
-        bazi: b.data,
-        fusion: f.data,
-        _meta: {
-          input: payload,
-          upstream_status: { western: w.status, bazi: b.status, fusion: f.status },
+      body: normalizeAzodiacResult(rawResult),
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ── Full profile aggregator ────────────────────────────────────────────────
+async function orchestrateFullProfile(rawBody) {
+  const payload = translatePayload(rawBody);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    // Mandatory calls (parallel)
+    const [w, b, f, wx] = await Promise.all([
+      callFuFire('calculate/western', payload, controller.signal),
+      callFuFire('calculate/bazi',    payload, controller.signal),
+      callFuFire('calculate/fusion',  payload, controller.signal),
+      callFuFire('calculate/wuxing',  payload, controller.signal),
+    ]);
+
+    // Optional: wuxing reference info (GET, no body needed)
+    let wuxingInfo = { data: null };
+    try {
+      const url = new URL('info/wuxing', getFuFireBaseUrl());
+      const r = await fetch(url, { headers: getFuFireHeaders(true), signal: controller.signal });
+      wuxingInfo = { data: r.ok ? await r.json() : null };
+    } catch { /* absorb — info endpoint is optional */ }
+
+    // Optional: TST (Ten-Star Theory) — absorb 404/errors
+    let tst = { data: null, ok: false };
+    try {
+      const r = await callFuFire('calculate/tst', payload, controller.signal);
+      if (r.ok) tst = r;
+    } catch { /* TST endpoint may not exist */ }
+
+    const mandatoryOk = w.ok && b.ok && f.ok && wx.ok;
+    const rawResult = {
+      western: w.data,
+      bazi:    b.data,
+      fusion:  f.data,
+      wuxing:  wx.data,
+      tst:     tst.data,
+      wuxing_info: wuxingInfo.data,
+      _meta: {
+        input: payload,
+        upstream_status: {
+          western: w.status,
+          bazi:    b.status,
+          fusion:  f.status,
+          wuxing:  wx.status,
+          tst:     tst.ok ? 200 : 'n/a',
+          wuxing_info: wuxingInfo.data ? 200 : 'n/a',
         },
       },
+    };
+    return {
+      httpStatus: mandatoryOk ? 200 : 502,
+      body: normalizeAzodiacResult(rawResult),
     };
   } finally {
     clearTimeout(timer);
@@ -170,15 +377,22 @@ function endpointCatalog() {
   }));
 }
 
-function sendJson(res, status, payload) {
+function sendJson(res, status, payload, requestOrigin = null) {
   const hasBody = status !== 204;
   const body = hasBody ? JSON.stringify(payload, null, 2) : '';
+  const origin = corsOrigin(requestOrigin);
+  const corsHeaders = origin
+    ? {
+        'access-control-allow-origin':  origin,
+        'access-control-allow-methods': 'GET,POST,OPTIONS',
+        'access-control-allow-headers': 'content-type,authorization,x-api-key',
+        ...(origin !== '*' ? { vary: 'Origin' } : {}),
+      }
+    : {};
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
-    'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET,POST,OPTIONS',
-    'access-control-allow-headers': 'content-type,authorization,x-api-key',
+    ...corsHeaders,
   });
   res.end(body);
 }
@@ -200,37 +414,91 @@ function readRequestBody(req) {
 }
 
 // ── /chart handler: validates JSON, orchestrates parallel FuFirE calls ────
-async function handleChartRequest(req, res) {
-  if (req.method === 'OPTIONS') return sendJson(res, 204, {});
+async function handleChartRequest(req, res, requestOrigin = null) {
+  if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
   if (req.method !== 'POST') {
-    return sendJson(res, 405, { error: 'Method not allowed', allowed: ['POST'], endpoint: '/chart' });
+    return sendJson(res, 405, { error: 'Method not allowed', allowed: ['POST'], endpoint: '/chart' }, requestOrigin);
   }
   let body = '';
   try {
     body = await readRequestBody(req);
     if (body) JSON.parse(body); // throws on bad JSON → 400
   } catch (error) {
-    return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message });
+    return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
   }
   try {
     const result = await orchestrateChart(body || '{}');
-    sendJson(res, result.httpStatus, result.body);
+    sendJson(res, result.httpStatus, result.body, requestOrigin);
   } catch (error) {
     const isAbort = error.name === 'AbortError';
     sendJson(res, 502, {
       error: isAbort ? 'FuFirE upstream timeout' : 'FuFirE upstream unavailable',
       detail: error.message,
       hint: 'Check FUFIRE_BASE_URL and FUFIRE_API_KEY environment variables.',
-    });
+    }, requestOrigin);
   }
 }
 
+// ── Geo-Cache (in-memory LRU, max 200 entries, TTL 24h) ──────────────────
+export function makeGeoCache({ maxSize = 200, ttlMs = 86_400_000 } = {}) {
+  const map = new Map(); // key → { value, expiresAt }
+  return {
+    get(key) {
+      const entry = map.get(key);
+      if (!entry) return null;
+      if (Date.now() > entry.expiresAt) { map.delete(key); return null; }
+      // LRU: refresh position
+      map.delete(key);
+      map.set(key, entry);
+      return entry.value;
+    },
+    set(key, value) {
+      if (map.has(key)) map.delete(key);
+      if (map.size >= maxSize) {
+        const firstKey = map.keys().next().value;
+        map.delete(firstKey);
+      }
+      map.set(key, { value, expiresAt: Date.now() + ttlMs });
+    },
+  };
+}
+
+// ── Geocode Rate Limiter (sliding window per IP) ──────────────────────────
+export function geocodeRateLimiter({ maxPerMinute = 10 } = {}) {
+  const windows = new Map(); // ip → timestamps[]
+  return {
+    allow(ip) {
+      const now = Date.now();
+      const cutoff = now - 60_000;
+      const timestamps = (windows.get(ip) || []).filter(t => t > cutoff);
+      if (timestamps.length >= maxPerMinute) return false;
+      timestamps.push(now);
+      windows.set(ip, timestamps);
+      return true;
+    },
+  };
+}
+
+const GEO_CACHE   = makeGeoCache();
+const GEO_LIMITER = geocodeRateLimiter();
+
 // ── /api/geocode?q=… handler: Nominatim + timeapi.io ─────────────────────
-async function handleGeocodeRequest(req, res) {
-  if (req.method === 'OPTIONS') return sendJson(res, 204, {});
+async function handleGeocodeRequest(req, res, requestOrigin = null) {
+  if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const q = (url.searchParams.get('q') || '').trim();
-  if (!q) return sendJson(res, 400, { error: 'Missing query parameter: q' });
+  if (!q) return sendJson(res, 400, { error: 'Missing query parameter: q' }, requestOrigin);
+
+  // Rate limit by IP
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  if (!GEO_LIMITER.allow(ip)) {
+    return sendJson(res, 429, { error: 'Geocode rate limit exceeded. Max 10 requests/minute per IP.' }, requestOrigin);
+  }
+
+  // Cache lookup
+  const cacheKey = q.toLowerCase();
+  const cached = GEO_CACHE.get(cacheKey);
+  if (cached) return sendJson(res, 200, cached, requestOrigin);
 
   try {
     const nominatimUrl =
@@ -260,9 +528,10 @@ async function handleGeocodeRequest(req, res) {
         return { display: place.display_name, lat, lon, tz, type: place.type || place.class };
       }),
     );
-    sendJson(res, 200, results);
+    GEO_CACHE.set(cacheKey, results);
+    sendJson(res, 200, results, requestOrigin);
   } catch (error) {
-    sendJson(res, 502, { error: 'Geocode upstream error', detail: error.message });
+    sendJson(res, 502, { error: 'Geocode upstream error', detail: error.message }, requestOrigin);
   }
 }
 
@@ -279,14 +548,14 @@ function allowedEndpointDescriptions() {
   }));
 }
 
-async function proxyFuFireRequest(req, res, endpoint) {
-  if (req.method === 'OPTIONS') return sendJson(res, 204, {});
+async function proxyFuFireRequest(req, res, endpoint, requestOrigin = null) {
+  if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
   if (req.method !== endpoint.method) {
     return sendJson(res, 405, {
       error: 'Method not allowed',
       allowed: [endpoint.method],
       endpoint: endpoint.path,
-    });
+    }, requestOrigin);
   }
 
   let body = '';
@@ -295,7 +564,7 @@ async function proxyFuFireRequest(req, res, endpoint) {
       body = await readRequestBody(req);
       if (body) JSON.parse(body);
     } catch (error) {
-      return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message });
+      return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
     }
   }
 
@@ -312,10 +581,14 @@ async function proxyFuFireRequest(req, res, endpoint) {
     });
     const responseText = await upstream.text();
     const contentType = upstream.headers.get('content-type') || 'application/json; charset=utf-8';
+    const origin = corsOrigin(requestOrigin);
+    const corsH = origin
+      ? { 'access-control-allow-origin': origin, ...(origin !== '*' ? { vary: 'Origin' } : {}) }
+      : {};
     res.writeHead(upstream.status, {
       'content-type': contentType,
       'cache-control': 'no-store',
-      'access-control-allow-origin': '*',
+      ...corsH,
       'x-fufire-upstream': upstreamUrl.toString(),
     });
     res.end(responseText);
@@ -327,17 +600,17 @@ async function proxyFuFireRequest(req, res, endpoint) {
       upstream: upstreamUrl.toString(),
       endpoint: endpoint.path,
       hint: 'Verify FUFIRE_BASE_URL and FUFIRE_API_KEY. The UI can still run; calculations need the upstream API.',
-    });
+    }, requestOrigin);
   } finally {
     clearTimeout(timer);
   }
 }
 
-function unknownFuFireEndpoint(res) {
+function unknownFuFireEndpoint(res, requestOrigin = null) {
   return sendJson(res, 404, {
     error: 'Unknown FuFirE endpoint',
     allowedEndpoints: allowedEndpointDescriptions(),
-  });
+  }, requestOrigin);
 }
 
 // ── Static file server ────────────────────────────────────────────────────
@@ -361,6 +634,7 @@ async function serveStatic(req, res, pathname) {
 // ── Main request handler ──────────────────────────────────────────────────
 export async function handleRequest(req, res) {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const requestOrigin = req.headers.origin || null;
 
   // ── Infrastructure ──
   if (url.pathname === '/health') {
@@ -370,36 +644,61 @@ export async function handleRequest(req, res) {
       fufireBaseUrl: getFuFireBaseUrl(),
       endpoints: endpointCatalog(),
       allowedEndpoints: FUFIRE_ENDPOINTS.map((e) => e.upstreamPath),
-    });
+    }, requestOrigin);
   }
   if (url.pathname === '/api/config') {
     return sendJson(res, 200, {
       fufireBaseUrl: getFuFireBaseUrl(),
       endpoints: endpointCatalog(),
       apiKeyConfigured: Boolean(FUFIRE_API_KEY),
-    });
+    }, requestOrigin);
+  }
+
+  // ── Full profile aggregator ──
+  if (url.pathname === '/api/azodiac/profile') {
+    if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
+    if (req.method !== 'POST') {
+      return sendJson(res, 405, { error: 'Method not allowed', allowed: ['POST'] }, requestOrigin);
+    }
+    let body = '';
+    try {
+      body = await readRequestBody(req);
+      if (body) JSON.parse(body);
+    } catch (error) {
+      return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
+    }
+    try {
+      const result = await orchestrateFullProfile(body || '{}');
+      return sendJson(res, result.httpStatus, result.body, requestOrigin);
+    } catch (error) {
+      const isAbort = error.name === 'AbortError';
+      return sendJson(res, 502, {
+        error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
+        detail: error.message,
+      }, requestOrigin);
+    }
   }
 
   // ── Geocoder ──
   if (url.pathname === '/api/geocode') {
-    return handleGeocodeRequest(req, res);
+    return handleGeocodeRequest(req, res, requestOrigin);
   }
 
   // ── Proxy (allowlist) ──
   if (url.pathname.startsWith('/api/fufire')) {
     const endpoint = getProxyEndpoint(url.pathname);
-    return endpoint ? proxyFuFireRequest(req, res, endpoint) : unknownFuFireEndpoint(res);
+    return endpoint ? proxyFuFireRequest(req, res, endpoint, requestOrigin) : unknownFuFireEndpoint(res, requestOrigin);
   }
 
   // ── Explicit shortcut routes ──
   // /chart is special: orchestrates multiple FuFirE calls server-side
   if (url.pathname === '/chart') {
-    return handleChartRequest(req, res);
+    return handleChartRequest(req, res, requestOrigin);
   }
   // All other explicit endpoints proxy directly (body forwarded as-is)
   const explicitEndpoint = ENDPOINTS_BY_PATH.get(url.pathname);
   if (explicitEndpoint) {
-    return proxyFuFireRequest(req, res, explicitEndpoint);
+    return proxyFuFireRequest(req, res, explicitEndpoint, requestOrigin);
   }
 
   // ── Static files ──
@@ -410,7 +709,7 @@ export async function handleRequest(req, res) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const server = createServer((req, res) => {
     handleRequest(req, res).catch((error) => {
-      sendJson(res, 500, { error: 'Internal server error', detail: error.message });
+      sendJson(res, 500, { error: 'Internal server error', detail: error.message }, req.headers.origin || null);
     });
   });
   server.listen(PORT, () => {

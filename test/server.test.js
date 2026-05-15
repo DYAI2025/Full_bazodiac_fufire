@@ -125,3 +125,90 @@ test('explicit v3 endpoints forward to configured upstream with v4 proxy hardeni
   assert.equal(seen[0].url, '/calculate/wuxing');
   assert.equal(seen[0].body, '{"planets":[]}');
 });
+
+test('/api/azodiac/profile orchestrates western + bazi + fusion + wuxing against mock upstream', async () => {
+  const seen = [];
+  const upstream = createServer((req, res) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      seen.push({ method: req.method, url: req.url });
+      const responses = {
+        '/calculate/western': { bodies: {}, houses: [], aspects: [] },
+        '/calculate/bazi':    { pillars: {} },
+        '/calculate/fusion':  { wu_xing_vectors: {}, coherence_index: 0.7 },
+        '/calculate/wuxing':  { vector: {} },
+        '/info/wuxing':       { planet_mapping: {} },
+      };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(responses[req.url] ?? { ok: true }));
+    });
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/api/azodiac/profile`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: '1990-01-01', time: '12:00', lat: 48.0, lon: 11.0, tz: 'Europe/Berlin' }),
+      });
+      assert.equal(res.status, 200);
+      const json = await res.json();
+      // ViewModel keys present
+      assert.ok('western' in json);
+      assert.ok('bazi' in json);
+      assert.ok('fusion' in json);
+      assert.ok('_meta' in json);
+      assert.equal(json._meta.view_model_version, '1');
+      // wuxing endpoint was called
+      assert.ok(seen.some(s => s.url === '/calculate/wuxing'));
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+});
+
+test('CORS allows * when FUFIRE_ALLOWED_ORIGINS is unset', async () => {
+  const prev = process.env.FUFIRE_ALLOWED_ORIGINS;
+  delete process.env.FUFIRE_ALLOWED_ORIGINS;
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/health`, { headers: { origin: 'https://evil.example.com' } });
+      assert.equal(res.headers.get('access-control-allow-origin'), '*');
+    });
+  } finally {
+    if (prev !== undefined) process.env.FUFIRE_ALLOWED_ORIGINS = prev;
+    else delete process.env.FUFIRE_ALLOWED_ORIGINS;
+  }
+});
+
+test('CORS restricts to allowed origin when FUFIRE_ALLOWED_ORIGINS is set', async () => {
+  const prev = process.env.FUFIRE_ALLOWED_ORIGINS;
+  process.env.FUFIRE_ALLOWED_ORIGINS = 'https://bazodiac.space,https://app.bazodiac.space';
+  try {
+    await withServer(async (base) => {
+      // Allowed origin → echo it back
+      const res1 = await fetch(`${base}/health`, {
+        headers: { origin: 'https://bazodiac.space' },
+      });
+      assert.equal(res1.headers.get('access-control-allow-origin'), 'https://bazodiac.space');
+
+      // Unknown origin → no ACAO header or not the evil one
+      const res2 = await fetch(`${base}/health`, {
+        headers: { origin: 'https://evil.example.com' },
+      });
+      const acao = res2.headers.get('access-control-allow-origin');
+      assert.ok(!acao || acao !== 'https://evil.example.com');
+    });
+  } finally {
+    if (prev !== undefined) process.env.FUFIRE_ALLOWED_ORIGINS = prev;
+    else delete process.env.FUFIRE_ALLOWED_ORIGINS;
+  }
+});

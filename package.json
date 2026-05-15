@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:contract": "FUFIRE_CONTRACT_TEST=true node --test test/contract.test.js"
   },
   "keywords": [
     "fufire",

@@ -196,6 +196,67 @@
     /* ── Hidden when no data ── */
     .hidden { display: none !important; }
 
+    /* ── Global Tooltip ── */
+    #g-tip {
+      position: fixed; z-index: 9999; pointer-events: none;
+      max-width: 320px; padding: 10px 13px;
+      background: #1a1d2e; border: 1px solid var(--border);
+      border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      font-size: 12px; line-height: 1.6; color: var(--text);
+      opacity: 0; transition: opacity .12s;
+    }
+    #g-tip.visible { opacity: 1; }
+    #g-tip strong { color: var(--accent); display: block; margin-bottom: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+    #g-tip em { color: var(--muted); font-style: normal; }
+
+    /* ── Symbol badges (hover target) ── */
+    [data-tip] { cursor: help; }
+
+    /* ── Aspect cards ── */
+    .aspect-card {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      margin-bottom: 7px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .aspect-card:hover { background: rgba(255,255,255,.04); }
+    .aspect-card.open { border-color: rgba(124,140,255,.3); }
+    .aspect-planet { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .aspect-planet .sym { font-size: 17px; }
+    .aspect-badge {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 5px 10px; border-radius: 7px;
+      font-weight: 700; font-size: 14px;
+    }
+    .aspect-badge-label { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 400; }
+    .aspect-expand { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .aspect-card.open .aspect-expand { display: block; }
+    .aspect-expand-section { margin-bottom: 8px; }
+    .aspect-expand-section:last-child { margin-bottom: 0; }
+    .aspect-expand-label { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+    .aspect-expand-text { font-size: 12px; line-height: 1.65; color: rgba(232,236,255,.82); }
+    .aspect-expand-fusion { font-size: 11px; line-height: 1.6; color: var(--muted); background: rgba(255,255,255,.03); border-radius: 6px; padding: 7px 10px; border: 1px solid var(--border); font-style: italic; }
+    .aspect-meta { font-size: 11px; color: var(--muted); margin-top: 6px; display: flex; gap: 12px; }
+    .aspect-orb { font-family: 'Space Mono', monospace; }
+    .aspect-applying { font-size: 10px; }
+
+    /* ── Planets table enhancements ── */
+    .planet-sym-wrap { display: inline-flex; align-items: center; gap: 6px; }
+    .retro-badge {
+      display: inline-block; padding: 1px 5px; border-radius: 4px;
+      background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3);
+      color: var(--warn); font-size: 11px; font-family: 'Space Mono', monospace;
+      cursor: help;
+    }
+    .planet-name-link { cursor: help; border-bottom: 1px dashed rgba(255,255,255,.2); }
+
     /* ── Footer note (required for tests: must contain endpoint references) ── */
     footer {
       margin-top: 40px; padding: 20px 0; border-top: 1px solid var(--border);
@@ -667,12 +728,14 @@
 
         <!-- Aspects -->
         <div class="card" style="margin-bottom:16px" id="aspects-card">
-          <div class="card-title">Aspekte</div>
+          <div class="card-title">Aspekte — Planetenbeziehungen</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+            Aspekte beschreiben den Winkel zwischen zwei Planeten. Der Winkel bestimmt die Qualität ihrer Wechselwirkung:
+            harmonisch (Fluss), spannungsreich (Wachstum) oder verschmelzend (Verstärkung).
+            Klicke auf einen Aspekt für Details — und was er im FuFirE-Fusionsvektor bedeutet.
+          </p>
           <div style="overflow-x:auto">
-            <table id="aspects-table">
-              <thead><tr><th>Planet 1</th><th>Aspekt</th><th>Planet 2</th><th>Orb °</th><th>Art</th></tr></thead>
-              <tbody id="aspects-body"></tbody>
-            </table>
+            <!-- populated by renderAspects() as card list -->
           </div>
         </div>
 
@@ -687,7 +750,9 @@
           <div class="card-title">Planeten &amp; Punkte</div>
           <div style="overflow-x:auto">
             <table>
-              <thead><tr><th>Symbol</th><th>Körper</th><th>Zeichen</th><th>Grad</th><th>Haus</th><th>Rückläufig</th></tr></thead>
+              <thead><tr><th>Symbol</th><th>Körper · Element</th><th>Zeichen</th><th>Grad</th><th>Haus</th>
+                <th data-tip-title="Rückläufig ℞" data-tip="Ein rückläufiger Planet (℞) scheint aus Sicht der Erde scheinbar rückwärts zu laufen. Seine Energie wirkt vertieft und nach innen gerichtet — Rückblick statt Vorwärtsgang. Hover über das ℞-Symbol für planetenspezifische Bedeutung." style="cursor:help">℞ <span style='font-size:10px;color:var(--muted)'>?</span></th>
+              </tr></thead>
               <tbody id="planets-body"></tbody>
             </table>
           </div>
@@ -704,6 +769,9 @@
     </section>
   </div>
 </main>
+
+<!-- Global tooltip -->
+<div id="g-tip" role="tooltip"></div>
 
 <!-- Required for tests: endpoint references must appear in HTML -->
 <footer>
@@ -743,7 +811,83 @@ const SIGN_SYMBOLS = {
   Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍',
   Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓',
 };
-const ASPECT_COLORS = { conjunction:'#f87171', opposition:'#f87171', trine:'#34d399', sextile:'#60a5fa', square:'#f97316' };
+const ASPECT_COLORS = { conjunction:'#fbbf24', opposition:'#f87171', trine:'#4ade80', sextile:'#38bdf8', square:'#f97316', quincunx:'#a78bfa', sesquiquadrate:'#fbbf24', semisquare:'#fbbf24' };
+
+// ── Zodiac sign tooltips ──────────────────────────────────────────────────
+const SIGN_DETAILS = {
+  Aries:       'Widder ♈ (21. März – 20. April) · Feuer · Cardinal · Mars. Pioniergeist, Mut, Spontanität. Der Antrieb zum Neubeginn — impulsiv, direkt, lebensbejahend.',
+  Taurus:      'Stier ♉ (21. April – 21. Mai) · Erde · Fix · Venus. Beständigkeit, Genuss, Sicherheit. Verankert in der sinnlichen Welt — geduldig, verlässlich, genussvoll.',
+  Gemini:      'Zwillinge ♊ (22. Mai – 21. Juni) · Luft · Wandelbar · Merkur. Neugier, Vielseitigkeit, Kommunikation. Schnell und variabel — sucht ständig neue Impulse.',
+  Cancer:      'Krebs ♋ (22. Juni – 23. Juli) · Wasser · Cardinal · Mond. Fürsorge, Empfindsamkeit, Geborgenheit. Tief verwurzelt in Erinnerung und Familie.',
+  Leo:         'Löwe ♌ (24. Juli – 23. Aug.) · Feuer · Fix · Sonne. Großzügigkeit, Kreativität, Stolz. Der leuchtende Mittelpunkt — will gesehen und geliebt werden.',
+  Virgo:       'Jungfrau ♍ (24. Aug. – 23. Sept.) · Erde · Wandelbar · Merkur. Analyse, Perfektion, Dienst. Präzise, bescheiden, hilfsbereit — stets auf Verbesserung bedacht.',
+  Libra:       'Waage ♎ (24. Sept. – 23. Okt.) · Luft · Cardinal · Venus. Harmonie, Gerechtigkeit, Beziehung. Sucht stets den Ausgleich — diplomatisch, ästhetisch, verbindend.',
+  Scorpio:     'Skorpion ♏ (24. Okt. – 22. Nov.) · Wasser · Fix · Pluto/Mars. Tiefe, Transformation, Intensität. Alles oder nichts — durchdringt die Oberfläche, sucht die Wahrheit.',
+  Sagittarius: 'Schütze ♐ (23. Nov. – 21. Dez.) · Feuer · Wandelbar · Jupiter. Freiheit, Philosophie, Abenteuer. Weit denken, weit reisen — sucht Sinn und Ausdehnung.',
+  Capricorn:   'Steinbock ♑ (22. Dez. – 20. Jan.) · Erde · Cardinal · Saturn. Ambition, Disziplin, Struktur. Geduldig, zielstrebig — baut Bleibendes mit langem Atem.',
+  Aquarius:    'Wassermann ♒ (21. Jan. – 19. Feb.) · Luft · Fix · Uranus/Saturn. Innovation, Freiheit, Kollektiv. Denkt in Systemen — Rebell und Visionär zugleich.',
+  Pisces:      'Fische ♓ (20. Feb. – 20. März) · Wasser · Wandelbar · Neptun. Empathie, Spiritualität, Auflösung. Grenzenlos fließend — verbindet sich mit allem.',
+};
+
+// ── Aspect knowledge base ─────────────────────────────────────────────────
+const ASPECT_DETAILS = {
+  conjunction:   { sym:'☌', short:'Konjunktion 0°',  type:'major', color:'#fbbf24',
+    meaning:'Zwei Planeten verschmelzen ihre Energien — Verstärkung, Fokus, aber auch blinder Fleck. Die Energien sind kaum voneinander zu trennen.',
+    fusion:'Im FuFirE-Fusionsvektor wirkt eine Konjunktion als Verstärker: die Wu-Xing-Elemente beider Planeten werden gewichtet addiert.' },
+  opposition:    { sym:'☍', short:'Opposition 180°', type:'major', color:'#f87171',
+    meaning:'Zwei Planeten stehen sich direkt gegenüber. Spannung, die nach Ausgleich sucht. Bewusstsein entsteht oft erst durch den Konflikt zwischen beiden Energien.',
+    fusion:'Oppositionen spiegeln häufig einen Kontrollzyklus im Wu-Xing-System — z.B. Holz kontrolliert Erde, Metall kontrolliert Holz.' },
+  trine:         { sym:'△', short:'Trigon 120°',     type:'major', color:'#4ade80',
+    meaning:'Harmonischer Fluss zwischen zwei Planeten. Talente, die mühelos verfügbar sind — manchmal so selbstverständlich, dass man sie übersieht.',
+    fusion:'Trigone verstärken den produktiven Erzeugungs-Zyklus im Wu-Xing-System: Holz→Feuer→Erde→Metall→Wasser→Holz.' },
+  square:        { sym:'□', short:'Quadrat 90°',     type:'major', color:'#f97316',
+    meaning:'Reibung, die Wachstum erzwingt. Zwei Planeten blockieren sich — bis sie gelernt haben, zusammenzuarbeiten. Stärkstes Wachstumsaspekt.',
+    fusion:'Quadrate spiegeln den Kontrollzyklus im Wu-Xing wider. Die Spannung zwischen den Elementen beider Planeten erhöht die Komplexität der Fusionsrechnung.' },
+  sextile:       { sym:'⚹', short:'Sextil 60°',      type:'major', color:'#38bdf8',
+    meaning:'Sanfte Unterstützung — eine Möglichkeit, keine Garantie. Zwei Planeten, die mit wenig Aufwand gut zusammenarbeiten.',
+    fusion:'Sextile tragen als milde Verstärker zum Wu-Xing-Vektor bei, mit geringerer Gewichtung als Konjunktionen oder Trigone.' },
+  quincunx:      { sym:'⚻', short:'Quincunx 150°',  type:'minor', color:'#a78bfa',
+    meaning:'Zwei Energien ohne gemeinsame Sprache. Anpassung ohne gemeinsamen Nenner — ein Hinweis auf blinde Flecken und Anpassungszwang.',
+    fusion:'Im FuFirE-System als Spannungsmarker gewertet — niedrige Vektorgewichtung.' },
+  semisquare:    { sym:'∠', short:'Halbquadrat 45°', type:'minor', color:'#fbbf24',
+    meaning:'Kleine Spannung, die unter der Oberfläche brodelt. Oft unbewusste Blockaden zwischen zwei Planetenenergien.',
+    fusion:'Minor-Aspekte: geringe Vektorgewichtung in FuFirE.' },
+  sesquiquadrate:{ sym:'⚼', short:'135°-Aspekt',    type:'minor', color:'#fbbf24',
+    meaning:'Ähnlich dem Quadrat, aber indirekter — Frustration, die Umwege sucht.',
+    fusion:'Minor-Aspekte: geringe Vektorgewichtung in FuFirE.' },
+};
+
+// ── Planet knowledge base ─────────────────────────────────────────────────
+const PLANET_DETAILS = {
+  'Sun':        { de:'Sonne',     meaning:'Kernidentität, Vitalität, Lebenszweck — wer du in deiner tiefsten Essenz bist. Die Sonne ist das bewusste Ich.',
+    retro: null },
+  'Moon':       { de:'Mond',      meaning:'Emotionen, Instinkt, Erinnerung. Der Mond zeigt, wie du fühlst, was du emotional brauchst — und dein Verhältnis zu Mutter/Vergangenheit.',
+    retro: null },
+  'Mercury':    { de:'Merkur',    meaning:'Denken, Kommunikation, Wahrnehmung. Wie du Information verarbeitest, sprichst und schreibst.',
+    retro: 'Rückläufiger Merkur ℞: Kommunikation und Technik wirken nach innen. Gute Zeit zum Überdenken — schlechte Zeit für Vertragsabschlüsse oder neue Projekte.' },
+  'Venus':      { de:'Venus',     meaning:'Liebe, Ästhetik, Werte, Anziehung. Was du begehrst, wie du liebst — und was du als schön oder wertvoll empfindest.',
+    retro: 'Rückläufige Venus ℞: Beziehungsthemen kehren zurück. Alte Verbindungen tauchen wieder auf. Zeit zur Neubewertung persönlicher Werte.' },
+  'Mars':       { de:'Mars',      meaning:'Antrieb, Wille, Durchsetzung. Wie du Energie einsetzt, auf Konflikte reagierst — und wo deine Leidenschaft liegt.',
+    retro: 'Rückläufiger Mars ℞: Energie und Tatendrang wenden sich nach innen. Frustration möglich — aber gut für strategisches Nachdenken statt Handeln.' },
+  'Jupiter':    { de:'Jupiter',   meaning:'Wachstum, Großzügigkeit, Weltanschauung. Wohin du dich ausdehnst — philosophisch, geografisch, spirituell.',
+    retro: 'Rückläufiger Jupiter ℞: Inneres Wachstum statt äußerer Expansion. Gute Zeit, eigene Überzeugungen kritisch zu hinterfragen.' },
+  'Saturn':     { de:'Saturn',    meaning:'Struktur, Disziplin, Grenzen, Reife. Wo du Verantwortung trägst — und was dich langfristig auf solides Fundament stellt.',
+    retro: 'Rückläufiger Saturn ℞: Interne Strukturüberprüfung. Vergangene Entscheidungen kommen zur Bewertung zurück. Zeit für ehrliche Selbstdisziplin.' },
+  'Uranus':     { de:'Uranus',    meaning:'Erneuerung, Rebellion, Originalität. Uranus bricht Muster auf, will Freiheit — und öffnet unerwartete Wege.',
+    retro: 'Rückläufiger Uranus ℞: Der Impuls zur Veränderung wirkt nach innen — persönliche Revolution statt gesellschaftlicher Umbruch.' },
+  'Neptune':    { de:'Neptun',    meaning:'Spiritualität, Illusion, Mitgefühl. Neptun löst Grenzen auf — Verbindung mit dem Transzendenten, aber auch Neigung zu Selbsttäuschung.',
+    retro: 'Rückläufiger Neptun ℞: Innere Traumarbeit, Auflösung alter Illusionen. Mystische Introspektion — Vorsicht vor Flucht in Eskapismus.' },
+  'Pluto':      { de:'Pluto',     meaning:'Transformation, Macht, Tod und Wiedergeburt. Pluto zeigt, wo tiefste Wandlungskräfte wirken — unausweichlich und kollektiv.',
+    retro: 'Rückläufiger Pluto ℞: Unterbewusste Transformationsprozesse intensivieren sich. Tief vergrabene Muster kommen zur Oberfläche.' },
+  'North Node': { de:'Nordknoten',meaning:'Evolutionäres Ziel — wohin die Seele in diesem Leben strebt. Das Unbekannte, das wächst, wenn man auf es zubewegt.',
+    retro: null },
+  'South Node': { de:'Südknoten', meaning:'Vertraute Stärken aus der Vergangenheit. Was du mitgebracht hast — Komfortzone, die loslassen möchte.',
+    retro: null },
+  'Chiron':     { de:'Chiron',    meaning:'Verwundeter Heiler: wo dein tiefster Schmerz liegt — und gleichzeitig deine größte Heilungskraft für andere.',
+    retro: 'Rückläufiger Chiron ℞: Alte Wunden kehren zur Heilung zurück. Introvertierter Heilungsprozess — gute Zeit für Therapie oder tiefe Selbstreflexion.' },
+  'Lilith':     { de:'Lilith',    meaning:'Dunkle Mondgöttin — unterdrückte Triebkraft, verdrängte Wildheit. Was gesellschaftlich verleugnet wurde und befreit werden will.',
+    retro: null },
+};
 
 // ── DOM helpers ───────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -1065,10 +1209,17 @@ function renderWheel(western) {
 
     // Symbol
     const sym = PLANET_SYMBOLS[planet.name] || planet.name.substring(0,2);
+    const pdet = PLANET_DETAILS[planet.name];
     const labelR = R_PLANET + 16;
     const lp2 = polarXY(cx, cy, labelR, deg);
     const lt = svgNS('text', { x: lp2.x, y: lp2.y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-      'font-size': '10', fill: color, 'font-family': 'Inter,sans-serif', 'font-weight': '600' });
+      'font-size': '10', fill: color, 'font-family': 'Inter,sans-serif', 'font-weight': '600',
+      style: 'cursor:help' });
+    if (pdet) {
+      const retroNote = planet.retro && pdet.retro ? ' ' + pdet.retro : '';
+      lt.setAttribute('data-tip-title', `${sym} ${pdet.de}`);
+      lt.setAttribute('data-tip', pdet.meaning + retroNote);
+    }
     lt.textContent = sym + (planet.retro ? 'ᴿ' : '');
     svg.appendChild(lt);
   });
@@ -1336,25 +1487,101 @@ function renderAspects(western) {
   const card = $('aspects-card');
   if (!aspects.length) { card.classList.add('hidden'); return; }
   card.classList.remove('hidden');
-  const tbody = $('aspects-body');
-  tbody.innerHTML = '';
+
+  // Replace table with card list
+  const container = card.querySelector('#aspects-body')?.closest('div') || card;
+  // find the overflow div wrapping the table and replace it
+  const tableWrap = card.querySelector('[style*="overflow-x"]') || card.querySelector('table')?.parentElement;
+  if (!tableWrap) return;
+
+  const list = document.createElement('div');
+  list.id = 'aspects-list';
+
+  // Legend row
+  const legend = document.createElement('div');
+  legend.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;';
+  const majorAspects = ['conjunction','opposition','trine','square','sextile'];
+  majorAspects.forEach(key => {
+    const d = ASPECT_DETAILS[key];
+    if (!d) return;
+    const pill = document.createElement('span');
+    pill.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid ${d.color}44;background:${d.color}11;font-size:11px;cursor:help;`;
+    pill.setAttribute('data-tip-title', d.short);
+    pill.setAttribute('data-tip', d.meaning);
+    pill.innerHTML = `<span style="color:${d.color};font-size:13px">${d.sym}</span><span style="color:${d.color};font-weight:600">${key.charAt(0).toUpperCase()+key.slice(1)}</span>`;
+    legend.appendChild(pill);
+  });
+  list.appendChild(legend);
+
   aspects.slice(0, 30).forEach(a => {
-    const p1 = a.planet1 || a.body1 || a.p1 || '';
-    const p2 = a.planet2 || a.body2 || a.p2 || '';
-    const type = a.type || a.aspect_type || a.aspect || '';
+    const p1  = a.planet1 || a.body1 || a.p1 || '';
+    const p2  = a.planet2 || a.body2 || a.p2 || '';
+    const typeRaw = (a.type || a.aspect_type || a.aspect || '').toLowerCase();
     const orb = a.orb !== undefined ? Number(a.orb).toFixed(2) : '—';
     const applying = a.applying !== undefined ? (a.applying ? '▶ applying' : '◀ separating') : '';
-    const color = ASPECT_COLORS[type?.toLowerCase()] || 'var(--muted)';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${PLANET_SYMBOLS[p1] || ''} ${p1}</td>
-      <td style="color:${color};font-weight:600">${type}</td>
-      <td>${PLANET_SYMBOLS[p2] || ''} ${p2}</td>
-      <td style="font-family:'Space Mono',monospace">${orb}</td>
-      <td style="font-size:11px;color:var(--muted)">${applying}</td>
+    const det  = ASPECT_DETAILS[typeRaw] || null;
+    const color = det?.color || ASPECT_COLORS[typeRaw] || 'var(--muted)';
+    const sym1  = PLANET_SYMBOLS[p1] || p1.substring(0,2);
+    const sym2  = PLANET_SYMBOLS[p2] || p2.substring(0,2);
+    const col1  = PLANET_COLORS?.[p1] || 'var(--text)';
+    const col2  = PLANET_COLORS?.[p2] || 'var(--text)';
+    const pdet1 = PLANET_DETAILS[p1];
+    const pdet2 = PLANET_DETAILS[p2];
+
+    const div = document.createElement('div');
+    div.className = 'aspect-card';
+    div.style.gridColumn = '1/-1'; // full-width inside the card list
+
+    // Outer grid: planet1 | badge | planet2
+    div.innerHTML = `
+      <div class="aspect-planet">
+        <span class="sym" style="color:${col1}"
+          ${pdet1 ? `data-tip-title="${sym1} ${pdet1.de}" data-tip="${pdet1.meaning}"` : ''}
+        >${sym1}</span>
+        <span style="font-weight:600">${p1}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="aspect-badge" style="color:${color};background:${color}18;border:1px solid ${color}44"
+          ${det ? `data-tip-title="${det.short}" data-tip="${det.meaning}"` : ''}>
+          ${det?.sym || typeRaw}
+        </div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">${typeRaw}</div>
+        <div class="aspect-orb" style="font-size:10px;color:var(--muted)">${orb}°</div>
+      </div>
+      <div class="aspect-planet" style="justify-content:flex-end;text-align:right">
+        <span style="font-weight:600">${p2}</span>
+        <span class="sym" style="color:${col2}"
+          ${pdet2 ? `data-tip-title="${sym2} ${pdet2.de}" data-tip="${pdet2.meaning}"` : ''}
+        >${sym2}</span>
+      </div>
+      ${det ? `
+      <div class="aspect-expand" style="grid-column:1/-1">
+        <div class="aspect-expand-section">
+          <div class="aspect-expand-label">Was bedeutet ${typeRaw}?</div>
+          <div class="aspect-expand-text">${det.meaning}</div>
+        </div>
+        <div class="aspect-expand-section">
+          <div class="aspect-expand-fusion">${det.fusion}</div>
+        </div>
+        <div class="aspect-meta">
+          <span class="aspect-orb">Orb: ${orb}°</span>
+          ${applying ? `<span class="aspect-applying">${applying}</span>` : ''}
+          <span style="color:${det.type==='major'?'var(--ok)':'var(--muted)'}">${det.type === 'major' ? 'Hauptaspekt' : 'Nebenaspekt'}</span>
+        </div>
+      </div>` : ''}
     `;
-    tbody.appendChild(tr);
+
+    if (det) {
+      // click header area to toggle (not the expand itself)
+      div.addEventListener('click', (e) => {
+        if (e.target.closest('.aspect-expand')) return;
+        div.classList.toggle('open');
+      });
+    }
+    list.appendChild(div);
   });
+
+  tableWrap.replaceWith(list);
 }
 
 // ── House knowledge base ──────────────────────────────────────────────────
@@ -1552,22 +1779,46 @@ function renderPlanets(western) {
     const b = bodies[name];
     if (!b) return;
     const lon = Number(b.longitude ?? b.lon ?? b.degree ?? 0);
-    // FuFirE: zodiac_sign is 0-based index; sign name not returned directly
     const signIdx = b.zodiac_sign ?? signIdxFromLon(lon);
     const sign = ZODIAC_NAMES[signIdx] || signFromLon(lon);
     const within = b.degree_in_sign ?? (lon % 30);
     const house = b.house ?? '';
-    const retro = b.is_retrograde || b.retrograde ? '℞' : '';
-    const color = PLANET_COLORS[name] || 'var(--muted)';
-    const sym = PLANET_SYMBOLS[name] || name.substring(0,2);
+    const isRetro = b.is_retrograde || b.retrograde;
+    const color  = PLANET_COLORS[name] || 'var(--muted)';
+    const sym    = PLANET_SYMBOLS[name] || name.substring(0,2);
+    const pdet   = PLANET_DETAILS[name];
+    const wuxing = getPlanetWuXing(name);
+    const wuxingColor = ELEM_COLORS[wuxing] || 'var(--muted)';
+
+    // Retrograde badge with planet-specific explanation
+    let retroCell = '';
+    if (isRetro) {
+      const retroTip = pdet?.retro || `${name} ℞: Dieser Planet läuft scheinbar rückwärts. Seine Energie wirkt nach innen — vertieft, verlangsamt oder reflektiert.`;
+      retroCell = `<span class="retro-badge" data-tip-title="Rückläufig ℞" data-tip="${retroTip.replace(/"/g,"'")}">℞</span>`;
+    }
+
+    // Sign tooltip
+    const signTip = SIGN_DETAILS?.[sign] ? `data-tip-title="${SIGN_SYMBOLS[sign]||''} ${sign}" data-tip="${SIGN_DETAILS[sign]}"` : '';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="color:${color};font-size:16px">${sym}</td>
-      <td style="font-weight:600">${name}</td>
-      <td>${SIGN_SYMBOLS[sign] || ''} ${sign}</td>
+      <td>
+        <span style="color:${color};font-size:17px"
+          ${pdet ? `data-tip-title="${sym} ${pdet.de}" data-tip="${pdet.meaning.replace(/"/g,"'")}"` : ''}
+        >${sym}</span>
+      </td>
+      <td>
+        <span class="planet-name-link"
+          ${pdet ? `data-tip-title="${sym} ${pdet.de}" data-tip="${pdet.meaning.replace(/"/g,"'")}"` : ''}
+          style="font-weight:600">${name}</span>
+        ${wuxing ? `<span style="font-size:10px;color:${wuxingColor};margin-left:5px;opacity:.7">${wuxing}</span>` : ''}
+      </td>
+      <td>
+        <span ${signTip}>${SIGN_SYMBOLS[sign] || ''} ${sign}</span>
+      </td>
       <td style="font-family:'Space Mono',monospace">${within.toFixed(2)}°</td>
       <td style="color:var(--muted)">${house}</td>
-      <td style="color:var(--warn)">${retro}</td>
+      <td>${retroCell}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -2104,6 +2355,40 @@ function _setupSynthHover() {
     });
   });
 }
+
+// ── Global tooltip ────────────────────────────────────────────────────────
+(function initTooltip() {
+  const tip = document.getElementById('g-tip');
+  if (!tip) return;
+  let hideTimer;
+
+  document.addEventListener('mousemove', (e) => {
+    const target = e.target.closest('[data-tip]');
+    if (!target) {
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => tip.classList.remove('visible'), 80);
+      return;
+    }
+    const title = target.dataset.tipTitle || '';
+    const body  = target.dataset.tip || '';
+    tip.innerHTML = `${title ? `<strong>${title}</strong>` : ''}${body}`;
+    const margin = 14;
+    const tw = tip.offsetWidth  || 280;
+    const th = tip.offsetHeight || 60;
+    let x = e.clientX + margin;
+    let y = e.clientY + margin;
+    if (x + tw > window.innerWidth  - 8) x = e.clientX - tw - margin;
+    if (y + th > window.innerHeight - 8) y = e.clientY - th - margin;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+    clearTimeout(hideTimer);
+    tip.classList.add('visible');
+  });
+
+  document.addEventListener('mouseleave', () => {
+    tip.classList.remove('visible');
+  });
+})();
 
 // ── Init ──────────────────────────────────────────────────────────────────
 loadConfig();
