@@ -292,6 +292,35 @@
       border: none; border-top: 1px solid var(--border); margin: 16px 0;
     }
 
+    /* ── BaZi Pillar Expand ── */
+    .pillar-card { cursor: pointer; transition: border-color .15s; position: relative; }
+    .pillar-card:hover { border-color: rgba(124,140,255,.3); }
+    .pillar-expand-btn {
+      font-size: 10px; color: var(--muted); margin-top: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .pillar-chevron { transition: transform .2s; display: inline-block; }
+    .pillar-card.open .pillar-chevron { transform: rotate(180deg); }
+    .pillar-expand-body {
+      display: none; margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid var(--border); text-align: left;
+    }
+    .pillar-card.open .pillar-expand-body { display: block; }
+    .pillar-interp-block { margin-bottom: 10px; }
+    .pillar-interp-block:last-child { margin-bottom: 0; }
+    .pillar-interp-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); font-weight: 600; margin-bottom: 3px;
+    }
+    .pillar-interp-text { font-size: 12px; line-height: 1.65; color: rgba(232,236,255,.82); }
+    .pillar-rel-note {
+      font-size: 11px; line-height: 1.6; color: var(--muted);
+      background: rgba(255,255,255,.04); border-radius: 6px;
+      padding: 8px 10px; margin-top: 8px; border: 1px solid var(--border);
+      font-style: italic;
+    }
+
     /* ── House Cards ── */
     .houses-grid { display: grid; gap: 10px; }
     .house-card {
@@ -474,8 +503,12 @@
       color: var(--accent); margin-left: 8px;
     }
     .synth-approx-note {
-      font-size: 10px; color: var(--muted); margin-top: 8px; font-style: italic;
+      font-size: 10px; color: var(--muted); margin-top: 6px; font-style: italic;
     }
+    .synth-vec-source {
+      font-size: 10px; color: var(--muted); margin-top: 8px;
+    }
+    .synth-vec-source strong { color: var(--accent); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -1054,6 +1087,78 @@ function renderWheel(western) {
   svg.appendChild(centerT);
 }
 
+// ── BaZi Knowledge Base ───────────────────────────────────────────────────
+const STEM_DETAILS = {
+  '甲': { polarity:'Yang', elem:'Holz', image:'Großer Baum',
+    meaning:'Yang-Holz in seiner ursprünglichsten Form — aufstrebend wie eine Eiche, die keine Hindernisse kennt. Der Stamm 甲 steht für Pioniergeist, Führungswillen und den Antrieb, Neues zu schaffen. Menschen mit 甲 im Tagstamm sind Vordenker: direkt, ehrgeizig, manchmal ungeduldig mit Rückschlägen — aber unaufhaltbar in ihrer Richtung.' },
+  '乙': { polarity:'Yin', elem:'Holz', image:'Blume & Gras',
+    meaning:'Yin-Holz — flexibel wie Efeu, das jeden Spalt nutzt. Der Stamm 乙 zeigt Anpassungsfähigkeit, Diplomatie und eine subtile Überzeugungskraft, die ohne Konfrontation ans Ziel kommt. Künstlerisches Gespür und die Fähigkeit, Beziehungen geschickt zu gestalten, sind seine Gaben.' },
+  '丙': { polarity:'Yang', elem:'Feuer', image:'Die Sonne',
+    meaning:'Yang-Feuer in Reinform — die Sonne, die allem Licht gibt. Der Stamm 丙 steht für angeborene Ausstrahlung, Großzügigkeit und öffentliche Wirkung. Menschen mit 丙 erhellen ihre Umgebung, ziehen andere an und wirken am besten auf einer Bühne. Die Gefahr: zu viel Energie für andere, zu wenig für sich selbst.' },
+  '丁': { polarity:'Yin', elem:'Feuer', image:'Kerzenflamme',
+    meaning:'Yin-Feuer — konzentrierte Wärme wie eine Kerze in der Nacht. Der Stamm 丁 zeigt emotionale Tiefe, inneres Feuer und präzises Denken. Keine Großspurigkeit, sondern stille Intensität. Menschen mit 丁 suchen echten Kontakt, nicht Oberfläche — und können andere mit wenigen Worten tief berühren.' },
+  '戊': { polarity:'Yang', elem:'Erde', image:'Der Berg',
+    meaning:'Yang-Erde — massiv und verlässlich wie ein Gebirge. Der Stamm 戊 steht für natürliche Autorität, Stabilität und tiefes Verantwortungsgefühl. Menschen mit 戊 tragen andere, ohne davon viel Aufhebens zu machen. Sie sind der Fels — manchmal zu starr in ihrer Form, aber immer vertrauenswürdig.' },
+  '己': { polarity:'Yin', elem:'Erde', image:'Ackerland',
+    meaning:'Yin-Erde — fruchtbares Feld, das nährt und empfängt. Der Stamm 己 zeigt Fürsorge, praktische Klugheit und die Fähigkeit, Netzwerke zu pflegen. Menschen mit 己 wachsen durch Beziehungen. Ihre Stärke liegt im Verbinden, im geduldigen Aufbauen — und darin, dass sie für andere einen sicheren Boden schaffen.' },
+  '庚': { polarity:'Yang', elem:'Metall', image:'Eiserne Axt',
+    meaning:'Yang-Metall — rohes Erz, das noch geformt werden muss. Der Stamm 庚 steht für Entschlossenheit, Direktheit und den Mut zur Reform. Menschen mit 庚 schneiden durch Komplexität, scheuen keine Konfrontation und haben natürliche Disziplin. Ihre Herausforderung: Mitgefühl neben der Schärfe zu entwickeln.' },
+  '辛': { polarity:'Yin', elem:'Metall', image:'Juwel & Schmuck',
+    meaning:'Yin-Metall — geschliffenes Juwel, fein und empfindlich. Der Stamm 辛 zeigt ästhetische Wahrnehmung, hohe Standards und eine scharfe Intuition. Menschen mit 辛 spüren Unvollkommenheiten tief — was sie zu großer Präzision befähigt, aber auch empfindlich macht gegenüber Kritik und Chaos.' },
+  '壬': { polarity:'Yang', elem:'Wasser', image:'Der Ozean',
+    meaning:'Yang-Wasser — grenzenlos wie das Meer. Der Stamm 壬 steht für Weisheit, Ressourcenreichtum und strategisches Denken. Menschen mit 壬 erfassen große Zusammenhänge intuitiv und finden immer einen Weg. Ihre Gefahr: sich ohne Richtung zu verlieren — in den eigenen Tiefen oder im ständigen Fließen zu anderen.' },
+  '癸': { polarity:'Yin', elem:'Wasser', image:'Regen & Tau',
+    meaning:'Yin-Wasser — stiller Regen, der alles durchdringt. Der Stamm 癸 zeigt Intuition, innere Stille und spirituelle Sensibilität. Menschen mit 癸 wirken im Verborgenen, nehmen feine Schwingungen wahr und haben oft eine tiefe Verbindung zu dem, was unsichtbar ist. Ihre Stärke liegt in der Tiefe, nicht im Lärm.' },
+};
+
+const BRANCH_DETAILS = {
+  '子': { animal:'Ratte', elem:'Wasser', polarity:'Yang', hours:'23:00–01:00',
+    meaning:'Die Ratte — Einfallsreichtum, Geschwindigkeit des Denkens, die Gabe, Chancen zu erkennen und zu nutzen. Der Zweig 子 bringt Yang-Wasser-Energie: beweglich, klug, sozial anpassungsfähig. Ein tiefer Instinkt für Ressourcen und Netzwerke ist diesem Zweig eigen.' },
+  '丑': { animal:'Ochse', elem:'Erde', polarity:'Yin', hours:'01:00–03:00',
+    meaning:'Der Ochse — stille Kraft, unerschütterliche Ausdauer, die Würde des Beharrens. Der Zweig 丑 bringt Yin-Erde-Energie: langsam entscheidend, tief verankert. Was der Ochse anpackt, bringt er zu Ende — dieser Zweig steht für Integrität in der langen Strecke.' },
+  '寅': { animal:'Tiger', elem:'Holz', polarity:'Yang', hours:'03:00–05:00',
+    meaning:'Der Tiger — Mut, natürliche Führungsaura, die Bereitschaft zum Risiko. Der Zweig 寅 bringt Yang-Holz-Energie: ausgreifend, charismatisch, unruhig in Stagnation. Der Tigerzweig verleiht Durchsetzungskraft und Anziehungsstärke — und die Herausforderung, Impulsivität in Kraft zu wandeln.' },
+  '卯': { animal:'Hase', elem:'Holz', polarity:'Yin', hours:'05:00–07:00',
+    meaning:'Der Hase — Anmut, Diplomatie, feines Gespür für Stimmungen. Der Zweig 卯 bringt Yin-Holz-Energie: flexibel, kunstsinnig, beziehungsorientiert. Menschen mit 卯 navigieren Konflikte geschickt, manchmal zu geschickt — dieser Zweig lädt dazu ein, auch Reibung zuzulassen.' },
+  '辰': { animal:'Drache', elem:'Erde', polarity:'Yang', hours:'07:00–09:00',
+    meaning:'Der Drache — das einzige mythische Tier im Zyklus, Zeichen von Macht und Vision. Der Zweig 辰 bringt Yang-Erde-Energie, aber mit einem Funken Himmelsfeuer darin: kraftvoll, ambitioniert, transformativ. Im Drachen-Zweig schlummern verborgene Kräfte — die藏干 (Hidden Stems) sind besonders potent.' },
+  '巳': { animal:'Schlange', elem:'Feuer', polarity:'Yin', hours:'09:00–11:00',
+    meaning:'Die Schlange — Weisheit, Intuition, eine tiefe magnetische Stille. Der Zweig 巳 bringt Yin-Feuer-Energie: präzise, durchdringend, schwer zu durchschauen. Die Schlange denkt bevor sie handelt, und wenn sie handelt, trifft sie. Geheimnisse und strategisches Denken sind ihr Element.' },
+  '午': { animal:'Pferd', elem:'Feuer', polarity:'Yang', hours:'11:00–13:00',
+    meaning:'Das Pferd — Leidenschaft, Freiheitsdrang, soziale Strahlkraft. Der Zweig 午 bringt Yang-Feuer-Energie in ihrer expressivsten Form: enthusiastisch, in Bewegung, mitreißend. Das Pferd braucht Weite. Stagnation ist sein größter Feind — Ruhe muss es bewusst wählen.' },
+  '未': { animal:'Ziege', elem:'Erde', polarity:'Yin', hours:'13:00–15:00',
+    meaning:'Die Ziege — Kreativität, Einfühlungsvermögen, das Gespür für Schönheit und Gemeinschaft. Der Zweig 未 bringt Yin-Erde-Energie: empfänglich, sanft, kunstsinnig. Menschen mit 未 tragen andere emotional, manchmal auf Kosten eigener Stabilität. Grenzen zu setzen ist ihre wachstumsträchtige Aufgabe.' },
+  '申': { animal:'Affe', elem:'Metall', polarity:'Yang', hours:'15:00–17:00',
+    meaning:'Der Affe — Intelligenz, Vielseitigkeit, spielerischer Witz. Der Zweig 申 bringt Yang-Metall-Energie: scharf, innovativ, strategisch. Der Affe lernt schnell und nutzt Situationen klug. Seine Herausforderung: Beharrlichkeit zu entwickeln und nicht jede Chance gleichzeitig zu greifen.' },
+  '酉': { animal:'Hahn', elem:'Metall', polarity:'Yin', hours:'17:00–19:00',
+    meaning:'Der Hahn — Präzision, Direktheit, hohe Standards. Der Zweig 酉 bringt Yin-Metall-Energie: geschliffen, selbstkritisch, ordnungsliebend. Der Hahn hat ein untrügliches Gespür für Qualität und sagt klar, was er denkt — seine Herausforderung ist Milde gegenüber Unvollkommenheit.' },
+  '戌': { animal:'Hund', elem:'Erde', polarity:'Yang', hours:'19:00–21:00',
+    meaning:'Der Hund — Loyalität, Gerechtigkeitssinn, Schutzbereitschaft. Der Zweig 戌 bringt Yang-Erde-Energie: treu, direkt, manchmal unnachgiebig. Menschen mit 戌 stehen für andere ein, manchmal bis zur Erschöpfung. Ihre tiefste Kraft liegt in bedingungsloser Verlässlichkeit.' },
+  '亥': { animal:'Schwein', elem:'Wasser', polarity:'Yin', hours:'21:00–23:00',
+    meaning:'Das Schwein — Großzügigkeit, Aufrichtigkeit, innere Stärke im Verborgenen. Der Zweig 亥 bringt Yin-Wasser-Energie: tief, wohlwollend, vertrauend. Menschen mit 亥 begegnen anderen mit offener Natur. Die Herausforderung ist die Kalibrierung von Vertrauen — und das Erkennen, wenn Offenheit ausgenutzt wird.' },
+};
+
+const PILLAR_POSITION = {
+  year:  { role: 'Soziale Außenpersona · Vorfahren',
+    desc: 'Die Jahressäule zeigt, wie andere dich intuitiv wahrnehmen und welchen Ruf du nach außen trägst. Sie spiegelt die Prägungen deiner Vorfahren und Kindheit wider — das soziale Erbe, das du trägst, ob du willst oder nicht. Die erste Lebensdekade (0–10 Jahre) steht unter ihrem Einfluss.' },
+  month: { role: 'Beruf · Elternlinie · Antrieb',
+    desc: 'Die Monatssäule zeigt deinen beruflichen Weg, das Elternhaus als prägendes Kraftfeld und die zweite bis vierte Lebensdekade. Hier sind Leistungsantriebe und Karriereenergien verankert — und die unbewussten Erwartungen, die dir mitgegeben wurden.' },
+  day:   { role: 'Du selbst · Partnerschaft',
+    desc: 'Die Tagessäule ist die wichtigste des Vierersystems. Der Tagsstamm (天干) bist du — dein Wesenskern, dein Day Master, dein innerstes Temperament. Der Tagszweig zeigt die Sphäre der Partnerschaft und tiefer Vertrautheit: was du in einer Verbindung bringst — und was du darin suchst.' },
+  hour:  { role: 'Kinder · Kreatives Erbe · Innere Welt',
+    desc: 'Die Stundensäule zeigt Kinder oder das kreative Erbe, das du hinterlässt — und deine innerste, oft verborgene Welt: Träume, Ängste, das, was du nie jemandem gesagt hast. Die letzte Lebensphase (60+) steht unter ihrem Einfluss.' },
+};
+
+function pillarRelation(stemElem, branchElem) {
+  if (!stemElem || !branchElem) return '';
+  if (stemElem === branchElem) return `Stamm und Zweig teilen das Element <strong>${stemElem}</strong> — die Energie dieses Pfeilers ist konzentriert und in sich geschlossen. Was dieser Pfeil zeigt, kommt ohne Reibung zum Ausdruck.`;
+  if (WUXING_PRODUCTIVE[stemElem] === branchElem) return `${stemElem} (Stamm) <em>nährt</em> ${branchElem} (Zweig) — eine produktive Strömung. Die Stammqualität entfaltet und stärkt die Zweig-Energie. Harmonisch, aber der Stamm gibt viel.`;
+  if (WUXING_CONSUMING[stemElem] === branchElem) return `${branchElem} (Zweig) <em>nährt</em> ${stemElem} (Stamm) — der Zweig speist den Stamm. Die Grundlage stärkt den Ausdruck. Ruhige, tragfähige Dynamik.`;
+  if (WUXING_CONTROLS[stemElem] === branchElem) return `${stemElem} (Stamm) <em>kontrolliert</em> ${branchElem} (Zweig) — eine formende Spannung. Disziplin und Fokus, aber auch innere Reibung: der Stamm bändigt, was der Zweig entfalten will.`;
+  if (WUXING_CONTROLLED[stemElem] === branchElem) return `${branchElem} (Zweig) <em>kontrolliert</em> ${stemElem} (Stamm) — der Zweig strukturiert den Stamm. Das kann bremsend wirken oder Form geben, je nach Kontext.`;
+  return `${stemElem} und ${branchElem} stehen in neutraler Relation — verschiedene Elementenergien, die nebeneinander wirken und sich ergänzen können.`;
+}
+
 // ── BaZi Pillars ──────────────────────────────────────────────────────────
 function renderPillars(bazi) {
   const grid = $('pillars-grid');
@@ -1072,9 +1177,18 @@ function renderPillars(bazi) {
     const elemColor = ELEM_COLORS[elemRaw] || ELEM_COLORS[elemDE] || 'var(--muted)';
     const hiddenStems = p.hidden_stems || p.zang_gan || [];
 
+    // Knowledge base lookups
+    const stemInfo   = STEM_DETAILS[stamm]   || null;
+    const branchInfo = BRANCH_DETAILS[zweig] || null;
+    const posInfo    = PILLAR_POSITION[key]  || null;
+    const stemElem   = stemInfo?.elem   || elemDE;
+    const branchElem = branchInfo?.elem || '';
+    const relNote    = pillarRelation(stemElem, branchElem);
+    const isDay      = key === 'day';
+
     const card = el('div', {class:'pillar-card'});
     card.innerHTML = `
-      <div class="pillar-label">${PILLAR_LABELS[key] || key}</div>
+      <div class="pillar-label">${PILLAR_LABELS[key] || key}${isDay ? ' <span style="color:var(--accent);font-size:9px;vertical-align:middle">★ Tagsstamm</span>' : ''}</div>
       <div class="pillar-stamm">${stamm}</div>
       <div class="pillar-zweig">${zweig}</div>
       ${tier ? `<div class="pillar-meta">${tier}</div>` : ''}
@@ -1089,7 +1203,42 @@ function renderPillars(bazi) {
             return `<div class="hidden-stem-row"><span>${hsName}${hsElem ? ' · '+hsElem : ''}</span><span>${typeof hsWeight==='number' ? hsWeight.toFixed(1) : hsWeight}</span></div>`;
           }).join('')}
         </div>` : ''}
+      <div class="pillar-expand-btn">
+        <span class="pillar-chevron">▾</span>
+        <span>Deutung</span>
+      </div>
+      <div class="pillar-expand-body">
+        ${posInfo ? `
+          <div class="pillar-interp-block">
+            <div class="pillar-interp-label">Säulenposition · ${posInfo.role}</div>
+            <div class="pillar-interp-text">${posInfo.desc}</div>
+          </div>` : ''}
+        ${stemInfo ? `
+          <div class="pillar-interp-block">
+            <div class="pillar-interp-label">天干 Himmelsstamm · ${stamm} · ${stemInfo.elem} (${stemInfo.polarity})</div>
+            <div class="pillar-interp-text" style="font-style:italic;margin-bottom:4px;color:var(--muted)">„${stemInfo.image}"</div>
+            <div class="pillar-interp-text">${stemInfo.meaning}</div>
+          </div>` : ''}
+        ${branchInfo ? `
+          <div class="pillar-interp-block">
+            <div class="pillar-interp-label">地支 Erdzweig · ${zweig} · ${branchInfo.animal} · ${branchInfo.elem} (${branchInfo.polarity})</div>
+            <div class="pillar-interp-text" style="color:var(--muted);font-size:11px;margin-bottom:3px">${branchInfo.hours}</div>
+            <div class="pillar-interp-text">${branchInfo.meaning}</div>
+          </div>` : ''}
+        ${relNote ? `<div class="pillar-rel-note">${relNote}</div>` : ''}
+        ${isDay && stemInfo ? `
+          <div class="pillar-rel-note" style="border-color:var(--accent)44;background:rgba(124,140,255,.06)">
+            <strong style="color:var(--accent)">Tagsstamm (日主):</strong> Dies ist dein Kern-Selbst im BaZi-System.
+            Alle anderen Elemente im Chart werden in Bezug zu dir als <em>${stemInfo.elem}-${stemInfo.polarity}</em> interpretiert.
+          </div>` : ''}
+      </div>
     `;
+
+    // click to toggle expand
+    card.addEventListener('click', () => {
+      card.classList.toggle('open');
+    });
+
     grid.appendChild(card);
   });
 
@@ -1759,7 +1908,10 @@ function renderSynthesis(western, bazi, fusion) {
     for (const [k,v] of Object.entries(fVecRaw)) { const de=ELEM_DE[k.toLowerCase()]; if(de) r[de]=Number(v); }
     return Object.keys(r).length ? r : null;
   })() : null;
-  const fusedVec = fVec || avgVec(wVec, bVec);
+  // Use authoritative data only — no averaging that distorts element dominance
+  // Priority: FuFirE fusion vector > western planets vector > BaZi vector
+  const fusedVec = fVec || wVec || bVec;
+  const vecSource = fVec ? 'FuFirE Fusionsvektor' : wVec ? 'Westliche Planeten (Wu-Xing)' : bVec ? 'BaZi-Säulen (Wu-Xing)' : null;
 
   // ── Destillat text ────────────────────────────────────────────────────────
   const harmony    = extractHarmony(fusion);
@@ -1861,7 +2013,8 @@ function renderSynthesis(western, bazi, fusion) {
           <span class="synth-harmony-val">${harmony.toFixed(3)}</span>
           <span style="font-size:11px;color:var(--muted);margin-left:8px">Kohärenz-Index</span>
         </div>` : ''}
-      <div class="synth-approx-note">Häuser-Element via Zodiak-Zeichen (Approximation). Planeten-Element via Wu-Xing Mapping.</div>
+      ${vecSource ? `<div class="synth-vec-source">Blasengröße · Quelle: <strong>${vecSource}</strong></div>` : ''}
+      <div class="synth-approx-note">Häuser-Spalte zeigt strukturelle Approximation (Zodiak→Element), fließt nicht in Vektoren ein.</div>
     </div>
   `;
 
