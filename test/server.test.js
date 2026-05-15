@@ -46,14 +46,14 @@ test('health endpoint exposes Railway and explicit FuFirE v3 endpoint catalog', 
   });
 });
 
-test('root serves the live dashboard with explicit endpoints', async () => {
+test('root serves the app shell', async () => {
   await withServer(async (base) => {
     const response = await fetch(`${base}/`);
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, /FuFirE Live Dashboard/);
-    assert.match(html, /POST \/calculate\/wuxing/);
-    assert.match(html, /GET \/info\/wuxing/);
+    assert.match(html, /Azodiac/);
+    assert.match(html, /id="app"/);
+    assert.match(html, /src\/app\.js/);
   });
 });
 
