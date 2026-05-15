@@ -398,3 +398,11 @@ test('createSynastryProjection — confidence > 0 when both profiles have day_ma
   const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
   assert.ok(result.confidence > 0);
 });
+
+test('createSynastryProjection — single missing entry when day_master absent in one profile', () => {
+  const noEl = structuredClone(SYN_PROFILE_A);
+  delete noEl.bazi.day_master;
+  const result = createSynastryProjection(noEl, SYN_PROFILE_B_FEUER);
+  const dayMasterMissing = result.missing.filter(m => m.toLowerCase().includes('day master') || m.toLowerCase().includes('bazi'));
+  assert.equal(dayMasterMissing.length, 1, `Expected exactly 1 missing entry for absent Day Master, got ${dayMasterMissing.length}: ${JSON.stringify(result.missing)}`);
+});

@@ -686,29 +686,26 @@ export function createSynastryProjection(profileA, profileB) {
   const elA = profileA?.bazi?.day_master?.element || null;
   const elB = profileB?.bazi?.day_master?.element || null;
   let wuxing = null;
+  let bazi = null;
   if (elA && elB) {
+    // Wu-Xing
     const pair = WUXING_PAIR[`${elA}-${elB}`];
     wuxing = pair
       ? { elementA: elA, elementB: elB, relation: pair.relation, cycle: pair.cycle, description: pair.description }
       : { elementA: elA, elementB: elB, relation: 'neutral', cycle: `${elA} ↔ ${elB}`, description: 'Keine bekannte Zyklusbeziehung — neutrale Begegnung.' };
-  } else {
-    missing.push('Wu-Xing Vergleich (BaZi Day Master fehlt in einem der Profile)');
-    deduction += 0.3;
-  }
 
-  let bazi = null;
-  if (elA && elB) {
+    // BaZi Day Master
     const desc = BAZI_PAIR[`${elA}-${elB}`] || `${elA} und ${elB} — individuelle Energiesignaturen begegnen sich.`;
     bazi = {
-      stemA:    profileA?.bazi?.day_master?.stem || '',
-      elementA: elA,
-      stemB:    profileB?.bazi?.day_master?.stem || '',
-      elementB: elB,
+      stemA:       profileA?.bazi?.day_master?.stem || '',
+      elementA:    elA,
+      stemB:       profileB?.bazi?.day_master?.stem || '',
+      elementB:    elB,
       description: desc,
     };
   } else {
-    missing.push('BaZi-Resonanz (Day Master unvollständig)');
-    deduction += 0.2;
+    missing.push('BaZi Day Master fehlt in einem der Profile (Wu-Xing + BaZi-Resonanz nicht verfügbar)');
+    deduction += 0.4;
   }
 
   const aspects = [];
