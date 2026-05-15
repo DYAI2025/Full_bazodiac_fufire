@@ -5,6 +5,7 @@ import { DashboardPage }      from './pages/DashboardPage.js';
 import { LovePage }            from './pages/LovePage.js';
 import { CareerFinancePage }  from './pages/CareerFinancePage.js';
 import { PersonalityPage }    from './pages/PersonalityPage.js';
+import { SynastryPage }       from './pages/SynastryPage.js';
 
 let currentProfile = null;
 
@@ -51,5 +52,8 @@ router
       profile: currentProfile,
       onNavigate: (path) => router.navigate(path),
     });
+  })
+  .register('/synastry', (app) => {
+    SynastryPage(app, { onNavigate: (path) => router.navigate(path) });
   })
   .start();

@@ -129,6 +129,46 @@ function translatePayload(raw) {
   };
 }
 
+export function validatePayload(raw) {
+  const errors = [];
+  let obj;
+  try {
+    obj = typeof raw === 'string' ? (raw ? JSON.parse(raw) : {}) : (raw || {});
+  } catch {
+    return { valid: false, errors: ['Request body is not valid JSON'] };
+  }
+
+  // Date: required, must match YYYY-MM-DD or YYYY-MM-DDTHH:MM[:SS]
+  const dateStr = obj.date || obj.datetime || '';
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/;
+  if (!dateStr) {
+    errors.push('date: required — provide date (YYYY-MM-DD) or datetime (YYYY-MM-DDTHH:MM)');
+  } else if (!DATE_RE.test(dateStr)) {
+    errors.push(`date: invalid format "${dateStr}" — expected YYYY-MM-DD or YYYY-MM-DDTHH:MM`);
+  }
+
+  // Lat: required, finite, [-90, 90]
+  const rawLat = obj.lat ?? obj.latitude ?? obj.location?.latitude;
+  const lat = rawLat !== undefined && rawLat !== '' ? Number(rawLat) : NaN;
+  if (rawLat === undefined || rawLat === '') {
+    errors.push('lat: required — provide lat (decimal degrees, e.g. 48.137)');
+  } else if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    errors.push(`lat: must be a number between -90 and 90, got "${rawLat}"`);
+  }
+
+  // Lon: required, finite, [-180, 180]
+  const rawLon = obj.lon ?? obj.longitude ?? obj.location?.longitude;
+  const lon = rawLon !== undefined && rawLon !== '' ? Number(rawLon) : NaN;
+  if (rawLon === undefined || rawLon === '') {
+    errors.push('lon: required — provide lon (decimal degrees, e.g. 11.576)');
+  } else if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+    errors.push(`lon: must be a number between -180 and 180, got "${rawLon}"`);
+  }
+
+  if (errors.length) return { valid: false, errors };
+  return { valid: true };
+}
+
 // ── Element key normalizer ────────────────────────────────────────────────
 const ELEM_DE_MAP = {
   wood:'Holz', fire:'Feuer', earth:'Erde', metal:'Metall', water:'Wasser',
@@ -478,6 +518,13 @@ async function handleChartRequest(req, res, requestOrigin = null) {
   } catch (error) {
     return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
   }
+  const validation = validatePayload(body || '{}');
+  if (!validation.valid) {
+    return sendJson(res, 400, {
+      error: 'Invalid request payload',
+      errors: validation.errors,
+    }, requestOrigin);
+  }
   try {
     const result = await orchestrateChart(body || '{}');
     sendJson(res, result.httpStatus, result.body, requestOrigin);
@@ -720,6 +767,13 @@ export async function handleRequest(req, res) {
       if (body) JSON.parse(body);
     } catch (error) {
       return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
+    }
+    const validation = validatePayload(body || '{}');
+    if (!validation.valid) {
+      return sendJson(res, 400, {
+        error: 'Invalid request payload',
+        errors: validation.errors,
+      }, requestOrigin);
     }
     try {
       const result = await orchestrateFullProfile(body || '{}');

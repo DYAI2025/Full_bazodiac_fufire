@@ -68,6 +68,7 @@ export function OverviewPage(app, { profile, onNavigate }) {
         <a href="#/career-finance" class="nav-link">Karriere</a>
         <a href="#/personality" class="nav-link">Persönlichkeit</a>
         <a href="#/dashboard" class="nav-link">Dashboard</a>
+        <a href="#/synastry" class="nav-link">Synastrie</a>
       </nav>
       <section class="core-statement-section" aria-label="Kernsatz"></section>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">

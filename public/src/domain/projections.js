@@ -597,3 +597,151 @@ export function createPersonalityProjection(profile) {
 
   return finalize(proj);
 }
+
+// ── Synastry ──────────────────────────────────────────────────────────────────
+
+const WUXING_PAIR = {
+  'Holz-Holz':    { relation: 'identisch',        cycle: 'Holz ↔ Holz',           description: 'Zwei Holz-Energien begegnen sich — tiefe Wiedererkennung. Gemeinsamer Wachstumsdrang, aber ähnliche blinde Flecken; braucht Impulse von außen.' },
+  'Holz-Feuer':   { relation: 'nährt',             cycle: 'Holz nährt Feuer',       description: 'A-Person gibt Kraft und Ressourcen, B-Person entfacht daraus Glanz. Organisch stützende Dynamik.' },
+  'Holz-Erde':    { relation: 'kontrolliert',      cycle: 'Holz kontrolliert Erde', description: 'Holz-Wachstum begrenzt Erde-Beständigkeit. Strukturierende Spannung: A formt das Terrain, das B bewohnt.' },
+  'Holz-Metall':  { relation: 'wird-kontrolliert', cycle: 'Metall kontrolliert Holz', description: 'Metall-Klarheit formt den Holz-Wachstum. B setzt den Rahmen, A wird verfeinert — herausfordernde, aber prägende Begegnung.' },
+  'Holz-Wasser':  { relation: 'wird-genährt',      cycle: 'Wasser nährt Holz',      description: 'Tiefe Unterstützung: B-Person nährt A-Entfaltung. Stille, fließende Fürsorge.' },
+
+  'Feuer-Holz':   { relation: 'wird-genährt',      cycle: 'Holz nährt Feuer',       description: 'A-Person empfängt Kraft von B-Person und leuchtet auf. Natürliche Stützung.' },
+  'Feuer-Feuer':  { relation: 'identisch',          cycle: 'Feuer ↔ Feuer',          description: 'Zwei Feuer-Naturen — intensive Anziehung und explosive Energie. Gegenseitige Inspiration, aber auch das Risiko, gemeinsam auszubrennen.' },
+  'Feuer-Erde':   { relation: 'nährt',              cycle: 'Feuer nährt Erde',       description: 'Leidenschaft gibt der Beständigkeit Tiefe. A wärmt und entzündet, B gibt dem Feuer Halt.' },
+  'Feuer-Metall': { relation: 'kontrolliert',       cycle: 'Feuer kontrolliert Metall', description: 'Feuer schmilzt Metall — transformierende Spannung. A stellt Struktur in Frage, B wird herausgefordert, sich neu zu formen.' },
+  'Feuer-Wasser': { relation: 'wird-kontrolliert',  cycle: 'Wasser kontrolliert Feuer', description: 'Wasser-Tiefe kühlt Feuer-Impuls. B dämpft A — eine Polarität, die zur Mäßigung und Reife einladen kann.' },
+
+  'Erde-Holz':    { relation: 'wird-kontrolliert',  cycle: 'Holz kontrolliert Erde', description: 'B-Wachstumsdrang formt das A-Terrain. B setzt Grenzen und Anreize, A wird strukturiert.' },
+  'Erde-Feuer':   { relation: 'wird-genährt',       cycle: 'Feuer nährt Erde',       description: 'Feuer-Wärme nährt Erde-Substanz. B gibt A Energie und Begeisterung.' },
+  'Erde-Erde':    { relation: 'identisch',           cycle: 'Erde ↔ Erde',            description: 'Zwei Erde-Naturen — stabile, verlässliche Verbindung. Hohe Sicherheit, gemeinsame Werte, aber auch Tendenz zur Stagnation.' },
+  'Erde-Metall':  { relation: 'nährt',               cycle: 'Erde nährt Metall',      description: 'A-Substanz gibt B-Klarheit Boden. A nährt die Präzision und Fokus der B-Person.' },
+  'Erde-Wasser':  { relation: 'kontrolliert',        cycle: 'Erde kontrolliert Wasser', description: 'Erde formt den Wasserfluss. A gibt der Tiefe von B Kanäle und Richtung.' },
+
+  'Metall-Holz':  { relation: 'kontrolliert',        cycle: 'Metall kontrolliert Holz', description: 'Metall-Schärfe formt Holz-Wachstum. A schleift und verfeinert — kreative, manchmal herausfordernde Präzision.' },
+  'Metall-Feuer': { relation: 'wird-kontrolliert',   cycle: 'Feuer kontrolliert Metall', description: 'Feuer stellt Metall-Struktur in Frage. B bringt Wärme und Spontanität, A wird herausgefordert, sich zu öffnen.' },
+  'Metall-Erde':  { relation: 'wird-genährt',        cycle: 'Erde nährt Metall',      description: 'Erde-Substanz gibt Metall Kraft. B nährt A mit Beständigkeit und Ressourcen.' },
+  'Metall-Metall':{ relation: 'identisch',            cycle: 'Metall ↔ Metall',        description: 'Zwei Metall-Naturen — klare Sprache, hohe gegenseitige Standards. Respekt und Präzision; braucht emotionalen Wärmeausgleich.' },
+  'Metall-Wasser':{ relation: 'nährt',                cycle: 'Metall nährt Wasser',    description: 'Klarheit gibt Tiefe Richtung. A-Fokus speist B-Intuition und emotionale Fülle.' },
+
+  'Wasser-Holz':  { relation: 'nährt',                cycle: 'Wasser nährt Holz',      description: 'Tiefe Fürsorge nährt Wachstum. A unterstützt B-Entfaltung mit Stille und emotionaler Weisheit.' },
+  'Wasser-Feuer': { relation: 'kontrolliert',          cycle: 'Wasser kontrolliert Feuer', description: 'Wasser-Tiefe kühlt Feuer-Impuls. A dämpft und mäßigt — kann lämmend oder ausgleichend wirken.' },
+  'Wasser-Erde':  { relation: 'wird-kontrolliert',     cycle: 'Erde kontrolliert Wasser', description: 'Erde-Beständigkeit kanalisiert Wasserfluss. B gibt A Struktur und Halt im Gefühlsleben.' },
+  'Wasser-Metall':{ relation: 'wird-genährt',          cycle: 'Metall nährt Wasser',    description: 'Metall-Fokus gibt Wasser-Tiefe Richtung. B speist A mit Klarheit und Präzision.' },
+  'Wasser-Wasser':{ relation: 'identisch',             cycle: 'Wasser ↔ Wasser',        description: 'Zwei Wasser-Naturen — tiefe intuitive Verbindung. Fühlen ohne Worte, aber auch das Risiko, gemeinsam im Unstrukturierten zu versinken.' },
+};
+
+const BAZI_PAIR = {
+  'Holz-Holz':    'Gleichgesinnte Pioniere — teilen Wachstumsdrang und Idealismus. Stärken: gemeinsame Vision. Herausforderung: ähnliche Ungeduld.',
+  'Holz-Feuer':   'Holz gibt dem Feuer Nahrung — A-Person inspiriert und ermöglicht. B-Person leuchtet mit der Energie, die A bereitstellt.',
+  'Holz-Erde':    'Strukturierende Spannung — Holz-Expansion begegnet Erde-Beständigkeit. Wachstum trifft auf Verwurzelung.',
+  'Holz-Metall':  'Formende Begegnung — Metall schleift Holz. B-Person schärft, fordert, verfeinert die A-Person.',
+  'Holz-Wasser':  'Tiefe Unterstützung — Wasser nährt Holz-Wachstum. B gibt A emotionalen Rückhalt und Intuition.',
+  'Feuer-Holz':   'Feuer empfängt Holz-Kraft — A-Person leuchtet durch die Ressourcen, die B bereitstellt.',
+  'Feuer-Feuer':  'Intensives Aufflackern — leidenschaftliche Anziehung, gemeinsame Begeisterung. Braucht Erdung.',
+  'Feuer-Erde':   'Feuer nährt Erde — A-Person wärmt und belebt. B-Person gibt dem Feuer Substanz und Halt.',
+  'Feuer-Metall': 'Feuer transformiert Metall — A stellt Strukturen in Frage. B wird herausgefordert, sich neu zu formen.',
+  'Feuer-Wasser': 'Polarisierende Anziehung — Leidenschaft und Tiefe in Spannung. Intensive Verbindung, die zur Reife einlädt.',
+  'Erde-Holz':    'Erde wird durch Holz geformt — B-Wachstum gibt A-Stabilität neue Richtung.',
+  'Erde-Feuer':   'Erde empfängt Feuer-Wärme — B belebt, A gibt dem Feuer Boden.',
+  'Erde-Erde':    'Solide Verbindung — tiefe Verlässlichkeit und gemeinsame Werte. Braucht Impulse von außen.',
+  'Erde-Metall':  'Erde nährt Metall — A gibt B Substanz und Ressourcen. Natürliche Stützung.',
+  'Erde-Wasser':  'Erde kanalisiert Wasser — A gibt B-Tiefe Form und Richtung.',
+  'Metall-Holz':  'Metall schleift Holz — A verfeinert und fordert B. Prägende, manchmal harte Begegnung.',
+  'Metall-Feuer': 'Metall wird durch Feuer herausgefordert — B Wärme öffnet A-Struktur.',
+  'Metall-Erde':  'Metall empfängt Erde-Nahrung — B gibt A Substanz und Stabilität.',
+  'Metall-Metall':'Klare Begegnung — hohe Standards, gegenseitiger Respekt. Braucht emotionale Wärme.',
+  'Metall-Wasser':'Metall speist Wasser — A-Klarheit gibt B-Intuition Richtung.',
+  'Wasser-Holz':  'Wasser nährt Holz — A gibt B emotionalen Rückhalt und Intuition.',
+  'Wasser-Feuer': 'Wasser mäßigt Feuer — A dämpft B-Impuls. Ausgleich oder Reibung.',
+  'Wasser-Erde':  'Wasser wird durch Erde kanalisiert — B gibt A-Tiefe Form.',
+  'Wasser-Metall':'Wasser empfängt Metall-Fokus — B gibt A Richtung und Klarheit.',
+  'Wasser-Wasser':'Tiefe intuitive Resonanz — stilles Verstehen. Braucht praktische Erdung.',
+};
+
+const ASPECT_DEFS = [
+  { angle: 0,   orb: 8, label: 'Konjunktion', description: 'Direkte Verschmelzung — Energien verstärken oder überlagern sich.' },
+  { angle: 60,  orb: 5, label: 'Sextil',      description: 'Harmonische Ergänzung — Chancen entstehen durch Begegnung.' },
+  { angle: 90,  orb: 7, label: 'Quadrat',     description: 'Kreative Spannung — Wachstum durch Auseinandersetzung.' },
+  { angle: 120, orb: 7, label: 'Trigon',      description: 'Natürlicher Fluss — Unterstützung ohne Aufwand.' },
+  { angle: 180, orb: 8, label: 'Opposition',  description: 'Polarisierende Anziehung — zwei Seiten eines Ganzen.' },
+];
+
+const SYNASTRY_BODIES = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'];
+
+function angleBetween(lonA, lonB) {
+  const diff = Math.abs((lonA - lonB + 360) % 360);
+  return diff > 180 ? 360 - diff : diff;
+}
+
+export function createSynastryProjection(profileA, profileB) {
+  if (!profileB) {
+    return { wuxing: null, bazi: null, aspects: [], missing: ['Person B — Zweiter Geburts-Datensatz fehlt'], confidence: 0 };
+  }
+
+  const missing = [];
+  let deduction = 0;
+
+  const elA = profileA?.bazi?.day_master?.element || null;
+  const elB = profileB?.bazi?.day_master?.element || null;
+  let wuxing = null;
+  let bazi = null;
+  if (elA && elB) {
+    // Wu-Xing
+    const pair = WUXING_PAIR[`${elA}-${elB}`];
+    wuxing = pair
+      ? { elementA: elA, elementB: elB, relation: pair.relation, cycle: pair.cycle, description: pair.description }
+      : { elementA: elA, elementB: elB, relation: 'neutral', cycle: `${elA} ↔ ${elB}`, description: 'Keine bekannte Zyklusbeziehung — neutrale Begegnung.' };
+
+    // BaZi Day Master
+    const desc = BAZI_PAIR[`${elA}-${elB}`] || `${elA} und ${elB} — individuelle Energiesignaturen begegnen sich.`;
+    bazi = {
+      stemA:       profileA?.bazi?.day_master?.stem || '',
+      elementA:    elA,
+      stemB:       profileB?.bazi?.day_master?.stem || '',
+      elementB:    elB,
+      description: desc,
+    };
+  } else {
+    missing.push('BaZi Day Master fehlt in einem der Profile (Wu-Xing + BaZi-Resonanz nicht verfügbar)');
+    deduction += 0.4;
+  }
+
+  const aspects = [];
+  const bodiesA = profileA?.western?.bodies || {};
+  const bodiesB = profileB?.western?.bodies || {};
+  let aspectsChecked = 0;
+
+  for (const nameA of SYNASTRY_BODIES) {
+    const bA = bodiesA[nameA];
+    if (!bA || bA.longitude === undefined) continue;
+    for (const nameB of SYNASTRY_BODIES) {
+      const bB = bodiesB[nameB];
+      if (!bB || bB.longitude === undefined) continue;
+      aspectsChecked++;
+      const angle = angleBetween(bA.longitude, bB.longitude);
+      for (const def of ASPECT_DEFS) {
+        if (Math.abs(angle - def.angle) <= def.orb) {
+          aspects.push({
+            bodyA:       nameA,
+            bodyB:       nameB,
+            aspect:      def.label,
+            orbDeg:      Math.round(Math.abs(angle - def.angle) * 10) / 10,
+            description: def.description,
+          });
+          break;
+        }
+      }
+    }
+  }
+
+  if (aspectsChecked === 0) {
+    missing.push('Westliche Aspekte (Planetenpositionen fehlen)');
+    deduction += 0.2;
+  }
+
+  const confidence = Math.max(0, Math.round((1 - deduction) * 100) / 100);
+  return { wuxing, bazi, aspects, missing, confidence };
+}
+
