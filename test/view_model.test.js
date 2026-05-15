@@ -79,6 +79,28 @@ test('normalizePillar derives hidden_stems from branch when API omits them', () 
   assert.equal(hs[0].stem, '癸'); // Gui — Yin-Wasser, Hauptstamm der Ratte
 });
 
+test('normalizeAzodiacResult derives ascendant sign from angles.Ascendant longitude', () => {
+  // FuFirE actual: western.angles.Ascendant = ecliptic longitude (number)
+  // 185.34° → index 6 (185/30 = 6.17) → Libra (Waage)
+  const vm = normalizeAzodiacResult({
+    western: {
+      bodies: {},
+      angles: { Ascendant: 185.34 },
+    },
+    bazi: null, fusion: null, _meta: {},
+  });
+  assert.equal(vm.western.ascendant, 'Libra', 'ascendant sign must be derived from angles.Ascendant longitude');
+  assert.ok(vm.western.angles?.Ascendant === 185.34, 'raw angles must be preserved');
+});
+
+test('normalizeAzodiacResult accepts direct sign string as ascendant', () => {
+  const vm = normalizeAzodiacResult({
+    western: { bodies: {}, ascendant: 'Scorpio' },
+    bazi: null, fusion: null, _meta: {},
+  });
+  assert.equal(vm.western.ascendant, 'Scorpio');
+});
+
 test('normalizeAzodiacResult extracts coherence_index from FuFirE harmony_index nested shape', () => {
   // FuFirE actual response: fusion.harmony_index = { harmony_index: 0.7352, interpretation: "...", cosine_similarity: 0.72 }
   const vm = normalizeAzodiacResult({
