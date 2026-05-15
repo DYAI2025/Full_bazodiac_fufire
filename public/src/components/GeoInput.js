@@ -105,7 +105,13 @@ export function GeoInput({ onSelect }) {
     }, 300);
   });
 
-  document.addEventListener('click', (e) => {
+  // Self-removing: once the wrapper leaves the DOM (router teardown via app.innerHTML=''),
+  // the next click removes the listener so it doesn't accumulate across navigations.
+  document.addEventListener('click', function onDocClick(e) {
+    if (!document.contains(wrapper)) {
+      document.removeEventListener('click', onDocClick);
+      return;
+    }
     if (!wrapper.contains(e.target)) dropdown.hidden = true;
   });
 
