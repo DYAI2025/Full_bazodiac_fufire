@@ -518,6 +518,13 @@ async function handleChartRequest(req, res, requestOrigin = null) {
   } catch (error) {
     return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
   }
+  const validation = validatePayload(body || '{}');
+  if (!validation.valid) {
+    return sendJson(res, 400, {
+      error: 'Invalid request payload',
+      errors: validation.errors,
+    }, requestOrigin);
+  }
   try {
     const result = await orchestrateChart(body || '{}');
     sendJson(res, result.httpStatus, result.body, requestOrigin);
@@ -760,6 +767,13 @@ export async function handleRequest(req, res) {
       if (body) JSON.parse(body);
     } catch (error) {
       return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
+    }
+    const validation = validatePayload(body || '{}');
+    if (!validation.valid) {
+      return sendJson(res, 400, {
+        error: 'Invalid request payload',
+        errors: validation.errors,
+      }, requestOrigin);
     }
     try {
       const result = await orchestrateFullProfile(body || '{}');

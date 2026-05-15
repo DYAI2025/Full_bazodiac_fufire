@@ -212,3 +212,57 @@ test('CORS restricts to allowed origin when FUFIRE_ALLOWED_ORIGINS is set', asyn
     else delete process.env.FUFIRE_ALLOWED_ORIGINS;
   }
 });
+
+test('/chart: returns 400 when date is missing', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/chart`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.errors));
+    assert.ok(body.errors.some(e => e.includes('date')));
+  });
+});
+
+test('/chart: returns 400 when lat is out of range', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/chart`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '1990-03-15', lat: 999, lon: 11.576 }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(body.errors.some(e => e.includes('lat')));
+  });
+});
+
+test('/api/azodiac/profile: returns 400 when lon is missing', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/profile`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '1990-03-15', lat: 48.0 }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(body.errors.some(e => e.includes('lon')));
+  });
+});
+
+test('/api/azodiac/profile: returns 400 when body is empty', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/profile`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.errors));
+    assert.ok(body.errors.length >= 3);
+  });
+});
