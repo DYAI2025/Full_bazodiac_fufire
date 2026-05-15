@@ -209,6 +209,94 @@
     .zone-strength { background: rgba(52,211,153,.15); color: var(--ok); }
     .zone-development { background: rgba(124,58,237,.15); color: var(--accent2); }
     .zone-neutral { background: rgba(100,116,139,.15); color: var(--muted); }
+
+    /* ── House Cards ── */
+    .houses-grid { display: grid; gap: 10px; }
+    .house-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color .15s;
+    }
+    .house-card:hover { border-color: rgba(124,140,255,.35); }
+    .house-header {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .house-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+      background: rgba(124,140,255,.1);
+      border-radius: 8px;
+      padding: 6px 4px;
+      line-height: 1;
+    }
+    .house-header-text { min-width: 0; }
+    .house-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .house-sign-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .house-sign-sym { font-size: 16px; }
+    .house-sign-name { font-weight: 600; }
+    .house-deg { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
+    .house-chevron { color: var(--muted); font-size: 12px; transition: transform .2s; flex-shrink: 0; }
+    .house-card.open .house-chevron { transform: rotate(180deg); }
+    .house-body {
+      display: none;
+      padding: 0 16px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .house-card.open .house-body { display: block; }
+    .house-domain {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .kw-pill {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .house-meaning {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text);
+      margin-top: 12px;
+    }
+    .house-interp {
+      font-size: 13px;
+      line-height: 1.65;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(124,140,255,.07);
+      border-left: 3px solid var(--accent);
+      color: rgba(232,236,255,.85);
+    }
+    .house-question {
+      font-size: 12px;
+      color: var(--accent2);
+      margin-top: 10px;
+      font-style: italic;
+    }
+    .sign-meta {
+      display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .sign-meta span {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px;
+      border: 1px solid var(--border); color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -336,15 +424,10 @@
           </div>
         </div>
 
-        <!-- Houses Table -->
+        <!-- Houses Cards -->
         <div class="card" style="margin-bottom:16px" id="houses-card">
-          <div class="card-title">Hellenistische Häuser</div>
-          <div style="overflow-x:auto">
-            <table>
-              <thead><tr><th>#</th><th>Name</th><th>Tierkreiszeichen</th><th>Grad</th></tr></thead>
-              <tbody id="houses-body"></tbody>
-            </table>
-          </div>
+          <div class="card-title">Hellenistische Häuser — Zeichen &amp; Deutung</div>
+          <div class="houses-grid" id="houses-grid"></div>
         </div>
 
         <!-- Planets Table -->
@@ -901,6 +984,120 @@ function renderAspects(western) {
   });
 }
 
+// ── House knowledge base ──────────────────────────────────────────────────
+const HOUSE_DETAILS = {
+  1: {
+    name: 'I – Vita (Leben)',
+    domain: 'Persönlichkeit, Körper, Erscheinung, erster Eindruck',
+    keywords: ['Selbst', 'Auftreten', 'Vitalität', 'Identität'],
+    meaning: 'Das erste Haus ist der Aszendent — der Schwellenwert zwischen innen und außen. Es zeigt, wie du die Welt betrittst und wie die Welt dich wahrnimmt. Körperbau, Temperament und die Art, wie du auf Neues reagierst, sind hier verwurzelt.',
+    question: 'Wie trete ich in Erscheinung, und was prägt mein unmittelbares Selbstgefühl?',
+  },
+  2: {
+    name: 'II – Lucrum (Reichtum)',
+    domain: 'Besitz, materielle Sicherheit, persönliche Werte',
+    keywords: ['Geld', 'Ressourcen', 'Werte', 'Selbstwert'],
+    meaning: 'Das zweite Haus beschreibt dein Verhältnis zu materiellem Besitz und zu dem, was du als wertvoll erachtst. Es umfasst Einkommen, Besitztümer und — auf tieferer Ebene — den inneren Selbstwert, der wirtschaftliche Entscheidungen unterbewusst lenkt.',
+    question: 'Was gibt mir Sicherheit, und wie stehe ich zu Geld und materiellen Dingen?',
+  },
+  3: {
+    name: 'III – Fratres (Geschwister)',
+    domain: 'Kommunikation, Geschwister, kurze Wege, Lernumfeld',
+    keywords: ['Sprache', 'Denken', 'Geschwister', 'Neugier'],
+    meaning: 'Das dritte Haus regiert die Art, wie du kommunizierst, schreibst und denkst. Geschwister, Nachbarn und das unmittelbare soziale Umfeld fallen hierhin. Es zeigt auch den Umgang mit Alltagsinformation und kurzen Reisen.',
+    question: 'Wie denke ich, spreche ich — und wie gestalte ich mein direktes Umfeld?',
+  },
+  4: {
+    name: 'IV – Genitor (Eltern)',
+    domain: 'Herkunft, Familie, innere Heimat, emotionale Wurzeln',
+    keywords: ['Familie', 'Heimat', 'Wurzeln', 'Innenleben'],
+    meaning: 'Das vierte Haus ist der tiefste Punkt des Horoskops — die innere Basis. Es zeigt Herkunftsfamilie, Kindheitsprägungen und das Gefühl von Geborgenheit. Als IC (Imum Coeli) markiert es, wohin du dich zurückziehst und woraus du innerlich Kraft schöpfst.',
+    question: 'Wohin kehre ich innerlich zurück — und was ist mein emotionales Fundament?',
+  },
+  5: {
+    name: 'V – Nati (Kinder)',
+    domain: 'Kreativität, Freude, Liebe, Spiel, Selbstausdruck',
+    keywords: ['Freude', 'Kreativität', 'Kinder', 'Romantik'],
+    meaning: 'Das fünfte Haus ist das Haus der Lebensfreude: Kreativität, spielerischer Ausdruck, romantische Zuneigung und — wörtlich — Kinder. Hier entfaltest du dich spontan, ohne Zweck zu verfolgen. Es zeigt, was dich begeistert und wie du Genuss erlebst.',
+    question: 'Wobei blühe ich auf, und wie drücke ich meine einzigartige Lebensfreude aus?',
+  },
+  6: {
+    name: 'VI – Valetudo (Gesundheit)',
+    domain: 'Alltag, Arbeit, Gesundheit, Dienst, Routinen',
+    keywords: ['Gesundheit', 'Arbeit', 'Routine', 'Dienst'],
+    meaning: 'Das sechste Haus beschreibt tägliche Abläufe, Arbeitsdisziplin und körperliche Gesundheit. Es ist das Haus des Dienens — an anderen und an den eigenen Lebensqualitätsansprüchen. Ernährungsgewohnheiten, Rituale und der Umgang mit dem eigenen Körper stehen hier im Mittelpunkt.',
+    question: 'Wie organisiere ich meinen Alltag, und wie pflege ich meinen Körper und meine Energie?',
+  },
+  7: {
+    name: 'VII – Uxor (Partner)',
+    domain: 'Partnerschaft, enge Beziehungen, offene Gegner',
+    keywords: ['Partnerschaft', 'Ehe', 'Gegenüber', 'Vertrag'],
+    meaning: 'Das siebte Haus — der Deszendent — zeigt das, was wir suchen, wenn wir uns einem anderen öffnen. Es regiert Ehe, Lebenspartnerschaften, enge Kooperationen, aber auch offene Konfrontationen und rechtliche Auseinandersetzungen.',
+    question: 'Was suche ich in einer Partnerschaft, und welche Qualitäten projiziere ich auf andere?',
+  },
+  8: {
+    name: 'VIII – Mors (Transformation)',
+    domain: 'Wandel, Tiefenpsychologie, gemeinsame Ressourcen, Tod',
+    keywords: ['Transformation', 'Verlust', 'Macht', 'Intimität'],
+    meaning: 'Das achte Haus ist das Haus der Verwandlung — von Tod und Wiedergeburt im symbolischen Sinn. Erbschaften, gemeinsame Finanzen, Sexualität in ihrer tiefsten Form und das Ringen um Kontrolle sind seine Themen. Es lädt zur Auseinandersetzung mit dem ein, was vergeht.',
+    question: 'Was muss ich loslassen, um mich zu erneuern — und wie begegne ich dem Unvermeidlichen?',
+  },
+  9: {
+    name: 'IX – Iter (Reisen)',
+    domain: 'Philosophie, Glaube, Fernreisen, höhere Bildung',
+    keywords: ['Weisheit', 'Glaube', 'Ferne', 'Sinn'],
+    meaning: 'Das neunte Haus erweitert den Horizont: Philosophie, Weltanschauung, Religiosität und akademisches Wissen. Fernreisen — geografisch wie geistig — eröffnen neue Perspektiven. Hier sucht die Seele nach übergeordnetem Sinn und universellen Wahrheiten.',
+    question: 'Welche Überzeugungen leiten mich, und wie erweitere ich meinen Horizont?',
+  },
+  10: {
+    name: 'X – Regnum (Karriere)',
+    domain: 'Beruf, öffentliche Rolle, Ansehen, Lebensleistung',
+    keywords: ['Karriere', 'Status', 'Ruf', 'Öffentlichkeit'],
+    meaning: 'Das zehnte Haus — der Midheaven (MC) — ist der höchste Punkt im Horoskop und zeigt deine sichtbare gesellschaftliche Rolle. Berufsweg, Reputation und die Leistungen, für die du in Erinnerung bleiben willst, sind hier beheimatet.',
+    question: 'Welchen Beitrag leiste ich für die Gesellschaft — und wie möchte ich in Erinnerung bleiben?',
+  },
+  11: {
+    name: 'XI – Benefacta (Freunde)',
+    domain: 'Freundeskreis, Gemeinschaft, Visionen, Hoffnungen',
+    keywords: ['Freundschaft', 'Kollektiv', 'Ideale', 'Netzwerk'],
+    meaning: 'Das elfte Haus beschreibt Gruppen, in denen du dich als Teil eines größeren Ganzen erlebst: Freundeskreise, soziale Bewegungen, Online-Communities. Hier wohnen auch Wünsche, Lebensvisionen und die Vorstellung davon, wie eine bessere Welt aussehen könnte.',
+    question: 'In welcher Gemeinschaft finde ich Halt, und welche Zukunftsvision treibt mich an?',
+  },
+  12: {
+    name: 'XII – Carcer (Rückzug)',
+    domain: 'Verborgenes, Unterbewusstes, Rückzug, Spiritualität',
+    keywords: ['Rückzug', 'Stille', 'Verborgenes', 'Mitgefühl'],
+    meaning: 'Das zwölfte Haus liegt im Verborgenen — es zeigt das Unterbewusstsein, Muster aus vergangenen Leben (oder früher Kindheit), Isolation und spirituelle Tiefe. Einschränkungen, Krankheit und Selbstaufopferung können hier auftreten, ebenso wie mystische Begabung und tiefes Mitgefühl.',
+    question: 'Was liegt in mir verborgen — und wie finde ich Frieden mit dem, was ich nicht kontrollieren kann?',
+  },
+};
+
+const SIGN_THEMES = {
+  Aries:       { de:'Widder',      elem:'Feuer', mode:'Kardinal', key:'Initiative, Pioniergeist, direkte Kraft',     flavor:'Das Zeichen des Anfangs: Energie und Selbstdurchsetzung prägen diesen Lebensbereich. Themen werden mutig und unmittelbar angegangen — manchmal ungeduldig, stets vorwärtsgewandt.' },
+  Taurus:      { de:'Stier',       elem:'Erde',  mode:'Fix',      key:'Beständigkeit, Sinnlichkeit, materieller Aufbau', flavor:'Beharrlichkeit und Sinnlichkeit bestimmen diesen Bereich. Dinge wollen aufgebaut, genossen und gesichert werden. Ein langsames, aber solides Fundament entsteht.' },
+  Gemini:      { de:'Zwillinge',   elem:'Luft',  mode:'Veränderlich', key:'Neugier, Vielseitigkeit, Kommunikation', flavor:'Wandelbarkeit und intellektuelle Neugier prägen diesen Lebensbereich. Themen werden auf viele Arten erkundet — flexibel, kommunikativ, bisweilen sprunghaft.' },
+  Cancer:      { de:'Krebs',       elem:'Wasser',mode:'Kardinal', key:'Fürsorge, Empfindsamkeit, Heimatgefühl',      flavor:'Emotionale Tiefe und das Bedürfnis nach Sicherheit bestimmen diesen Bereich. Intuition, Pflege und das Festhalten an Vertrautem spielen eine zentrale Rolle.' },
+  Leo:         { de:'Löwe',        elem:'Feuer', mode:'Fix',      key:'Ausstrahlung, Kreativität, Selbstverwirklichung', flavor:'Wärme, Stolz und der Wunsch nach Anerkennung prägen diesen Lebensbereich. Die Energie ist großzügig und selbstausdrückend — Gestaltungsfreude steht im Vordergrund.' },
+  Virgo:       { de:'Jungfrau',    elem:'Erde',  mode:'Veränderlich', key:'Analyse, Präzision, Dienst, Perfektionismus', flavor:'Genauigkeit und der Wille zur Verbesserung bestimmen diesen Bereich. Themen werden sorgfältig geprüft, strukturiert und verfeinert — oft mit hohem Anspruch an sich selbst.' },
+  Libra:       { de:'Waage',       elem:'Luft',  mode:'Kardinal', key:'Harmonie, Gerechtigkeit, Beziehungssinn',     flavor:'Der Ausgleich zwischen Gegensätzen steht im Mittelpunkt. Ästhetik, Fairness und das Streben nach harmonischen Verbindungen prägen den Umgang mit diesem Lebensbereich.' },
+  Scorpio:     { de:'Skorpion',    elem:'Wasser',mode:'Fix',      key:'Tiefe, Transformation, Kontrolle, Intensität', flavor:'Intensität und die Bereitschaft zur Transformation kennzeichnen diesen Lebensbereich. Themen werden in ihrer tiefsten Schicht erfahren — keine Oberfläche genügt.' },
+  Sagittarius: { de:'Schütze',     elem:'Feuer', mode:'Veränderlich', key:'Freiheit, Weisheit, Expansion, Abenteuer', flavor:'Expansionsdrang und der Hunger nach Bedeutung prägen diesen Bereich. Grenzen werden überschritten, Horizonte erweitert — manchmal auf Kosten von Geduld und Detail.' },
+  Capricorn:   { de:'Steinbock',   elem:'Erde',  mode:'Kardinal', key:'Struktur, Disziplin, Ehrgeiz, Ausdauer',     flavor:'Konsequenz und langfristiger Aufbau bestimmen diesen Lebensbereich. Themen werden ernsthaft, verantwortungsbewusst und mit einem klaren Blick auf Realitäten angegangen.' },
+  Aquarius:    { de:'Wassermann',  elem:'Luft',  mode:'Fix',      key:'Innovation, Kollektiv, Unabhängigkeit, Ideale', flavor:'Unabhängigkeit und das Streben nach dem Unkonventionellen prägen diesen Bereich. Themen werden mit Distanz und Originalität betrachtet — das Kollektive steht über dem Persönlichen.' },
+  Pisces:      { de:'Fische',      elem:'Wasser',mode:'Veränderlich', key:'Empathie, Hingabe, Auflösung, Spiritualität', flavor:'Grenzenlosigkeit und tiefes Mitgefühl bestimmen diesen Lebensbereich. Themen fließen ineinander — die Unterscheidung zwischen sich selbst und anderen kann schwerfallen, ebenso wie Abgrenzen.' },
+};
+
+const ELEM_SIGN_COLORS = {
+  Feuer: '#f97316', Erde: '#eab308', Luft: '#60a5fa', Wasser: '#38bdf8',
+};
+
+function generateSignInHouseText(houseNum, signName) {
+  const hd = HOUSE_DETAILS[houseNum];
+  const st = SIGN_THEMES[signName];
+  if (!hd || !st) return '';
+  return `${st.de} auf dem ${houseNum}. Haus-Aszendenten bedeutet: ${st.flavor} Im Kontext dieses Hauses — das ${hd.domain.toLowerCase()} berührt — ${hd.meaning.charAt(0).toLowerCase()}${hd.meaning.slice(1)} Das Zusammenspiel von ${st.de}s ${st.mode}er ${st.elem}-Energie mit den Themen des ${houseNum}. Hauses legt nahe: Hier wirkst du am kraftvollsten, wenn du ${st.key.toLowerCase()} als Ressource nutzt.`;
+}
+
 // ── Houses ────────────────────────────────────────────────────────────────
 function renderHouses(western) {
   // FuFirE: houses is {"1": 50.26, "2": 76.31, ...} — cusp longitudes keyed by house number
@@ -913,21 +1110,58 @@ function renderHouses(western) {
   const card = $('houses-card');
   if (!houseList.length) { card.classList.add('hidden'); return; }
   card.classList.remove('hidden');
-  const tbody = $('houses-body');
-  tbody.innerHTML = '';
-  houseList.slice(0, 12).forEach(house => {
+
+  const grid = $('houses-grid');
+  grid.innerHTML = '';
+
+  houseList.slice(0, 12).forEach((house, idx) => {
     const num = house.number;
     const cusp = house.cusp;
     const sign = house.sign || signFromLon(cusp);
     const within = house.degree_in_sign ?? (cusp % 30);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="font-family:'Space Mono',monospace;font-weight:700;color:var(--accent)">${num}</td>
-      <td style="font-size:12px;color:var(--muted)">${HOUSE_NAMES[num] || ''}</td>
-      <td>${SIGN_SYMBOLS[sign] || ''} ${sign}</td>
-      <td style="font-family:'Space Mono',monospace">${Number(within).toFixed(1)}°</td>
+    const hd = HOUSE_DETAILS[num] || { name: HOUSE_NAMES[num] || `Haus ${num}`, domain: '', keywords: [], meaning: '', question: '' };
+    const st = SIGN_THEMES[sign] || null;
+    const sym = SIGN_SYMBOLS[sign] || '';
+    const isAngular = [1,4,7,10].includes(num);
+    const elemColor = st ? (ELEM_SIGN_COLORS[st.elem] || 'var(--muted)') : 'var(--muted)';
+    const interpText = generateSignInHouseText(num, sign);
+
+    const houseCard = document.createElement('div');
+    houseCard.className = 'house-card' + (idx === 0 ? ' open' : '');
+    houseCard.innerHTML = `
+      <div class="house-header">
+        <div class="house-num" style="${isAngular ? 'color:var(--accent2);background:rgba(167,139,250,.12)' : ''}">${num}</div>
+        <div class="house-header-text">
+          <div class="house-name">${hd.name}</div>
+          <div class="house-sign-row">
+            <span class="house-sign-sym" style="color:${elemColor}">${sym}</span>
+            <span class="house-sign-name">${st ? st.de : sign}</span>
+            <span class="house-deg">${Number(within).toFixed(1)}°</span>
+            ${st ? `<span style="font-size:10px;color:var(--muted);margin-left:2px">${st.elem} · ${st.mode}</span>` : ''}
+          </div>
+        </div>
+        <span class="house-chevron">▼</span>
+      </div>
+      <div class="house-body">
+        ${st ? `<div class="sign-meta">
+          <span>${sym} ${st.de}</span>
+          <span>${st.elem}</span>
+          <span>${st.mode}</span>
+          ${st.key.split(', ').map(k => `<span>${k}</span>`).join('')}
+        </div>` : ''}
+        <div class="house-domain">
+          ${hd.keywords.map(k => `<span class="kw-pill">${k}</span>`).join('')}
+        </div>
+        <div class="house-meaning">${hd.meaning}</div>
+        ${interpText ? `<div class="house-interp">${interpText}</div>` : ''}
+        ${hd.question ? `<div class="house-question">✦ ${hd.question}</div>` : ''}
+      </div>
     `;
-    tbody.appendChild(tr);
+
+    houseCard.querySelector('.house-header').addEventListener('click', () => {
+      houseCard.classList.toggle('open');
+    });
+    grid.appendChild(houseCard);
   });
 }
 
