@@ -48,6 +48,10 @@ test('normalizeAzodiacResult produces stable ViewModel shape', () => {
 
   // Meta version stamp
   assert.equal(vm._meta.view_model_version, '1');
+
+  // fetched_at — ISO timestamp
+  assert.ok(typeof vm._meta.fetched_at === 'string', 'fetched_at must be a string');
+  assert.doesNotThrow(() => new Date(vm._meta.fetched_at), 'fetched_at must be valid ISO date');
 });
 
 test('normalizeAzodiacResult handles missing subsections gracefully', () => {

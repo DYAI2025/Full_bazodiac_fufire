@@ -257,6 +257,7 @@ export function normalizeAzodiacResult(raw) {
     _meta: {
       ...meta,
       view_model_version: '1',
+      fetched_at: new Date().toISOString(),
     },
   };
 }
