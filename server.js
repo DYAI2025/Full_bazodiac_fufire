@@ -234,12 +234,28 @@ export function normalizeAzodiacResult(raw) {
   const baziVec    = normalizeVector(vecs.bazi_pillars    ?? vecs.bazi);
   const fusionVec  = normalizeVector(vecs.fusion ?? vecs.fused);
 
+  // Coherence index: FuFirE returns harmony_index: { harmony_index: 0.73, cosine_similarity: ... }
+  // Accept that shape as well as the future flat field names.
+  const hi = f.harmony_index;
+  const coherenceIndex = f.coherence_index
+    ?? (hi && typeof hi === 'object' ? (hi.harmony_index ?? hi.cosine_similarity ?? null) : null)
+    ?? (typeof hi === 'number' ? hi : null)
+    ?? f.harmony
+    ?? f.harmony_score
+    ?? null;
+
+  // Harmony interpretation: present in FuFirE as harmony_index.interpretation
+  const harmonyInterpretation = hi?.interpretation ?? '';
+
   return {
     western: {
       bodies,
-      houses:    Array.isArray(w.houses)  ? w.houses  : [],
+      // Pass houses through as-is — frontend handles both object {"1":50.26} and array forms
+      houses:    w.houses  ?? [],
       aspects:   Array.isArray(w.aspects) ? w.aspects : [],
       ascendant: w.ascendant ?? null,
+      // Pass angles through for Ascendant extraction (FuFirE: angles.Ascendant)
+      angles:    w.angles   ?? null,
     },
     bazi: {
       pillars,
@@ -251,8 +267,8 @@ export function normalizeAzodiacResult(raw) {
         bazi_pillars:    baziVec,
         ...(Object.keys(fusionVec).length ? { fusion: fusionVec } : {}),
       },
-      coherence_index:       f.coherence_index ?? f.harmony ?? f.harmony_score ?? null,
-      fusion_interpretation: f.fusion_interpretation ?? f.interpretation ?? '',
+      coherence_index:       typeof coherenceIndex === 'number' ? coherenceIndex : null,
+      fusion_interpretation: [harmonyInterpretation, f.fusion_interpretation ?? f.interpretation ?? ''].filter(Boolean).join('\n\n'),
     },
     _meta: {
       ...meta,
@@ -298,9 +314,12 @@ async function orchestrateChart(rawBody) {
         upstream_status: { western: w.status, bazi: b.status, fusion: f.status },
       },
     };
+    // NOTE: /chart returns the raw FuFirE response for the legacy index.html frontend
+    // which reads field names in the original API format (harmony_index, angles, etc.).
+    // The ViewModel normalizer is applied only by /api/azodiac/profile (orchestrateFullProfile).
     return {
       httpStatus: allOk ? 200 : 502,
-      body: normalizeAzodiacResult(rawResult),
+      body: rawResult,
     };
   } finally {
     clearTimeout(timer);

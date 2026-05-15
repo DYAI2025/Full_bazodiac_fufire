@@ -79,6 +79,28 @@ test('normalizePillar derives hidden_stems from branch when API omits them', () 
   assert.equal(hs[0].stem, '癸'); // Gui — Yin-Wasser, Hauptstamm der Ratte
 });
 
+test('normalizeAzodiacResult extracts coherence_index from FuFirE harmony_index nested shape', () => {
+  // FuFirE actual response: fusion.harmony_index = { harmony_index: 0.7352, interpretation: "...", cosine_similarity: 0.72 }
+  const vm = normalizeAzodiacResult({
+    western: null, bazi: null,
+    fusion: {
+      harmony_index: {
+        harmony_index: 0.7352,
+        interpretation: 'Hohe Resonanz zwischen westlichem und östlichem System.',
+        cosine_similarity: 0.72,
+      },
+    },
+    _meta: {},
+  });
+
+  assert.equal(typeof vm.fusion.coherence_index, 'number', 'coherence_index must be a number');
+  assert.ok(Math.abs(vm.fusion.coherence_index - 0.7352) < 0.0001, 'coherence_index must match harmony_index.harmony_index');
+  assert.ok(
+    vm.fusion.fusion_interpretation.includes('Hohe Resonanz'),
+    'fusion_interpretation must include harmony_index.interpretation',
+  );
+});
+
 test('normalizePillar keeps API-supplied hidden_stems unchanged', () => {
   const vm = normalizeAzodiacResult({
     western: null, fusion: null,
