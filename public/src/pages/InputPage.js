@@ -95,6 +95,8 @@ export function InputPage(app, { onResult }) {
       location: selectedPlace.display,
     };
 
+    sessionStorage.setItem('azodiac_birth_input', JSON.stringify(input));
+
     onResult?.(res.data);
   });
 }

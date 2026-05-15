@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateProfile, geocodePlace, getTransitNow, getTransitTimeline } from '../public/src/api/client.js';
+import { calculateProfile, geocodePlace, getTransitNow, getTransitTimeline, getDailyExperience } from '../public/src/api/client.js';
 
 // Helpers to mock and restore globalThis.fetch
 function withFetch(mockFn, fn) {
@@ -80,5 +80,21 @@ test('getTransitTimeline returns envelope with days array', () =>
       assert.equal(r.ok, true);
       assert.ok(Array.isArray(r.data.days));
       assert.equal(r.data.days.length, 1);
+    },
+  ));
+
+test('getDailyExperience sends birth input and returns daily envelope', () =>
+  withFetch(
+    async (url, opts) => {
+      assert.ok(url.includes('/api/azodiac/daily'));
+      assert.equal(opts.method, 'POST');
+      const body = JSON.parse(opts.body);
+      assert.ok(body.date);
+      return { ok: true, status: 200, json: async () => ({ date: '2026-05-16', western: {}, eastern: {}, fusion: {} }) };
+    },
+    async () => {
+      const r = await getDailyExperience({ date: '1990-03-15', lat: 48.0, lon: 11.0, tz: 'Europe/Berlin' });
+      assert.equal(r.ok, true);
+      assert.ok(r.data.date);
     },
   ));

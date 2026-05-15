@@ -53,6 +53,10 @@ export async function getTransitTimeline() {
   return request('GET', '/transit/timeline');
 }
 
+export async function getDailyExperience(birthInput) {
+  return request('POST', '/api/azodiac/daily', birthInput);
+}
+
 export function noFakeDataGuard(data, label = '') {
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'development') return;
   const DUMMY_SIGNATURES = ['Lorem', 'dummy', 'fake', 'random', 'placeholder', 'test123'];
