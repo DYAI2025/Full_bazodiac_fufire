@@ -210,6 +210,88 @@
     .zone-development { background: rgba(124,58,237,.15); color: var(--accent2); }
     .zone-neutral { background: rgba(100,116,139,.15); color: var(--muted); }
 
+    /* ── Transformation Card ── */
+    .transform-layout {
+      display: grid; grid-template-columns: 1fr 60px 1fr; gap: 16px; align-items: start;
+    }
+    @media (max-width: 700px) { .transform-layout { grid-template-columns: 1fr; } }
+    .planet-row-tr {
+      display: grid;
+      grid-template-columns: 22px 84px 1fr 56px;
+      align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 8px;
+      border: 1px solid transparent;
+      transition: opacity .25s, background .25s, border-color .25s;
+      opacity: .3; font-size: 12px;
+    }
+    .planet-row-tr.active {
+      opacity: 1; background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08);
+    }
+    .planet-row-tr.pulse { animation: trPulse .5s ease-out; }
+    @keyframes trPulse {
+      0%  { box-shadow: 0 0 0 0 rgba(124,140,255,.5); }
+      50% { box-shadow: 0 0 0 8px rgba(124,140,255,0); }
+      100%{ box-shadow: none; }
+    }
+    .elem-badge-sm {
+      font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; display: inline-block;
+    }
+    .tr-arrow-col {
+      display: flex; flex-direction: column; align-items: center;
+      padding-top: 12px; gap: 4px; color: var(--muted);
+    }
+    .tr-arrow-line { width: 1px; flex: 1; background: var(--border); min-height: 20px; }
+    .accum-bar-row { margin-bottom: 10px; }
+    .accum-bar-row .bar-label {
+      display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;
+    }
+    .accum-track {
+      height: 14px; background: var(--panel2); border-radius: 999px;
+      overflow: hidden; border: 1px solid var(--border);
+    }
+    .accum-fill { height: 100%; border-radius: 999px; width: 0%; transition: width .4s ease-out; }
+    .accum-planets { font-size: 10px; color: var(--muted); margin-top: 2px; min-height: 14px; }
+    .transform-note {
+      font-size: 11px; color: var(--muted); line-height: 1.5;
+      background: rgba(255,255,255,.03); border-radius: 8px;
+      padding: 10px; margin-top: 12px; border: 1px solid var(--border);
+    }
+
+    /* ── Comparison Card ── */
+    .cmp-block { margin-bottom: 18px; }
+    .cmp-block:last-child { margin-bottom: 0; }
+    .cmp-point-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+    }
+    .cmp-point-sym {
+      font-size: 22px; width: 40px; height: 40px; display: flex;
+      align-items: center; justify-content: center;
+      background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .cmp-point-info { min-width: 0; }
+    .cmp-point-name { font-size: 13px; font-weight: 600; }
+    .cmp-point-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .cmp-pillars-row {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 6px;
+    }
+    @media (max-width: 600px) { .cmp-pillars-row { grid-template-columns: 1fr 1fr; } }
+    .cmp-pillar-card {
+      border: 2px solid var(--border); border-radius: 10px; padding: 10px 8px;
+      text-align: center; transition: border-color .2s, background .2s; position: relative;
+    }
+    .cmp-pillar-card.best { border-color: var(--ok); background: rgba(52,211,153,.07); }
+    .cmp-pillar-card.weak { border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.04); }
+    .cmp-pillar-key { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+    .cmp-pillar-stem { font-size: 22px; font-weight: 700; line-height: 1; }
+    .cmp-pillar-elem { font-size: 11px; margin-top: 4px; }
+    .cmp-rel-label { font-size: 10px; margin-top: 5px; }
+    .affinity-mini { height: 3px; border-radius: 999px; background: var(--border); overflow: hidden; margin-top: 5px; }
+    .affinity-mini-fill { height: 100%; border-radius: 999px; }
+    .cmp-divider {
+      border: none; border-top: 1px solid var(--border); margin: 16px 0;
+    }
+
     /* ── House Cards ── */
     .houses-grid { display: grid; gap: 10px; }
     .house-card {
@@ -395,6 +477,41 @@
           <div class="pillars-grid" id="pillars-grid"></div>
         </div>
 
+        <!-- Western ↔ BaZi Resonanz -->
+        <div class="card" style="margin-bottom:16px" id="comparison-card">
+          <div class="card-title">Resonanz — Sonne · Mond · Aszendent ↔ BaZi Säulen</div>
+          <div id="comparison-content"></div>
+        </div>
+
+        <!-- Planet → WuXing Transformation -->
+        <div class="card" style="margin-bottom:16px" id="transform-card">
+          <div class="card-title">Planeten → Wu-Xing Transformation</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+            Jeder Planet trägt — unabhängig von seinem Tierkreiszeichen — ein eigenes Wu-Xing-Element. Die Summe aller Planetengewichte ergibt nach Normalisierung den westlichen Wu-Xing-Vektor.
+          </p>
+          <div style="margin-bottom:14px">
+            <button class="btn btn-primary" id="transform-btn" style="width:auto;padding:9px 18px;font-size:13px">
+              ▶ Transformation animieren
+            </button>
+          </div>
+          <div class="transform-layout">
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">Planeten</div>
+              <div id="transform-planets"></div>
+            </div>
+            <div class="tr-arrow-col">
+              <div class="tr-arrow-line"></div>
+              <span style="font-size:16px">→</span>
+              <div class="tr-arrow-line"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">Wu-Xing Akkumulation</div>
+              <div id="transform-bars"></div>
+            </div>
+          </div>
+          <div class="transform-note" id="transform-note" style="display:none"></div>
+        </div>
+
         <!-- WuXing Comparison -->
         <div class="two-col">
           <div class="card">
@@ -514,6 +631,8 @@ async function loadConfig() {
     $('hero-dot').className = 'dot bad';
     $('hero-status').textContent = 'Verbindung fehlgeschlagen';
   }
+  // Pre-load Wu-Xing planet mapping for transformation visualization
+  loadWuxingInfo();
 }
 
 // ── Geocoder ──────────────────────────────────────────────────────────────
@@ -605,6 +724,8 @@ function renderAll(data) {
   renderMetrics(western, bazi, fusion);
   renderWheel(western);
   renderPillars(bazi);
+  renderComparison(western, bazi);
+  renderTransformation(western, fusion);
   renderWuXingBars(fusion);
   renderFusionText(fusion);
   renderAspects(western);
@@ -1201,6 +1322,283 @@ function renderPlanets(western) {
   if (!sorted.length) {
     tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Keine Planetendaten.</td></tr>';
   }
+}
+
+// ── WuXing Info (planet→element mapping from API) ─────────────────────────
+let WUXING_PLANET_MAP = null;
+// Fallback if /info/wuxing unavailable — common FuFirE planet mapping
+const PLANET_WUXING_FALLBACK = {
+  Sun:'Feuer', Moon:'Wasser', Mercury:'Holz', Venus:'Metall', Mars:'Feuer',
+  Jupiter:'Holz', Saturn:'Erde', Uranus:'Holz', Neptune:'Wasser', Pluto:'Wasser',
+  'North Node':'Holz', 'South Node':'Metall', Chiron:'Erde', Lilith:'Wasser',
+};
+
+async function loadWuxingInfo() {
+  try {
+    const res = await fetch('/api/fufire/info/wuxing');
+    if (!res.ok) return;
+    const data = await res.json();
+    // Flexibly parse various response shapes
+    const raw = data.planet_mapping || data.planets || data.mapping || data.elements || data;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const parsed = {};
+      for (const [k, v] of Object.entries(raw)) {
+        const elem = typeof v === 'string' ? v : (v?.element || v?.wu_xing || v?.wuxing || '');
+        const de = ELEM_DE[elem.toLowerCase()] || elem;
+        if (de && ELEMENTS.includes(de)) parsed[k] = de;
+      }
+      if (Object.keys(parsed).length >= 5) WUXING_PLANET_MAP = parsed;
+    }
+  } catch {}
+}
+
+function getPlanetWuXing(name) {
+  const m = WUXING_PLANET_MAP || PLANET_WUXING_FALLBACK;
+  return m[name] || null;
+}
+
+// ── Planet → Wu-Xing Transformation ───────────────────────────────────────
+function renderTransformation(western, fusion) {
+  const card = $('transform-card');
+  const bodies = western.bodies || {};
+  const PLANET_ORDER = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','North Node','Chiron'];
+  const planets = PLANET_ORDER.filter(n => bodies[n]).map(n => {
+    const b = bodies[n];
+    const lon = Number(b.longitude ?? b.lon ?? 0);
+    const signIdx = b.zodiac_sign ?? signIdxFromLon(lon);
+    const sign = ZODIAC_NAMES[signIdx] || signFromLon(lon);
+    return { name: n, sign, wuXing: getPlanetWuXing(n), retro: b.is_retrograde || b.retrograde };
+  }).filter(p => p.wuXing);
+
+  if (!planets.length) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+
+  // Actual fusion vector for final accurate display
+  const actualVec = (() => {
+    const v = (fusion?.wu_xing_vectors?.western_planets) || (fusion?.vectors?.western_planets) || (fusion?.vectors?.western);
+    if (!v) return null;
+    const r = {};
+    for (const [k, val] of Object.entries(v)) { const de = ELEM_DE[k.toLowerCase()]; if (de) r[de] = Number(val); }
+    return Object.keys(r).length ? r : null;
+  })();
+
+  // Build planet rows
+  const grid = $('transform-planets');
+  grid.innerHTML = '';
+  planets.forEach((p, i) => {
+    const sym = PLANET_SYMBOLS[p.name] || p.name.substring(0,2);
+    const pColor = PLANET_COLORS[p.name] || '#94a3b8';
+    const elemColor = ELEM_COLORS[p.wuXing] || 'var(--muted)';
+    const row = document.createElement('div');
+    row.className = 'planet-row-tr';
+    row.id = `tr-p-${i}`;
+    row.innerHTML = `
+      <span style="color:${pColor};font-size:14px">${sym}</span>
+      <span>${p.name}</span>
+      <span style="color:var(--muted)">${SIGN_SYMBOLS[p.sign]||''} ${p.sign}</span>
+      <span class="elem-badge-sm" style="background:${elemColor}22;color:${elemColor};border:1px solid ${elemColor}44">${p.wuXing}</span>
+    `;
+    grid.appendChild(row);
+  });
+
+  // Build accumulation bars
+  const barsDiv = $('transform-bars');
+  barsDiv.innerHTML = '';
+  ELEMENTS.forEach(elem => {
+    const elemColor = ELEM_COLORS[elem] || 'var(--muted)';
+    const wrap = document.createElement('div');
+    wrap.className = 'accum-bar-row';
+    wrap.innerHTML = `
+      <div class="bar-label">
+        <strong style="color:${elemColor};font-size:12px">${elem}</strong>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)" id="tr-pct-${elem}">—</span>
+      </div>
+      <div class="accum-track">
+        <div class="accum-fill" id="tr-bar-${elem}" style="background:${elemColor}"></div>
+      </div>
+      <div class="accum-planets" id="tr-pl-${elem}"></div>
+    `;
+    barsDiv.appendChild(wrap);
+  });
+
+  // Note about data source
+  const noteDiv = $('transform-note');
+  if (WUXING_PLANET_MAP) {
+    noteDiv.textContent = 'Planet-zu-Element-Mapping: live von FuFirE /info/wuxing API.';
+    noteDiv.style.display = '';
+  } else {
+    noteDiv.textContent = 'Planet-zu-Element-Mapping: Fallback-Tabelle (API /info/wuxing nicht erreichbar). Prozente aus Fusion-Vektor sobald Berechnung abgeschlossen.';
+    noteDiv.style.display = '';
+  }
+
+  // Store for animation
+  $('transform-btn')._planets = planets;
+  $('transform-btn')._actualVec = actualVec;
+  $('transform-btn').disabled = false;
+  $('transform-btn').textContent = '▶ Transformation animieren';
+}
+
+$('transform-btn').addEventListener('click', function() {
+  const planets = this._planets;
+  const actualVec = this._actualVec;
+  if (!planets) return;
+  this.disabled = true;
+  this.textContent = '⟳ Animiert …';
+
+  // Reset state
+  const planetsByElem = {};
+  ELEMENTS.forEach(e => {
+    planetsByElem[e] = [];
+    const bar = $(`tr-bar-${e}`); if (bar) bar.style.width = '0%';
+    const pct = $(`tr-pct-${e}`); if (pct) pct.textContent = '—';
+    const pl = $(`tr-pl-${e}`);   if (pl)  pl.textContent = '';
+  });
+  document.querySelectorAll('.planet-row-tr').forEach(r => {
+    r.classList.remove('active','pulse'); r.style.opacity = '.3';
+  });
+
+  const total = planets.length || 1;
+  planets.forEach((p, i) => {
+    setTimeout(() => {
+      const row = $(`tr-p-${i}`);
+      if (row) { row.style.opacity = '1'; row.classList.add('active','pulse'); }
+      planetsByElem[p.wuXing].push(PLANET_SYMBOLS[p.name] || p.name);
+
+      // Incremental bar (count-based until we have actual vector)
+      ELEMENTS.forEach(elem => {
+        const bar = $(`tr-bar-${elem}`);
+        const pct = $(`tr-pct-${elem}`);
+        const pl  = $(`tr-pl-${elem}`);
+        const count = planetsByElem[elem].length;
+        if (bar) bar.style.width = `${(count / total) * 100}%`;
+        if (pct) pct.textContent = `${count}/${total}`;
+        if (pl)  pl.textContent = planetsByElem[elem].join(' ');
+      });
+    }, i * 380);
+  });
+
+  // After all planets: snap to actual normalized values
+  setTimeout(() => {
+    if (actualVec) {
+      ELEMENTS.forEach(elem => {
+        const bar = $(`tr-bar-${elem}`);
+        const pct = $(`tr-pct-${elem}`);
+        if (bar) bar.style.width = `${(actualVec[elem] || 0) * 100}%`;
+        if (pct) pct.textContent = `${((actualVec[elem] || 0) * 100).toFixed(1)}%`;
+      });
+    }
+    this.disabled = false;
+    this.textContent = '↺ Nochmal animieren';
+  }, planets.length * 380 + 500);
+});
+
+// ── Western ↔ BaZi Resonanz Comparison ───────────────────────────────────
+const WUXING_PRODUCTIVE = {Holz:'Feuer', Feuer:'Erde', Erde:'Metall', Metall:'Wasser', Wasser:'Holz'};
+const WUXING_CONSUMING  = {Feuer:'Holz', Erde:'Feuer', Metall:'Erde', Wasser:'Metall', Holz:'Wasser'};
+const WUXING_CONTROLS   = {Holz:'Erde', Erde:'Wasser', Wasser:'Feuer', Feuer:'Metall', Metall:'Holz'};
+const WUXING_CONTROLLED = {Erde:'Holz', Wasser:'Erde', Feuer:'Wasser', Metall:'Feuer', Holz:'Metall'};
+
+function elementAffinity(a, b) {
+  if (!a || !b) return { score:0, label:'—', color:'var(--muted)' };
+  if (a === b)                        return { score:1.00, label:'Identisch ✦',      color:'var(--ok)' };
+  if (WUXING_PRODUCTIVE[a] === b)     return { score:0.80, label:'Nährend (A→B)',    color:'#34d399' };
+  if (WUXING_CONSUMING[a]  === b)     return { score:0.70, label:'Gespeist (B→A)',   color:'#60a5fa' };
+  if (WUXING_CONTROLS[a]   === b)     return { score:0.35, label:'Kontrolliert A⊃B', color:'var(--warn)' };
+  if (WUXING_CONTROLLED[a] === b)     return { score:0.25, label:'Kontrolliert B⊃A', color:'var(--bad)' };
+  return { score:0.50, label:'Neutral', color:'var(--muted)' };
+}
+
+// Air signs: approximate via ruling planet's traditional Wu-Xing affinity
+const SIGN_TO_WUXING_APPROX = {
+  Aries:'Feuer', Leo:'Feuer', Sagittarius:'Feuer',
+  Taurus:'Erde', Virgo:'Erde', Capricorn:'Erde',
+  Gemini:'Holz', Libra:'Holz', Aquarius:'Metall',
+  Cancer:'Wasser', Scorpio:'Wasser', Pisces:'Wasser',
+};
+
+function renderComparison(western, bazi) {
+  const card = $('comparison-card');
+  const bodies = western.bodies || {};
+  const pillars = bazi.pillars || {};
+  const PILLAR_ORDER = ['year','month','day','hour'];
+
+  const pillarData = PILLAR_ORDER.map(key => {
+    const p = pillars[key];
+    if (!p) return null;
+    const elemRaw = p.element || '';
+    const elemDE = ELEM_DE[elemRaw.toLowerCase()] || elemRaw;
+    return { key, label: PILLAR_LABELS[key]||key, stamm: p.stamm || p.stem || '?', zweig: p.zweig || '?', elem: elemDE };
+  }).filter(Boolean);
+
+  if (!pillarData.length) { card.classList.add('hidden'); return; }
+
+  const ascLon  = extractAscLon(western);
+  const ascSign = signFromLon(ascLon);
+
+  function getSignFromBody(name) {
+    const b = bodies[name];
+    if (!b) return null;
+    const lon = Number(b.longitude ?? b.lon ?? 0);
+    return ZODIAC_NAMES[b.zodiac_sign ?? signIdxFromLon(lon)] || signFromLon(lon);
+  }
+
+  const sunSign  = getSignFromBody('Sun');
+  const moonSign = getSignFromBody('Moon');
+
+  const points = [
+    { name:'Sonne ☉',     sym:'☉', sign:sunSign,  wuXing:getPlanetWuXing('Sun'),  color:PLANET_COLORS.Sun,  note:'Direkt via Planeten-Mapping' },
+    { name:'Mond ☽',      sym:'☽', sign:moonSign, wuXing:getPlanetWuXing('Moon'), color:PLANET_COLORS.Moon, note:'Direkt via Planeten-Mapping' },
+    { name:'Aszendent AC', sym:'AC',sign:ascSign,  wuXing:SIGN_TO_WUXING_APPROX[ascSign]||null, color:'#e2e8f0', note:'Approximation via Zeichen-Element' },
+  ].filter(p => p.sign && p.wuXing);
+
+  if (!points.length) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+
+  const container = $('comparison-content');
+  container.innerHTML = '';
+
+  points.forEach((point, pi) => {
+    const elemColor = ELEM_COLORS[point.wuXing] || 'var(--muted)';
+
+    // Score all pillars, sort by affinity descending
+    const scored = pillarData.map(pil => ({
+      ...pil, aff: elementAffinity(point.wuXing, pil.elem)
+    })).sort((a,b) => b.aff.score - a.aff.score);
+
+    const block = document.createElement('div');
+    block.className = 'cmp-block';
+    block.innerHTML = `
+      ${pi > 0 ? '<hr class="cmp-divider">' : ''}
+      <div class="cmp-point-header">
+        <div class="cmp-point-sym" style="color:${point.color}">${point.sym}</div>
+        <div class="cmp-point-info">
+          <div class="cmp-point-name">${point.name}
+            <span style="margin-left:8px;font-size:12px;color:var(--muted);font-weight:400">${SIGN_SYMBOLS[point.sign]||''} ${point.sign}</span>
+            <span class="elem-badge-sm" style="margin-left:6px;background:${elemColor}22;color:${elemColor};border:1px solid ${elemColor}44">${point.wuXing}</span>
+          </div>
+          <div class="cmp-point-sub">${point.note}</div>
+        </div>
+      </div>
+      <div class="cmp-pillars-row">
+        ${scored.map((pil, i) => {
+          const pilColor = ELEM_COLORS[pil.elem] || 'var(--muted)';
+          const rank = i === 0 ? 'best' : (i === scored.length - 1 ? 'weak' : '');
+          const rankLabel = i === 0 ? '★ Höchste Resonanz' : (i === scored.length - 1 ? '△ Höchste Spannung' : '');
+          return `
+            <div class="cmp-pillar-card ${rank}">
+              <div class="cmp-pillar-key">${pil.label.split(' ')[0]}</div>
+              <div class="cmp-pillar-stem" style="color:${pilColor}">${pil.stamm}</div>
+              <div class="cmp-pillar-elem" style="color:${pilColor}">${pil.elem}</div>
+              <div class="affinity-mini"><div class="affinity-mini-fill" style="width:${pil.aff.score*100}%;background:${pil.aff.color}"></div></div>
+              <div class="cmp-rel-label" style="color:${pil.aff.color}">${pil.aff.label}</div>
+              ${rankLabel ? `<div style="font-size:9px;color:var(--muted);margin-top:3px">${rankLabel}</div>` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    container.appendChild(block);
+  });
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
