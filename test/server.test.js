@@ -31,6 +31,8 @@ test('health endpoint exposes Railway and explicit FuFirE v3 endpoint catalog', 
       'calculate/fusion',
       'calculate/wuxing',
       'info/wuxing',
+      'transit/now',
+      'transit/timeline',
     ]);
     assert.deepEqual(
       json.endpoints.map(({ method, path }) => `${method} ${path}`),
@@ -41,6 +43,8 @@ test('health endpoint exposes Railway and explicit FuFirE v3 endpoint catalog', 
         'POST /calculate/fusion',
         'POST /calculate/wuxing',
         'GET /info/wuxing',
+        'GET /transit/now',
+        'GET /transit/timeline',
       ],
     );
   });

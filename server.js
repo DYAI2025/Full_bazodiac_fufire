@@ -82,6 +82,20 @@ const FUFIRE_ENDPOINTS = [
     category: 'reference',
     description: 'Statische FuFirE-Referenz: Planet-zu-Element-Mapping.',
   },
+  {
+    method: 'GET',
+    path: '/transit/now',
+    upstreamPath: 'transit/now',
+    category: 'transit',
+    description: 'Aktuelle Transitplaneten-Positionen mit Sektor-Intensitäten (12 Häuser).',
+  },
+  {
+    method: 'GET',
+    path: '/transit/timeline',
+    upstreamPath: 'transit/timeline',
+    category: 'transit',
+    description: '7-Tage-Transitkalender: tägliche Planetenpositionen und Sektor-Intensitäten.',
+  },
 ];
 
 const ENDPOINTS_BY_PATH = new Map(FUFIRE_ENDPOINTS.map((e) => [e.path, e]));
