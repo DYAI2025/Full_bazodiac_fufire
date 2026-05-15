@@ -1,4 +1,4 @@
-import { createPersonalityProjection } from '../domain/projections.js';
+import { createPersonalityProjection, COHERENCE_FACTOR_LABEL } from '../domain/projections.js';
 import { SourceBadge }   from '../components/SourceBadge.js';
 import { ConfidenceBar } from '../components/ConfidenceBar.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
@@ -58,7 +58,7 @@ export function PersonalityPage(app, { profile, onNavigate }) {
 
   const ci           = profile?.fusion?.coherence_index;
   const hasLowCoh    = ci !== null && ci !== undefined && ci <= 0.35;
-  const coherenceFactor = proj.supportingFactors.find((f) => f.label === 'Fusions-Kohärenz');
+  const coherenceFactor = proj.supportingFactors.find((f) => f.label === COHERENCE_FACTOR_LABEL);
 
   app.innerHTML = `
     <main class="personality-page">
@@ -140,7 +140,7 @@ export function PersonalityPage(app, { profile, onNavigate }) {
   // Supporting factors (excluding coherence, already shown above)
   const supportGrid = app.querySelector('.supporting-factors');
   proj.supportingFactors
-    .filter((f) => f.label !== 'Fusions-Kohärenz')
+    .filter((f) => f.label !== COHERENCE_FACTOR_LABEL)
     .forEach((f) => supportGrid.appendChild(factorCard(f)));
 
   // Missing factors

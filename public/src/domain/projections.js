@@ -2,6 +2,8 @@
 // All functions return: { primaryFactors, supportingFactors, missingFactors, sourceTrace, confidence }
 // Rules: no LLM values, no financial advice, no diagnoses, confidence drops on missing key factors
 
+export const COHERENCE_FACTOR_LABEL = 'Fusions-Kohärenz';
+
 const SIGN_DE = {
   Aries: 'Widder', Taurus: 'Stier', Gemini: 'Zwillinge', Cancer: 'Krebs',
   Leo: 'Löwe', Virgo: 'Jungfrau', Libra: 'Waage', Scorpio: 'Skorpion',
@@ -535,7 +537,7 @@ export function createPersonalityProjection(profile) {
       ? 'Kreative Spannung — ein Kontrast und Widerspruch zwischen BaZi und westlichem Chart, der zur bewussten Integration einlädt'
       : 'Ausgewogene Mischung aus Stabilität und Entwicklung';
     proj.supportingFactors.push({
-      label: 'Fusions-Kohärenz',
+      label: COHERENCE_FACTOR_LABEL,
       value: `${Math.round(ci * 100)}% Deckungsgleichheit`,
       source: 'api_aggregated',
       endpoint: '/api/azodiac/profile',
