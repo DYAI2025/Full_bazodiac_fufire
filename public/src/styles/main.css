@@ -142,3 +142,30 @@ input:focus { border-color: var(--accent); }
 .new-calc-btn:hover { color: var(--text); border-color: var(--accent); }
 
 .missing-note { font-size: .78rem; color: var(--warn); margin-top: 8px; }
+
+/* ── DashboardPage ── */
+.dashboard-page { display: flex; flex-direction: column; gap: 40px; }
+.dash-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+.dash-section { display: flex; flex-direction: column; gap: 12px; }
+.dash-section h2 { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+.endpoint-matrix { display: flex; flex-direction: column; gap: 6px; }
+.ep-row { display: grid; grid-template-columns: 1.2rem 1fr auto; align-items: center; gap: 12px; padding: 8px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; }
+.ep-dot { font-size: 1rem; }
+.ep-ok .ep-dot { color: var(--ok); }
+.ep-missing .ep-dot { color: var(--border); }
+.ep-route { font-size: .78rem; font-family: 'Space Mono', ui-monospace, monospace; }
+.ep-status { font-size: .72rem; color: var(--muted); }
+.ep-ok .ep-status { color: var(--ok); }
+
+.json-viewer { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.json-viewer summary { padding: 10px 16px; cursor: pointer; font-size: .8rem; font-weight: 600; color: var(--muted); }
+.json-viewer summary:hover { color: var(--text); }
+.json-pre { padding: 16px; font-size: .72rem; font-family: 'Space Mono', ui-monospace, monospace; white-space: pre-wrap; word-break: break-word; overflow-x: auto; max-height: 60vh; overflow-y: auto; color: var(--text); line-height: 1.5; }
+
+.planned-list { display: flex; flex-direction: column; gap: 8px; }
+.planned-item { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 4px 12px; align-items: center; }
+.planned-label { font-weight: 700; font-size: .9rem; }
+.planned-route { font-size: .72rem; font-family: 'Space Mono', ui-monospace, monospace; color: var(--muted); }
+.planned-badge { background: var(--warn)22; color: var(--warn); border: 1px solid var(--warn)44; font-size: .65rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; white-space: nowrap; grid-row: 1; }
+.planned-note { font-size: .75rem; color: var(--muted); grid-column: 1 / -1; }

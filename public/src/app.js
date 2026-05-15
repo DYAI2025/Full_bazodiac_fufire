@@ -1,6 +1,7 @@
 import { router } from './router.js';
 import { InputPage } from './pages/InputPage.js';
-import { OverviewPage } from './pages/OverviewPage.js';
+import { OverviewPage }   from './pages/OverviewPage.js';
+import { DashboardPage }  from './pages/DashboardPage.js';
 
 let currentProfile = null;
 
@@ -16,6 +17,13 @@ router
   .register('/overview', (app) => {
     if (!currentProfile) { router.navigate('/'); return; }
     OverviewPage(app, {
+      profile: currentProfile,
+      onNavigate: (path) => router.navigate(path),
+    });
+  })
+  .register('/dashboard', (app) => {
+    if (!currentProfile) { router.navigate('/'); return; }
+    DashboardPage(app, {
       profile: currentProfile,
       onNavigate: (path) => router.navigate(path),
     });
