@@ -333,13 +333,19 @@ async function orchestrateFullProfile(rawBody) {
   const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
-    // Mandatory calls (parallel)
-    const [w, b, f, wx] = await Promise.all([
+    // Mandatory calls (parallel) — western, bazi, fusion must all succeed
+    const [w, b, f] = await Promise.all([
       callFuFire('calculate/western', payload, controller.signal),
       callFuFire('calculate/bazi',    payload, controller.signal),
       callFuFire('calculate/fusion',  payload, controller.signal),
-      callFuFire('calculate/wuxing',  payload, controller.signal),
     ]);
+
+    // Optional: wuxing standalone vector — absorb errors (fusion already carries wu-xing data)
+    let wx = { data: null, ok: false, status: 'n/a' };
+    try {
+      const r = await callFuFire('calculate/wuxing', payload, controller.signal);
+      if (r.ok) wx = r;
+    } catch { /* wuxing may not be available on all deployments */ }
 
     // Optional: wuxing reference info (GET, no body needed)
     let wuxingInfo = { data: null };
@@ -356,7 +362,7 @@ async function orchestrateFullProfile(rawBody) {
       if (r.ok) tst = r;
     } catch { /* TST endpoint may not exist */ }
 
-    const mandatoryOk = w.ok && b.ok && f.ok && wx.ok;
+    const mandatoryOk = w.ok && b.ok && f.ok;
     const rawResult = {
       western: w.data,
       bazi:    b.data,
@@ -370,9 +376,15 @@ async function orchestrateFullProfile(rawBody) {
           western: w.status,
           bazi:    b.status,
           fusion:  f.status,
-          wuxing:  wx.status,
+          wuxing:  wx.ok ? wx.status : 'n/a',
           tst:     tst.ok ? 200 : 'n/a',
           wuxing_info: wuxingInfo.data ? 200 : 'n/a',
+        },
+        // Surface upstream errors for diagnostics when mandatory calls fail
+        upstream_errors: mandatoryOk ? undefined : {
+          western: w.ok ? null : `HTTP ${w.status}`,
+          bazi:    b.ok ? null : `HTTP ${b.status}`,
+          fusion:  f.ok ? null : `HTTP ${f.status}`,
         },
       },
     };

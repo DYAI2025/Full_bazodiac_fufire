@@ -79,7 +79,12 @@ export function InputPage(app, { onResult }) {
     progress.stop();
 
     if (!res.ok || !res.data) {
-      errorEl.textContent = res.error || 'Berechnung nicht möglich — bitte erneut versuchen.';
+      // Show full diagnostic: base error + upstream_errors if present (helps debug 502)
+      const upstreamErrs = res.data?._meta?.upstream_errors;
+      const detail = upstreamErrs
+        ? ' (' + Object.entries(upstreamErrs).filter(([,v]) => v).map(([k,v]) => `${k}: ${v}`).join(', ') + ')'
+        : (res.data?.detail ? ` — ${res.data.detail}` : '');
+      errorEl.textContent = (res.error || 'Berechnung nicht möglich') + detail + ' — bitte erneut versuchen.';
       errorEl.hidden = false;
       progress.replaceWith(form);
       return;

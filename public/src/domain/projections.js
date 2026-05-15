@@ -2,6 +2,8 @@
 // All functions return: { primaryFactors, supportingFactors, missingFactors, sourceTrace, confidence }
 // Rules: no LLM values, no financial advice, no diagnoses, confidence drops on missing key factors
 
+export const COHERENCE_FACTOR_LABEL = 'Fusions-Kohärenz';
+
 const SIGN_DE = {
   Aries: 'Widder', Taurus: 'Stier', Gemini: 'Zwillinge', Cancer: 'Krebs',
   Leo: 'Löwe', Virgo: 'Jungfrau', Libra: 'Waage', Scorpio: 'Skorpion',
@@ -68,6 +70,21 @@ const SUN_CAREER = {
   Pisces: 'Kreativität, Mitgefühl und ganzheitliches Denken',
 };
 
+const SUN_IDENTITY = {
+  Aries:       'Direktheit, Mut und der Antrieb, als Erste voranzugehen',
+  Taurus:      'Geerdetheit, Beständigkeit und Freude am Sinnlichen',
+  Gemini:      'Neugier, Wandlungsfähigkeit und Liebe zur Verbindung',
+  Cancer:      'Tiefe Empathie, Fürsorge und emotionale Intuition',
+  Leo:         'Strahlkraft, Herzlichkeit und das Bedürfnis, gesehen zu werden',
+  Virgo:       'Klarheit, Präzision und der Wunsch, wirklich hilfreich zu sein',
+  Libra:       'Harmoniebedürfnis, Schönheitssinn und Fähigkeit zur Balance',
+  Scorpio:     'Intensität, Tiefgründigkeit und Lust auf Transformation',
+  Sagittarius: 'Weitsicht, Freiheitsdrang und philosophischer Geist',
+  Capricorn:   'Zuverlässigkeit, Ehrgeiz und Sinn für das Wesentliche',
+  Aquarius:    'Unabhängigkeit, visionäres Denken und Gefühl für das Kollektiv',
+  Pisces:      'Feingefühl, Mitgefühl und Zugang zur imaginativen Tiefe',
+};
+
 const SATURN_STRUCTURE = {
   Aries: 'Struktur durch Eigenverantwortung und schnelle Entscheidungen',
   Taurus: 'Ausdauer und materielle Stabilität als Fundament',
@@ -111,7 +128,13 @@ function signDE(s) { return s ? (SIGN_DE[s] || s) : null; }
 function getBody(profile, name) { return profile?.western?.bodies?.[name] || null; }
 
 function getHouseSign(profile, houseNum) {
-  return profile?.western?.houses?.[houseNum - 1]?.sign || null;
+  const houses = profile?.western?.houses;
+  if (!houses) return null;
+  // houses may be an array [{sign,...}, ...] or an object {"1":{sign,...}, ...}
+  const entry = Array.isArray(houses)
+    ? houses[houseNum - 1]
+    : houses[String(houseNum)];
+  return entry?.sign || null;
 }
 
 function getDayElement(profile) { return profile?.bazi?.pillars?.day?.element || null; }
@@ -462,7 +485,7 @@ export function createPersonalityProjection(profile) {
   if (sun?.sign) {
     proj.primaryFactors.push({
       label: `Sonne im ${signDE(sun.sign)}`,
-      value: SUN_CAREER[sun.sign] || signDE(sun.sign),
+      value: SUN_IDENTITY[sun.sign] || signDE(sun.sign),
       source: 'api',
       endpoint: '/api/azodiac/profile',
       note: 'Kern-Identität und bewusster Selbstausdruck',
@@ -514,7 +537,7 @@ export function createPersonalityProjection(profile) {
       ? 'Kreative Spannung — ein Kontrast und Widerspruch zwischen BaZi und westlichem Chart, der zur bewussten Integration einlädt'
       : 'Ausgewogene Mischung aus Stabilität und Entwicklung';
     proj.supportingFactors.push({
-      label: 'Fusions-Kohärenz',
+      label: COHERENCE_FACTOR_LABEL,
       value: `${Math.round(ci * 100)}% Deckungsgleichheit`,
       source: 'api_aggregated',
       endpoint: '/api/azodiac/profile',

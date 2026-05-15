@@ -32,8 +32,8 @@ export function DashboardPage(app, { profile, onNavigate }) {
     { label: 'western',  check: () => !!profile?.western?.bodies,        route: 'POST /calculate/western' },
     { label: 'bazi',     check: () => !!profile?.bazi?.pillars,          route: 'POST /calculate/bazi' },
     { label: 'fusion',   check: () => profile?.fusion?.coherence_index !== undefined, route: 'POST /calculate/fusion' },
-    { label: 'wuxing',   check: () => Array.isArray(profile?.wuxing?.elements), route: 'POST /calculate/wuxing' },
-    { label: 'info/wuxing', check: () => !!profile?._meta?.sources?.info_wuxing, route: 'GET /info/wuxing' },
+    { label: 'wuxing',   check: () => profile?._meta?.upstream_status?.wuxing === 200, route: 'POST /calculate/wuxing' },
+    { label: 'info/wuxing', check: () => profile?._meta?.upstream_status?.wuxing_info === 200, route: 'GET /info/wuxing' },
     { label: 'geocode',  check: () => !!profile?._inputMeta?.location,   route: 'GET /api/geocode' },
   ];
 
