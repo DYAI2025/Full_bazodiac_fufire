@@ -90,6 +90,9 @@ test('getDailyExperience sends birth input and returns daily envelope', () =>
       assert.equal(opts.method, 'POST');
       const body = JSON.parse(opts.body);
       assert.ok(body.date);
+      assert.ok(body.lat !== undefined);
+      assert.ok(body.lon !== undefined);
+      assert.ok(body.tz);
       return { ok: true, status: 200, json: async () => ({ date: '2026-05-16', western: {}, eastern: {}, fusion: {} }) };
     },
     async () => {
