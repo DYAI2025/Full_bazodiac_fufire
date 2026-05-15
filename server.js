@@ -488,38 +488,24 @@ async function orchestrateDailyExperience(rawBody) {
   const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
-    const bootstrapUrl = new URL('experience/bootstrap', getFuFireBaseUrl());
-    const bootstrapRes = await fetch(bootstrapUrl, {
-      method: 'POST',
-      headers: getFuFireHeaders(false),
-      body: JSON.stringify({ birth }),
-      signal: controller.signal,
-    });
-    if (!bootstrapRes.ok) {
-      const errText = await bootstrapRes.text();
-      return { httpStatus: 502, body: { error: 'Experience bootstrap failed', detail: errText } };
+    const bootstrapResult = await callFuFire('experience/bootstrap', { birth }, controller.signal);
+    if (!bootstrapResult.ok) {
+      return { httpStatus: 502, body: { error: 'Experience bootstrap failed', detail: bootstrapResult.data } };
     }
-    const bootstrap = await bootstrapRes.json();
+    const bootstrap = bootstrapResult.data;
     const soulprintSectors = bootstrap.soulprint_sectors || new Array(12).fill(0);
 
     const today = new Date().toISOString().split('T')[0];
-    const dailyUrl = new URL('experience/daily', getFuFireBaseUrl());
-    const dailyRes = await fetch(dailyUrl, {
-      method: 'POST',
-      headers: getFuFireHeaders(false),
-      body: JSON.stringify({
-        birth,
-        soulprint_sectors: soulprintSectors,
-        quiz_sectors: new Array(12).fill(0),
-        target_date: obj.target_date || today,
-      }),
-      signal: controller.signal,
-    });
-    if (!dailyRes.ok) {
-      const errText = await dailyRes.text();
-      return { httpStatus: 502, body: { error: 'Experience daily failed', detail: errText } };
+    const dailyResult = await callFuFire('experience/daily', {
+      birth,
+      soulprint_sectors: soulprintSectors,
+      quiz_sectors: new Array(12).fill(0),
+      target_date: obj.target_date || today,
+    }, controller.signal);
+    if (!dailyResult.ok) {
+      return { httpStatus: 502, body: { error: 'Experience daily failed', detail: dailyResult.data } };
     }
-    const daily = await dailyRes.json();
+    const daily = dailyResult.data;
 
     return {
       httpStatus: 200,
@@ -897,6 +883,7 @@ export async function handleRequest(req, res) {
       return sendJson(res, 502, {
         error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
         detail: error.message,
+        hint: 'Check FUFIRE_BASE_URL and FUFIRE_API_KEY environment variables.',
       }, requestOrigin);
     }
   }
