@@ -247,14 +247,34 @@ export function normalizeAzodiacResult(raw) {
   // Harmony interpretation: present in FuFirE as harmony_index.interpretation
   const harmonyInterpretation = hi?.interpretation ?? '';
 
+  // Ascendant sign derivation:
+  // FuFirE returns angles.Ascendant = ecliptic longitude (number, e.g. 185.34).
+  // OverviewPage expects a zodiac sign name string like "Scorpio" / "Libra".
+  // Derive from longitude if no direct sign string is available.
+  const ASC_SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                     'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  function lonToSign(lon) {
+    if (lon == null || typeof lon !== 'number') return null;
+    return ASC_SIGNS[Math.floor(((lon % 360) + 360) % 360 / 30)];
+  }
+
+  // Resolve ascendant: prefer a string (sign name or sign lookup via longitude)
+  const ascRaw = w.ascendant;
+  const ascLon = w.angles?.Ascendant
+    ?? w.angles?.ASC
+    ?? (typeof ascRaw === 'number' ? ascRaw : (ascRaw?.longitude ?? null));
+  const ascSign = (typeof ascRaw === 'string' && ascRaw.length > 1)
+    ? ascRaw                              // API already sends a name
+    : lonToSign(ascLon);                  // derive from longitude
+
   return {
     western: {
       bodies,
       // Pass houses through as-is — frontend handles both object {"1":50.26} and array forms
       houses:    w.houses  ?? [],
       aspects:   Array.isArray(w.aspects) ? w.aspects : [],
-      ascendant: w.ascendant ?? null,
-      // Pass angles through for Ascendant extraction (FuFirE: angles.Ascendant)
+      ascendant: ascSign,                 // always a sign name or null
+      // Keep raw angles for any downstream calculation (e.g. degree-in-sign)
       angles:    w.angles   ?? null,
     },
     bazi: {
