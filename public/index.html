@@ -379,6 +379,103 @@
       font-size: 11px; padding: 2px 8px; border-radius: 999px;
       border: 1px solid var(--border); color: var(--muted);
     }
+
+    /* ── Konvergenzstrom / Synthesis ── */
+    .synth-columns {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0;
+    }
+    @media (max-width: 600px) { .synth-columns { grid-template-columns: 1fr; gap: 8px; } }
+    .synth-col {
+      background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 10px 8px;
+    }
+    .synth-col-title {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted); margin-bottom: 8px; font-weight: 600;
+    }
+    .synth-source-item {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 5px; border-radius: 5px; border: 1px solid transparent;
+      transition: background .18s, border-color .18s, opacity .18s;
+      font-size: 11px; margin-bottom: 2px;
+      opacity: 0; animation: ssiAppear .35s ease-out forwards;
+    }
+    @keyframes ssiAppear {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 0.55; transform: translateY(0); }
+    }
+    .synth-source-item.highlighted {
+      opacity: 1 !important; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12);
+    }
+    .synth-source-item.dimmed { opacity: 0.1 !important; }
+    .synth-elem-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .synth-stream-wrap {
+      height: 72px; position: relative; margin: 0 16px;
+    }
+    .synth-stream-svg { width: 100%; height: 100%; overflow: visible; }
+    .synth-stream-path {
+      fill: none; stroke-linecap: round;
+      stroke-dasharray: 400; stroke-dashoffset: 400;
+      transition: stroke-dashoffset .9s cubic-bezier(.4,0,.2,1);
+    }
+    .synth-stream-path.drawn { stroke-dashoffset: 0; }
+    .synth-bubbles-wrap {
+      display: flex; flex-direction: column; align-items: center; margin-bottom: 14px;
+    }
+    .synth-bubbles {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; flex-wrap: wrap; padding: 6px 0;
+    }
+    .synth-bubble {
+      border-radius: 50%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+      transition: transform .2s cubic-bezier(.17,.67,.35,1.4), box-shadow .2s, opacity .2s;
+      transform: scale(0); opacity: 0;
+    }
+    .synth-bubble.popped { transform: scale(1); opacity: 1; }
+    .synth-bubble:hover, .synth-bubble.highlighted {
+      transform: scale(1.1) !important; box-shadow: 0 0 20px currentColor;
+    }
+    .synth-bubble.dimmed { opacity: 0.18 !important; transform: scale(0.92) !important; }
+    .synth-bubble-name { font-size: 10px; font-weight: 700; line-height: 1; }
+    .synth-bubble-pct { font-family: 'Space Mono', monospace; font-size: 9px; opacity: .75; margin-top: 1px; }
+    .synth-rel-hint { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: .03em; }
+    .synth-destillat {
+      background: rgba(255,255,255,.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; margin-top: 4px;
+      transform: translateY(16px); opacity: 0;
+      transition: transform .5s ease, opacity .5s ease;
+    }
+    .synth-destillat.visible { transform: translateY(0); opacity: 1; }
+    .synth-dom-bars { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .synth-dom-bar {
+      padding: 5px 12px; border-radius: 6px; display: flex; align-items: center;
+    }
+    .synth-interp-text {
+      font-size: 13px; line-height: 1.65; color: rgba(232,236,255,.8); margin-bottom: 10px;
+    }
+    .synth-harmony { display: flex; align-items: center; }
+    .synth-harmony-heart {
+      font-size: 18px; color: var(--bad);
+      animation: heartbeat 1.5s ease-in-out infinite;
+    }
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      14%  { transform: scale(1.18); }
+      28%  { transform: scale(1); }
+      42%  { transform: scale(1.12); }
+      56%  { transform: scale(1); }
+    }
+    .synth-harmony-val {
+      font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700;
+      color: var(--accent); margin-left: 8px;
+    }
+    .synth-approx-note {
+      font-size: 10px; color: var(--muted); margin-top: 8px; font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -475,6 +572,11 @@
         <div class="card" style="margin-bottom:16px">
           <div class="card-title">BaZi — Vier Säulen 四柱</div>
           <div class="pillars-grid" id="pillars-grid"></div>
+        </div>
+
+        <!-- Konvergenzstrom — Synthesis -->
+        <div class="card" style="margin-bottom:16px" id="synthesis-card">
+          <!-- populated by renderSynthesis() -->
         </div>
 
         <!-- Western ↔ BaZi Resonanz -->
@@ -724,6 +826,7 @@ function renderAll(data) {
   renderMetrics(western, bazi, fusion);
   renderWheel(western);
   renderPillars(bazi);
+  renderSynthesis(western, bazi, fusion);
   renderComparison(western, bazi);
   renderTransformation(western, fusion);
   renderWuXingBars(fusion);
@@ -1598,6 +1701,254 @@ function renderComparison(western, bazi) {
       </div>
     `;
     container.appendChild(block);
+  });
+}
+
+// ── Konvergenzstrom — Synthesis ───────────────────────────────────────────
+function renderSynthesis(western, bazi, fusion) {
+  const card = $('synthesis-card');
+  if (!card) return;
+
+  const bodies   = western.bodies  || {};
+  const pillars  = bazi.pillars    || {};
+  const vecs     = fusion?.wu_xing_vectors || fusion?.vectors || {};
+
+  // ── Western planets ──────────────────────────────────────────────────────
+  const PLANET_ORDER = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
+  const westernItems = PLANET_ORDER.filter(n => bodies[n]).map(n => ({
+    name: n, sym: PLANET_SYMBOLS[n] || n.substring(0,2),
+    elem: getPlanetWuXing(n), planetColor: PLANET_COLORS[n] || '#94a3b8',
+  })).filter(p => p.elem).map(p => ({ ...p, color: ELEM_COLORS[p.elem] || 'var(--muted)' }));
+
+  // ── Houses with element via sign ─────────────────────────────────────────
+  const rawH = western.houses || {};
+  const houseList = (Array.isArray(rawH) ? rawH
+    : Object.entries(rawH).map(([num,cusp]) => ({number:Number(num), cusp:Number(cusp)})).sort((a,b)=>a.number-b.number));
+  const houseItems = houseList.slice(0,12).map(h => {
+    const sign = h.sign || signFromLon(h.cusp);
+    const elem = SIGN_TO_WUXING_APPROX[sign] || null;
+    if (!elem) return null;
+    return {
+      num: h.number, sign, sym: SIGN_SYMBOLS[sign] || '', elem,
+      isAngular: [1,4,7,10].includes(h.number),
+      color: ELEM_COLORS[elem] || 'var(--muted)',
+    };
+  }).filter(Boolean);
+
+  // ── BaZi pillars ─────────────────────────────────────────────────────────
+  const ORDER4 = ['year','month','day','hour'];
+  const baziItems = ORDER4.map(key => {
+    const p = pillars[key];
+    if (!p) return null;
+    const elemRaw = p.element || '';
+    const elemDE  = ELEM_DE[elemRaw.toLowerCase()] || elemRaw;
+    return { key, label: PILLAR_LABELS[key]||key, stamm: p.stamm||p.stem||'?', elem: elemDE, color: ELEM_COLORS[elemDE]||'var(--muted)' };
+  }).filter(p => p && ELEMENTS.includes(p.elem));
+
+  // ── Fusion vector (best available) ───────────────────────────────────────
+  function avgVec(a, b) {
+    if (!a && !b) return null;
+    if (!a) return b; if (!b) return a;
+    const r = {}; ELEMENTS.forEach(e => r[e] = ((a[e]||0)+(b[e]||0))/2); return r;
+  }
+  const wVec = extractVector(vecs.western_planets || vecs.western);
+  const bVec = extractVector(vecs.bazi_pillars   || vecs.bazi);
+  const fVecRaw = vecs.fusion || vecs.fused || vecs.combined;
+  const fVec = fVecRaw ? (() => {
+    const r={};
+    for (const [k,v] of Object.entries(fVecRaw)) { const de=ELEM_DE[k.toLowerCase()]; if(de) r[de]=Number(v); }
+    return Object.keys(r).length ? r : null;
+  })() : null;
+  const fusedVec = fVec || avgVec(wVec, bVec);
+
+  // ── Destillat text ────────────────────────────────────────────────────────
+  const harmony    = extractHarmony(fusion);
+  const interpFull = fusion?.fusion_interpretation || fusion?.interpretation || '';
+  const interpShort = interpFull ? interpFull.substring(0, 240).trimEnd().replace(/\s\S*$/, '') + ' …' : '';
+  const dominantElems = fusedVec
+    ? [...ELEMENTS].sort((a,b)=>(fusedVec[b]||0)-(fusedVec[a]||0)).slice(0,3)
+    : [];
+
+  // ── Wu-Xing control pair (top dominant controlling second) ───────────────
+  let relNote = '';
+  if (dominantElems.length >= 2) {
+    const a = dominantElems[0], b = dominantElems[1];
+    if (WUXING_PRODUCTIVE[a] === b) relNote = `${a} nährt ${b}`;
+    else if (WUXING_CONTROLS[a] === b) relNote = `${a} kontrolliert ${b}`;
+    else if (WUXING_PRODUCTIVE[b] === a) relNote = `${b} nährt ${a}`;
+    else if (WUXING_CONTROLS[b] === a) relNote = `${b} kontrolliert ${a}`;
+  }
+
+  // ── Build HTML ────────────────────────────────────────────────────────────
+  card.innerHTML = `
+    <div class="card-title">Konvergenzstrom — Fusionssynthese</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">
+      Planeten, Häuser und BaZi-Säulen im gemeinsamen Wu-Xing-Strom. Hover über ein Element-Kreis, um alle Quellen zu sehen, die es tragen.
+    </p>
+
+    <div class="synth-columns">
+      <div class="synth-col" id="synth-col-w">
+        <div class="synth-col-title">Planeten</div>
+        ${westernItems.map((p,i) => `
+          <div class="synth-source-item" data-elem="${p.elem}" style="animation-delay:${i*35}ms">
+            <span style="color:${p.planetColor};font-size:13px;width:16px;text-align:center;flex-shrink:0">${p.sym}</span>
+            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+            <span class="synth-elem-dot" style="background:${p.color}"></span>
+          </div>`).join('')}
+      </div>
+
+      <div class="synth-col" id="synth-col-h">
+        <div class="synth-col-title">Häuser</div>
+        ${houseItems.map((h,i) => `
+          <div class="synth-source-item" data-elem="${h.elem}" style="animation-delay:${i*28}ms">
+            <span style="font-family:'Space Mono',monospace;font-size:10px;color:${h.isAngular?'var(--accent2)':'var(--muted)'};width:14px;text-align:center;flex-shrink:0">${h.num}</span>
+            <span style="font-size:12px;color:${h.color};width:14px;text-align:center;flex-shrink:0">${h.sym}</span>
+            <span class="synth-elem-dot" style="background:${h.color}"></span>
+          </div>`).join('')}
+      </div>
+
+      <div class="synth-col" id="synth-col-b">
+        <div class="synth-col-title">BaZi 四柱</div>
+        ${baziItems.map((p,i) => `
+          <div class="synth-source-item" data-elem="${p.elem}" style="animation-delay:${i*55}ms">
+            <span style="font-size:20px;font-weight:800;color:${p.color};line-height:1;flex-shrink:0">${p.stamm}</span>
+            <span style="font-size:10px;color:var(--muted);flex:1;padding-left:4px">${p.label.split(' ')[0]}</span>
+            <span class="synth-elem-dot" style="background:${p.color}"></span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- animated convergence stream -->
+    <div class="synth-stream-wrap">
+      <svg id="synth-stream-svg" class="synth-stream-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <!-- element bubbles -->
+    <div class="synth-bubbles-wrap">
+      <div class="synth-bubbles" id="synth-bubbles">
+        ${ELEMENTS.map((elem,i) => {
+          const strength = fusedVec ? (fusedVec[elem]||0) : 0.18;
+          const size = Math.round(36 + strength * 100);
+          const color = ELEM_COLORS[elem];
+          return `<div class="synth-bubble" data-elem="${elem}"
+              style="width:${size}px;height:${size}px;border:2px solid ${color};background:${color}1a;color:${color};animation-delay:${1400+i*90}ms">
+              <div class="synth-bubble-name">${elem}</div>
+              <div class="synth-bubble-pct">${fusedVec ? Math.round(strength*100)+'%' : ''}</div>
+            </div>`;
+        }).join('')}
+      </div>
+      <div class="synth-rel-hint">
+        <span style="color:var(--ok)">── nährend</span>
+        <span style="margin-left:14px;color:var(--warn)">╌╌ kontrolle</span>
+        ${relNote ? `<span style="margin-left:14px;color:var(--muted)">${relNote}</span>` : ''}
+      </div>
+    </div>
+
+    <!-- destillat -->
+    <div class="synth-destillat" id="synth-destillat">
+      ${dominantElems.length ? `
+        <div class="synth-dom-bars">
+          ${dominantElems.map(elem => `
+            <div class="synth-dom-bar" style="background:${ELEM_COLORS[elem]}28;border-left:3px solid ${ELEM_COLORS[elem]}">
+              <span style="color:${ELEM_COLORS[elem]};font-weight:700;font-size:13px">${elem}</span>
+              ${fusedVec ? `<span style="font-size:11px;color:var(--muted);margin-left:6px;font-family:'Space Mono',monospace">${Math.round((fusedVec[elem]||0)*100)}%</span>` : ''}
+            </div>`).join('')}
+        </div>` : ''}
+      ${interpShort ? `<div class="synth-interp-text">${interpShort}</div>` : ''}
+      ${harmony !== null ? `
+        <div class="synth-harmony">
+          <span class="synth-harmony-heart">♡</span>
+          <span class="synth-harmony-val">${harmony.toFixed(3)}</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px">Kohärenz-Index</span>
+        </div>` : ''}
+      <div class="synth-approx-note">Häuser-Element via Zodiak-Zeichen (Approximation). Planeten-Element via Wu-Xing Mapping.</div>
+    </div>
+  `;
+
+  // draw stream and trigger animations after layout
+  requestAnimationFrame(() => {
+    _drawSynthStream(westernItems, houseItems, baziItems);
+    _animateSynthBubbles();
+    _setupSynthHover();
+  });
+}
+
+function _drawSynthStream(westernItems, houseItems, baziItems) {
+  const svg = $('synth-stream-svg');
+  if (!svg) return;
+  const W = svg.clientWidth  || 540;
+  const H = svg.clientHeight || 72;
+
+  // Three source x-positions (column centers)
+  const srcX = [W * 0.17, W * 0.50, W * 0.83];
+  const dstX  = W / 2;
+  const srcY  = 0;
+  const dstY  = H;
+
+  // Count each element per source
+  function countElems(items) {
+    const c = {}; ELEMENTS.forEach(e => c[e]=0);
+    items.forEach(item => { if (c[item.elem]!==undefined) c[item.elem]++; });
+    return c;
+  }
+  const counts = [countElems(westernItems), countElems(houseItems), countElems(baziItems)];
+
+  svg.innerHTML = '';
+
+  counts.forEach((cnt, si) => {
+    const sx = srcX[si];
+    ELEMENTS.forEach(elem => {
+      const n = cnt[elem];
+      if (!n) return;
+      const color = ELEM_COLORS[elem] || '#888';
+      const sw    = Math.min(n * 2.5 + 1, 9);
+      const cpY   = H * 0.55;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M ${sx} ${srcY} C ${sx} ${cpY}, ${dstX} ${H*0.35}, ${dstX} ${dstY}`);
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', sw);
+      path.setAttribute('opacity', '0.42');
+      path.setAttribute('stroke-linecap', 'round');
+      path.className = 'synth-stream-path';
+      svg.appendChild(path);
+
+      // Stagger draw per source
+      setTimeout(() => path.classList.add('drawn'), 600 + si * 180);
+    });
+  });
+}
+
+function _animateSynthBubbles() {
+  document.querySelectorAll('.synth-bubble').forEach((b, i) => {
+    setTimeout(() => b.classList.add('popped'), 1400 + i * 100);
+  });
+  const dest = $('synth-destillat');
+  if (dest) setTimeout(() => dest.classList.add('visible'), 2050);
+}
+
+function _setupSynthHover() {
+  const bubbles     = document.querySelectorAll('.synth-bubble');
+  const sourceItems = document.querySelectorAll('.synth-source-item');
+
+  bubbles.forEach(bubble => {
+    const elem = bubble.dataset.elem;
+
+    bubble.addEventListener('mouseenter', () => {
+      sourceItems.forEach(item => {
+        item.classList.toggle('highlighted', item.dataset.elem === elem);
+        item.classList.toggle('dimmed',      item.dataset.elem !== elem);
+      });
+      bubbles.forEach(b => {
+        b.classList.toggle('highlighted', b.dataset.elem === elem);
+        b.classList.toggle('dimmed',      b.dataset.elem !== elem);
+      });
+    });
+
+    bubble.addEventListener('mouseleave', () => {
+      sourceItems.forEach(item => item.classList.remove('highlighted','dimmed'));
+      bubbles.forEach(b => b.classList.remove('highlighted','dimmed'));
+    });
   });
 }
 
