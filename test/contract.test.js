@@ -17,6 +17,11 @@ const headers = {
   ...(API_KEY ? { 'x-api-key': API_KEY } : {}),
 };
 
+const getHeaders = {
+  'accept': 'application/json',
+  ...(API_KEY ? { 'x-api-key': API_KEY } : {}),
+};
+
 const MINIMAL_PAYLOAD = {
   date: '1990-06-15T12:00:00',
   tz: 'Europe/Berlin',
@@ -66,7 +71,6 @@ test('contract: calculate/fusion responds 200 with wu_xing_vectors', async (t) =
 test('contract: info/wuxing responds 200 — path drift detection', async (t) => {
   skipIfDisabled(t);
   // This test exists specifically to catch silent path renames
-  const getHeaders = { accept: 'application/json', ...(API_KEY ? { 'x-api-key': API_KEY } : {}) };
   const res = await fetch(`${BASE_URL}/info/wuxing`, {
     method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(10_000),
@@ -107,15 +111,14 @@ test('contract: response shape stability — Sun longitude is a number', async (
 test('contract: transit/now responds 200 with planets and sector_intensity', async (t) => {
   skipIfDisabled(t);
   const res = await fetch(`${BASE_URL}/transit/now`, {
-    method: 'GET',
-    headers: { 'accept': 'application/json', ...(API_KEY ? { 'x-api-key': API_KEY } : {}) },
+    method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(15_000),
   });
   assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
   const json = await res.json();
   assert.ok(json.planets, 'Response must contain planets field');
   assert.ok(json.planets.sun, 'planets.sun must exist');
-  assert.ok(typeof json.planets.sun.longitude === 'number', 'sun.longitude must be a number');
+  assert.equal(typeof json.planets.sun.longitude, 'number', 'sun.longitude must be a number');
   assert.ok(Array.isArray(json.sector_intensity), 'sector_intensity must be an array');
   assert.equal(json.sector_intensity.length, 12, 'sector_intensity must have 12 entries');
   assert.ok(json.computed_at, 'computed_at must be present');
@@ -124,8 +127,7 @@ test('contract: transit/now responds 200 with planets and sector_intensity', asy
 test('contract: transit/timeline responds 200 with 7-day days array', async (t) => {
   skipIfDisabled(t);
   const res = await fetch(`${BASE_URL}/transit/timeline`, {
-    method: 'GET',
-    headers: { 'accept': 'application/json', ...(API_KEY ? { 'x-api-key': API_KEY } : {}) },
+    method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(15_000),
   });
   assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
@@ -136,4 +138,5 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   assert.ok(day.date, 'Each day must have a date field');
   assert.ok(day.planets, 'Each day must have a planets field');
   assert.ok(Array.isArray(day.sector_intensity), 'Each day must have sector_intensity array');
+  assert.equal(day.sector_intensity.length, 12, 'Each day sector_intensity must have 12 entries');
 });
