@@ -23,7 +23,7 @@ async function request(method, path, body = null) {
       error = 'Response war kein gültiges JSON';
     }
     if (!res.ok && !error) error = data?.error || `HTTP ${res.status}`;
-    return { endpoint: path, fetchedAt, ok: res.ok, status: res.status, data, error };
+    return { endpoint: path, fetchedAt, ok: res.ok && error === null, status: res.status, data, error };
   } catch (e) {
     return { endpoint: path, fetchedAt, ok: false, status: 0, data: null, error: e.message };
   }
