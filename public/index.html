@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FuFirE Live Dashboard</title>
+  <style>
+    :root{color-scheme:dark;--bg:#08090d;--panel:#11131b;--panel2:#181b25;--text:#eef1ff;--muted:#9aa3bc;--line:#2a3040;--accent:#7c8cff;--ok:#4ade80;--warn:#fbbf24;--bad:#fb7185;--holz:#3D8B37;--feuer:#D63B0F;--erde:#C8930A;--metall:#9ca3af;--wasser:#1A6BB5}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#171b2c 0,#08090d 42rem);color:var(--text);font:14px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent)}header{padding:42px 20px 24px;border-bottom:1px solid var(--line)}main{max-width:1180px;margin:0 auto;padding:24px 20px 56px}.hero{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:end}.hero h1{font-size:clamp(30px,6vw,62px);line-height:.95;margin:0 0 16px;letter-spacing:-.06em}.hero p{margin:0;color:var(--muted);font-size:16px}.status-card,.card{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.22)}.status-card{padding:18px}.badge{display:inline-flex;gap:8px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel2);color:var(--muted);font-size:12px}.dot{width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 18px currentColor}.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}.grid{display:grid;grid-template-columns:420px 1fr;gap:20px;margin-top:22px}.card{padding:18px}.card h2{margin:0 0 12px;font-size:18px}.field{display:grid;gap:6px;margin:12px 0}label{font-weight:650;color:#d9def3;font-size:12px;text-transform:uppercase;letter-spacing:.06em}input,select,textarea,button{font:inherit;border-radius:12px;border:1px solid var(--line);background:#0d1018;color:var(--text)}input,select,textarea{width:100%;padding:11px 12px}textarea{min-height:210px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}button{padding:12px 15px;background:linear-gradient(135deg,#6f7dff,#a855f7);border:0;font-weight:800;cursor:pointer}button.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text)}button:disabled{opacity:.55;cursor:wait}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.notice{border-left:3px solid var(--accent);background:rgba(124,140,255,.08);padding:12px;border-radius:10px;color:var(--muted);margin:12px 0}.error{border-left-color:var(--bad);background:rgba(251,113,133,.08);color:#fecdd3}.results{display:grid;gap:16px}.metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.metric{padding:14px;background:var(--panel2);border:1px solid var(--line);border-radius:14px}.metric .value{font-size:28px;font-weight:900;letter-spacing:-.04em}.metric .label{color:var(--muted);font-size:12px}.bars{display:grid;gap:10px}.bar-row{display:grid;grid-template-columns:76px 1fr 54px;gap:10px;align-items:center}.track{height:14px;background:#0b0d13;border-radius:999px;overflow:hidden;border:1px solid #252b39}.fill{height:100%;border-radius:999px}.pill-list{display:flex;flex-wrap:wrap;gap:8px}.pill{padding:7px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--muted)}pre{max-height:420px;overflow:auto;background:#07080d;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:12px}.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}.small{font-size:12px;color:var(--muted)}@media(max-width:900px){.hero,.grid,.split{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="hero">
+    <div>
+      <span class="badge"><span class="dot" id="hero-dot"></span><span id="hero-status">Prüfe FuFirE-Verbindung …</span></span>
+      <h1>FuFirE Live Dashboard</h1>
+      <p>Railway-fähige Oberfläche mit Server-Proxy zur FuFirE API. Der Browser spricht diese App an; der Server verbindet sich direkt mit <code id="base-url">FUFIRE_BASE_URL</code>.</p>
+    </div>
+    <div class="status-card">
+      <strong>Deployment-Fix</strong>
+      <p class="small">Railpack erkennt diese App als Node-Service über <code>package.json</code> und startet sie mit <code>npm start</code>. Kein fehlendes <code>start.sh</code> mehr.</p>
+      <p class="small"><a href="/reference.html">Berechnungsreferenz öffnen</a> · <a href="/health">Health JSON</a></p>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="grid">
+    <section class="card">
+      <h2>1 · Live-Berechnung anfordern</h2>
+      <div class="notice">v3-Kern: die Oberfläche ruft die expliziten FuFirE-Endpunkte direkt auf (<code>/chart</code>, <code>/calculate/*</code>, <code>/info/wuxing</code>). v4-Härtung: dieselben Calls laufen serverseitig über Timeout, Allowlist, Healthcheck und Railway-Startvertrag.</div>
+      <div class="field"><label for="endpoint">Expliziter FuFirE Endpoint</label><select id="endpoint"><option value="/chart" data-method="POST">POST /chart · Alles in einem Call</option><option value="/calculate/western" data-method="POST">POST /calculate/western</option><option value="/calculate/bazi" data-method="POST">POST /calculate/bazi</option><option value="/calculate/fusion" data-method="POST">POST /calculate/fusion</option><option value="/calculate/wuxing" data-method="POST">POST /calculate/wuxing</option><option value="/info/wuxing" data-method="GET">GET /info/wuxing · Mapping-Referenz</option></select></div>
+      <div class="row"><div class="field"><label for="date">Geburtsdatum</label><input id="date" type="date" value="1990-01-01"></div><div class="field"><label for="time">Geburtszeit</label><input id="time" type="time" value="12:00"></div></div>
+      <div class="row"><div class="field"><label for="lat">Latitude</label><input id="lat" type="number" step="0.000001" value="52.520008"></div><div class="field"><label for="lon">Longitude</label><input id="lon" type="number" step="0.000001" value="13.404954"></div></div>
+      <div class="field"><label for="timezone">Timezone</label><input id="timezone" value="Europe/Berlin"></div>
+      <div class="actions"><button class="secondary" id="make-payload" type="button">Payload aktualisieren</button><button id="run" type="button">Echte FuFirE-Berechnung starten</button></div>
+      <div class="field"><label for="payload">Request JSON</label><textarea id="payload"></textarea></div>
+    </section>
+
+    <section class="results">
+      <div class="card">
+        <h2>2 · Ergebnisstatus</h2>
+        <div id="message" class="notice">Noch keine Berechnung gestartet.</div>
+        <div class="metric-grid" id="metrics"></div>
+      </div>
+      <div class="split">
+        <div class="card"><h2>WuXing West</h2><div class="bars" id="western-bars"></div></div>
+        <div class="card"><h2>WuXing BaZi</h2><div class="bars" id="bazi-bars"></div></div>
+      </div>
+      <div class="card"><h2>Planeten / Punkte</h2><div class="pill-list" id="planets"></div></div>
+      <div class="card"><h2>BaZi Säulen</h2><div class="pill-list" id="pillars"></div></div>
+      <div class="card"><h2>Raw JSON</h2><pre id="raw">{}</pre></div>
+    </section>
+  </div>
+</main>
+<script>
+const ELEMENTS = ['Holz','Feuer','Erde','Metall','Wasser'];
+const COLORS = {Holz:'var(--holz)',Feuer:'var(--feuer)',Erde:'var(--erde)',Metall:'var(--metall)',Wasser:'var(--wasser)',wood:'var(--holz)',fire:'var(--feuer)',earth:'var(--erde)',metal:'var(--metall)',water:'var(--wasser)'};
+const keyMap = {wood:'Holz',fire:'Feuer',earth:'Erde',metal:'Metall',water:'Wasser',holz:'Holz',feuer:'Feuer',erde:'Erde',metall:'Metall',wasser:'Wasser'};
+const $ = (id) => document.getElementById(id);
+
+function makePayload(){
+  const date = $('date').value;
+  const time = $('time').value;
+  const latitude = Number($('lat').value);
+  const longitude = Number($('lon').value);
+  const timezone = $('timezone').value;
+  $('payload').value = JSON.stringify({
+    date,
+    time,
+    datetime: `${date}T${time}:00`,
+    timezone,
+    latitude,
+    longitude,
+    location: { latitude, longitude },
+    options: { include_western: true, include_bazi: true, include_fusion: true }
+  }, null, 2);
+}
+
+async function loadConfig(){
+  try {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    $('base-url').textContent = cfg.fufireBaseUrl;
+    if (Array.isArray(cfg.endpoints)) {
+      $('hero-status').textContent = `Dashboard bereit · ${cfg.endpoints.length} explizite Endpunkte`;
+    } else {
+      $('hero-status').textContent = 'Dashboard bereit · Upstream konfiguriert';
+    }
+    $('hero-dot').className = 'dot ok';
+  } catch (error) {
+    $('hero-dot').className = 'dot bad';
+    $('hero-status').textContent = 'Konfiguration konnte nicht geladen werden';
+  }
+}
+
+function normalizeVector(value){
+  if (!value || typeof value !== 'object') return null;
+  const out = {};
+  for (const [key, raw] of Object.entries(value)) {
+    const mapped = keyMap[String(key).toLowerCase()];
+    const num = Number(raw);
+    if (mapped && Number.isFinite(num)) out[mapped] = num;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+function walk(value, visitor, path=[]){
+  visitor(value, path);
+  if (Array.isArray(value)) value.forEach((item, i) => walk(item, visitor, path.concat(i)));
+  else if (value && typeof value === 'object') Object.entries(value).forEach(([k,v]) => walk(v, visitor, path.concat(k)));
+}
+
+function findVectors(data){
+  const vectors = { western:null, bazi:null };
+  walk(data, (value, path) => {
+    const vector = normalizeVector(value);
+    if (!vector) return;
+    const joined = path.join('.').toLowerCase();
+    if (!vectors.western && /(west|planet)/.test(joined)) vectors.western = vector;
+    if (!vectors.bazi && /(bazi|pillar|chinese)/.test(joined)) vectors.bazi = vector;
+  });
+  return vectors;
+}
+
+function findHarmony(data){
+  let harmony = null;
+  walk(data, (value, path) => {
+    const key = String(path[path.length - 1] || '').toLowerCase();
+    if (harmony === null && /harmony|cosine|similarity/.test(key) && Number.isFinite(Number(value))) harmony = Number(value);
+  });
+  return harmony;
+}
+
+function findPlanets(data){
+  const planets = [];
+  walk(data, (value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const name = value.name || value.planet || value.body || value.point;
+    const sign = value.sign || value.zodiac || value.zodiac_sign;
+    const degree = value.degree ?? value.longitude ?? value.lon;
+    const degreeNumber = Number(degree);
+    const degreeText = Number.isFinite(degreeNumber) ? degreeNumber.toFixed(2) : degree;
+    if (name && (sign || degree !== undefined)) planets.push(`${name}${sign ? ' · ' + sign : ''}${degree !== undefined ? ' · ' + degreeText : ''}`);
+  });
+  return [...new Set(planets)].slice(0, 18);
+}
+
+function findPillars(data){
+  const pillars = [];
+  walk(data, (value, path) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const stem = value.stem || value.heavenly_stem || value.heavenlyStem;
+    const branch = value.branch || value.earthly_branch || value.earthlyBranch;
+    if (stem && branch) pillars.push(`${path[path.length - 1]} · ${stem}/${branch}`);
+  });
+  return [...new Set(pillars)].slice(0, 8);
+}
+
+function renderBars(id, vector){
+  const target = $(id); target.innerHTML = '';
+  if (!vector) { target.innerHTML = '<p class="small">Kein passender Vektor in der Antwort erkannt.</p>'; return; }
+  const max = Math.max(1, ...Object.values(vector).map(Number));
+  ELEMENTS.forEach((elem) => {
+    const val = Number(vector[elem] || 0);
+    const row = document.createElement('div'); row.className = 'bar-row';
+    row.innerHTML = `<strong style="color:${COLORS[elem]}">${elem}</strong><div class="track"><div class="fill" style="width:${Math.max(2, val/max*100)}%;background:${COLORS[elem]}"></div></div><span>${val.toFixed(2)}</span>`;
+    target.appendChild(row);
+  });
+}
+
+function renderPills(id, values, empty){
+  const target = $(id); target.innerHTML = '';
+  if (!values.length) { target.innerHTML = `<p class="small">${empty}</p>`; return; }
+  values.forEach((value) => { const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = value; target.appendChild(pill); });
+}
+
+function render(data, status){
+  $('raw').textContent = JSON.stringify(data, null, 2);
+  const vectors = findVectors(data);
+  const harmony = findHarmony(data);
+  const planets = findPlanets(data);
+  const pillars = findPillars(data);
+  $('metrics').innerHTML = `<div class="metric"><div class="value">${status}</div><div class="label">HTTP Status</div></div><div class="metric"><div class="value">${harmony === null ? '—' : harmony.toFixed(3)}</div><div class="label">Harmony / Similarity</div></div><div class="metric"><div class="value">${planets.length + pillars.length}</div><div class="label">erkannte Objekte</div></div>`;
+  renderBars('western-bars', vectors.western);
+  renderBars('bazi-bars', vectors.bazi);
+  renderPills('planets', planets, 'Keine Planeten/Punkte erkannt. Raw JSON prüfen.');
+  renderPills('pillars', pillars, 'Keine BaZi-Säulen erkannt. Raw JSON prüfen.');
+}
+
+async function runCalculation(){
+  $('run').disabled = true;
+  $('message').className = 'notice';
+  const selected = $('endpoint').selectedOptions[0];
+  const endpoint = $('endpoint').value;
+  const method = selected?.dataset.method || 'POST';
+  $('message').textContent = `Sende ${method} ${endpoint} an diese Railway-App; der Server proxyt gehärtet zu FuFirE …`;
+  try {
+    const payload = method === 'GET' ? null : JSON.parse($('payload').value || '{}');
+    const fetchOptions = { method, headers: { accept: 'application/json' } };
+    if (method !== 'GET') {
+      fetchOptions.headers['content-type'] = 'application/json';
+      fetchOptions.body = JSON.stringify(payload);
+    }
+    const res = await fetch(endpoint, fetchOptions);
+    const text = await res.text();
+    let data; try { data = JSON.parse(text); } catch { data = {raw:text}; }
+    render(data, res.status);
+    $('message').className = res.ok ? 'notice' : 'notice error';
+    $('message').textContent = res.ok ? `Echte FuFirE-Antwort von ${method} ${endpoint} empfangen und visualisiert.` : `FuFirE antwortete auf ${method} ${endpoint} mit HTTP ${res.status}. Details stehen im Raw JSON.`;
+  } catch (error) {
+    $('message').className = 'notice error';
+    $('message').textContent = error.message;
+  } finally {
+    $('run').disabled = false;
+  }
+}
+
+$('make-payload').addEventListener('click', makePayload);
+$('run').addEventListener('click', runCalculation);
+makePayload();
+loadConfig();
+</script>
+</body>
+</html>
