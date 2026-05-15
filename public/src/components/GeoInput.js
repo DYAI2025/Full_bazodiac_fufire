@@ -72,11 +72,6 @@ export function GeoInput({ onSelect }) {
 
   manualBtn.addEventListener('click', () => {
     manualDiv.hidden = !manualDiv.hidden;
-    if (!manualDiv.hidden) {
-      manualDiv.querySelector('.geo-lat').addEventListener('change', syncManual);
-      manualDiv.querySelector('.geo-lon').addEventListener('change', syncManual);
-      manualDiv.querySelector('.geo-tz').addEventListener('change', syncManual);
-    }
   });
 
   function syncManual() {
@@ -85,6 +80,10 @@ export function GeoInput({ onSelect }) {
     const tz  = manualDiv.querySelector('.geo-tz').value.trim() || 'UTC';
     if (lat && lon) onSelect?.({ display: `${lat}, ${lon}`, lat, lon, tz });
   }
+
+  manualDiv.querySelector('.geo-lat').addEventListener('change', syncManual);
+  manualDiv.querySelector('.geo-lon').addEventListener('change', syncManual);
+  manualDiv.querySelector('.geo-tz').addEventListener('change', syncManual);
 
   input.addEventListener('keydown', (e) => {
     const items = dropdown.querySelectorAll('.geo-option');
