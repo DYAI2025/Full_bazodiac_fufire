@@ -140,3 +140,59 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   assert.ok(Array.isArray(day.sector_intensity), 'Each day must have sector_intensity array');
   assert.equal(day.sector_intensity.length, 12, 'Each day sector_intensity must have 12 entries');
 });
+
+const BIRTH_PAYLOAD = {
+  date: '1990-03-15',
+  time: '14:30:00',
+  lat: 48.137,
+  lon: 11.576,
+  tz: 'Europe/Berlin',
+};
+
+test('contract: experience/bootstrap responds 200 with soulprint_sectors', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/experience/bootstrap`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ birth: BIRTH_PAYLOAD }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
+  const json = await res.json();
+  assert.ok(Array.isArray(json.soulprint_sectors), 'soulprint_sectors must be an array');
+  assert.equal(json.soulprint_sectors.length, 12, 'soulprint_sectors must have 12 entries');
+  assert.ok(json.profile, 'profile field must exist');
+});
+
+test('contract: experience/daily responds 200 with western + eastern + fusion', async (t) => {
+  skipIfDisabled(t);
+  const bootstrapRes = await fetch(`${BASE_URL}/experience/bootstrap`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ birth: BIRTH_PAYLOAD }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(bootstrapRes.status, 200);
+  const bootstrap = await bootstrapRes.json();
+
+  const today = new Date().toISOString().split('T')[0];
+  const dailyRes = await fetch(`${BASE_URL}/experience/daily`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      birth: BIRTH_PAYLOAD,
+      soulprint_sectors: bootstrap.soulprint_sectors,
+      quiz_sectors: new Array(12).fill(0),
+      target_date: today,
+    }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(dailyRes.status, 200, `Expected 200, got ${dailyRes.status}`);
+  const json = await dailyRes.json();
+  assert.ok(json.date, 'date field must exist');
+  assert.ok(json.western, 'western field must exist');
+  assert.ok(json.eastern, 'eastern field must exist');
+  assert.ok(json.fusion, 'fusion field must exist');
+  assert.ok(Array.isArray(json.western.themes), 'western.themes must be an array');
+  assert.equal(typeof json.fusion.pushworthy, 'boolean', 'fusion.pushworthy must be boolean');
+});
