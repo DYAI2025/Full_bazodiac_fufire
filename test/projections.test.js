@@ -215,3 +215,186 @@ test('createFinanceProjection — does not throw on empty profile', () => {
 test('createPersonalityProjection — does not throw on empty profile', () => {
   assert.doesNotThrow(() => createPersonalityProjection({}));
 });
+
+import { createSynastryProjection } from '../public/src/domain/projections.js';
+
+// ── Synastry fixtures ──────────────────────────────────────────────────────────
+
+const SYN_PROFILE_A = {
+  western: {
+    bodies: {
+      Sun:   { sign: 'Aries',   longitude: 15.5  },
+      Moon:  { sign: 'Cancer',  longitude: 95.2  },
+      Venus: { sign: 'Taurus',  longitude: 42.1  },
+      Mars:  { sign: 'Scorpio', longitude: 225.0 },
+    },
+    houses: [],
+    ascendant: 'Aries',
+  },
+  bazi: {
+    day_master: { stem: '甲', element: 'Holz' },
+    pillars: { day: { stem: '甲', branch: '子', element: 'Holz' } },
+  },
+  fusion: {
+    wu_xing_vectors: { fusion: { Holz: 0.4, Feuer: 0.2, Erde: 0.15, Metall: 0.1, Wasser: 0.15 } },
+    coherence_index: 0.8,
+  },
+};
+
+const SYN_PROFILE_B_FEUER = {
+  western: {
+    bodies: {
+      Sun:   { sign: 'Leo',       longitude: 135.0 },
+      Moon:  { sign: 'Capricorn', longitude: 275.8 },
+      Venus: { sign: 'Gemini',    longitude: 75.3  },
+      Mars:  { sign: 'Aries',     longitude: 10.0  },
+    },
+    houses: [],
+    ascendant: 'Leo',
+  },
+  bazi: {
+    day_master: { stem: '丙', element: 'Feuer' },
+    pillars: { day: { stem: '丙', branch: '午', element: 'Feuer' } },
+  },
+  fusion: {
+    wu_xing_vectors: { fusion: { Holz: 0.2, Feuer: 0.4, Erde: 0.15, Metall: 0.1, Wasser: 0.15 } },
+    coherence_index: 0.75,
+  },
+};
+
+const SYN_PROFILE_B_ERDE = {
+  western: { bodies: {}, houses: [] },
+  bazi: { day_master: { stem: '戊', element: 'Erde' }, pillars: {} },
+  fusion: {},
+};
+
+// ── Shape contract ────────────────────────────────────────────────────────────
+
+test('createSynastryProjection — returns expected shape with two profiles', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  assert.equal(typeof result, 'object');
+  assert.ok(result !== null);
+  assert.ok('wuxing'  in result);
+  assert.ok('bazi'    in result);
+  assert.ok('aspects' in result);
+  assert.ok('missing' in result);
+  assert.ok('confidence' in result);
+  assert.ok(Array.isArray(result.aspects));
+  assert.ok(Array.isArray(result.missing));
+  assert.equal(typeof result.confidence, 'number');
+  assert.ok(result.confidence >= 0 && result.confidence <= 1);
+});
+
+test('createSynastryProjection — does not throw when profileB is null', () => {
+  assert.doesNotThrow(() => createSynastryProjection(SYN_PROFILE_A, null));
+});
+
+test('createSynastryProjection — does not throw when profileB is undefined', () => {
+  assert.doesNotThrow(() => createSynastryProjection(SYN_PROFILE_A, undefined));
+});
+
+test('createSynastryProjection — confidence is 0 when profileB is null', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, null);
+  assert.equal(result.confidence, 0);
+});
+
+test('createSynastryProjection — wuxing is null when profileB is null', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, null);
+  assert.equal(result.wuxing, null);
+});
+
+test('createSynastryProjection — bazi is null when profileB is null', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, null);
+  assert.equal(result.bazi, null);
+});
+
+test('createSynastryProjection — aspects is empty array when profileB is null', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, null);
+  assert.deepEqual(result.aspects, []);
+});
+
+// ── Wu-Xing compatibility ─────────────────────────────────────────────────────
+
+test('createSynastryProjection — wuxing has elementA and elementB', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  assert.equal(result.wuxing.elementA, 'Holz');
+  assert.equal(result.wuxing.elementB, 'Feuer');
+});
+
+test('createSynastryProjection — Holz+Feuer relation is nährt', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  assert.equal(result.wuxing.relation, 'nährt');
+});
+
+test('createSynastryProjection — Holz+Erde relation is kontrolliert', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_ERDE);
+  assert.equal(result.wuxing.relation, 'kontrolliert');
+});
+
+test('createSynastryProjection — same element relation is identisch', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_A);
+  assert.equal(result.wuxing.relation, 'identisch');
+});
+
+test('createSynastryProjection — Feuer+Holz relation is wird-genährt (B nährt A)', () => {
+  const result = createSynastryProjection(SYN_PROFILE_B_FEUER, SYN_PROFILE_A);
+  assert.equal(result.wuxing.relation, 'wird-genährt');
+});
+
+test('createSynastryProjection — wuxing has cycle and description strings', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  assert.equal(typeof result.wuxing.cycle, 'string');
+  assert.ok(result.wuxing.cycle.length > 0);
+  assert.equal(typeof result.wuxing.description, 'string');
+  assert.ok(result.wuxing.description.length > 0);
+});
+
+// ── BaZi Day Master ───────────────────────────────────────────────────────────
+
+test('createSynastryProjection — bazi has elementA and elementB', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  assert.equal(result.bazi.elementA, 'Holz');
+  assert.equal(result.bazi.elementB, 'Feuer');
+});
+
+test('createSynastryProjection — bazi has description string', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  assert.equal(typeof result.bazi.description, 'string');
+  assert.ok(result.bazi.description.length > 0);
+});
+
+// ── Western aspects ───────────────────────────────────────────────────────────
+
+test('createSynastryProjection — detects trine between A.Sun and B.Sun (119.5°)', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  const sunTrine = result.aspects.find(
+    (a) => a.bodyA === 'Sun' && a.bodyB === 'Sun' && a.aspect === 'Trigon'
+  );
+  assert.ok(sunTrine, `Expected Sun-Sun trine. Got: ${JSON.stringify(result.aspects.map(a => ({bodyA:a.bodyA,bodyB:a.bodyB,aspect:a.aspect})))}`);
+});
+
+test('createSynastryProjection — detects conjunction when same profile used for A and B', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_A);
+  const sunConj = result.aspects.find(
+    (a) => a.bodyA === 'Sun' && a.bodyB === 'Sun' && a.aspect === 'Konjunktion'
+  );
+  assert.ok(sunConj, 'Expected Sun-Sun conjunction when A === B');
+});
+
+test('createSynastryProjection — each aspect has bodyA, bodyB, aspect, orbDeg, description', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  for (const asp of result.aspects) {
+    assert.equal(typeof asp.bodyA,       'string');
+    assert.equal(typeof asp.bodyB,       'string');
+    assert.equal(typeof asp.aspect,      'string');
+    assert.equal(typeof asp.orbDeg,      'number');
+    assert.equal(typeof asp.description, 'string');
+  }
+});
+
+// ── Confidence ────────────────────────────────────────────────────────────────
+
+test('createSynastryProjection — confidence > 0 when both profiles have day_master', () => {
+  const result = createSynastryProjection(SYN_PROFILE_A, SYN_PROFILE_B_FEUER);
+  assert.ok(result.confidence > 0);
+});
