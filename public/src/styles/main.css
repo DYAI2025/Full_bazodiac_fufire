@@ -252,3 +252,47 @@ input:focus { border-color: var(--accent); }
   .tab-btn { padding: 8px 14px; font-size: .82rem; }
   .page-header h1 { font-size: 1.4rem; }
 }
+
+/* ── Synastry Page ───────────────────────────────────────────────────────────── */
+.synastry-page { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+.synastry-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 600px) {
+  .synastry-input-grid { grid-template-columns: 1fr; }
+}
+
+.person-input { border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; }
+.person-input h2 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+.optional-hint { font-size: 0.75rem; font-weight: 400; color: var(--muted); }
+
+.synastry-form-footer { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 2rem; }
+
+.synastry-result { display: flex; flex-direction: column; gap: 2rem; }
+
+.synastry-section { border: 1px solid var(--border); border-radius: 0.5rem; padding: 1.25rem; }
+.synastry-section h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; }
+.synastry-section--placeholder { opacity: 0.6; border-style: dashed; }
+
+.synastry-compat-card { display: flex; flex-direction: column; gap: 0.75rem; }
+.synastry-compat-header { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.synastry-element { font-weight: 700; font-size: 1rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem; background: var(--panel2); }
+.synastry-relation-arrow { color: var(--muted); }
+.synastry-cycle-label { font-size: 0.85rem; color: var(--muted); }
+.synastry-compat-desc { margin: 0; color: var(--text); line-height: 1.5; }
+
+.synastry-bazi-card { display: flex; flex-direction: column; gap: 0.5rem; }
+.synastry-bazi-stems { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.bazi-stem-a, .bazi-stem-b { font-weight: 600; }
+.bazi-stem-sep { color: var(--muted); }
+.synastry-bazi-desc { margin: 0; line-height: 1.5; }
+
+.synastry-aspects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
+.synastry-aspect-card { border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.synastry-orb { font-size: 0.75rem; color: var(--muted); margin: 0; }
+
+.synastry-error { color: var(--bad); font-size: 0.875rem; margin-bottom: 0.5rem; }
