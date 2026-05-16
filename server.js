@@ -540,7 +540,10 @@ async function orchestrateDailyExperience(rawBody) {
       return {
         httpStatus: 200,
         body: {
-          ...daily,
+          date:    daily.date    ?? null,
+          western: daily.western ?? null,
+          eastern: daily.eastern ?? null,
+          fusion:  daily.fusion  ?? null,
           _meta: {
             bootstrap_profile: bootstrap.profile,
             computed_at: new Date().toISOString(),
