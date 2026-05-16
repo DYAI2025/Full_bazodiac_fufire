@@ -80,8 +80,8 @@ export function InputPage(app, { onResult }) {
 
     if (!res.ok || !res.data) {
       errorEl.textContent = res.error || 'Berechnung fehlgeschlagen. Bitte versuche es erneut.';
-      errorEl.hidden = false;
       progress.replaceWith(form);
+      errorEl.hidden = false;
       return;
     }
 

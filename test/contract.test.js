@@ -135,8 +135,12 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
   const json = await res.json();
   assert.ok(Array.isArray(json.days), 'Response must contain days array');
-  assert.ok(json.days.length >= 7, `days must have >= 7 entries, got ${json.days.length}`);
+  assert.ok(
+    json.days.length >= 7,
+    `days must have >= 7 entries (days array must not be empty), got ${json.days.length}`
+  );
   const day = json.days[0];
+  assert.ok(day && typeof day === 'object', 'days[0] must be an object');
   assert.ok(day.date, 'Each day must have a date field');
   assert.ok(day.planets ?? day.planet_positions, 'Each day must have a planets field');
   const sectorIntensity = day.sector_intensity ?? day.soulprint_sectors;
