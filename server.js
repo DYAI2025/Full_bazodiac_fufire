@@ -157,6 +157,8 @@ function translatePayload(raw) {
   };
 }
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
 export function validatePayload(raw) {
   const errors = [];
   let obj;
@@ -168,7 +170,6 @@ export function validatePayload(raw) {
 
   // Date: required, must match YYYY-MM-DD or YYYY-MM-DDTHH:MM[:SS]
   const dateStr = obj.date || obj.datetime || '';
-  const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
   if (!dateStr) {
     errors.push('date: required — provide date (YYYY-MM-DD) or datetime (YYYY-MM-DDTHH:MM)');
   } else if (!DATE_RE.test(dateStr)) {
@@ -274,6 +275,14 @@ function normalizePillar(raw) {
   };
 }
 
+const ASC_SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                   'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+
+function lonToSign(lon) {
+  if (lon == null || typeof lon !== 'number') return null;
+  return ASC_SIGNS[Math.floor(((lon % 360) + 360) % 360 / 30)];
+}
+
 // ── ViewModel normalizer ──────────────────────────────────────────────────
 export function normalizeAzodiacResult(raw) {
   const w = raw?.western || {};
@@ -325,12 +334,6 @@ export function normalizeAzodiacResult(raw) {
   // FuFirE returns angles.Ascendant = ecliptic longitude (number, e.g. 185.34).
   // OverviewPage expects a zodiac sign name string like "Scorpio" / "Libra".
   // Derive from longitude if no direct sign string is available.
-  const ASC_SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
-                     'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-  function lonToSign(lon) {
-    if (lon == null || typeof lon !== 'number') return null;
-    return ASC_SIGNS[Math.floor(((lon % 360) + 360) % 360 / 30)];
-  }
 
   // Resolve ascendant: prefer a string (sign name or sign lookup via longitude)
   const ascRaw = w.ascendant;
