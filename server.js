@@ -319,7 +319,10 @@ export function normalizeAzodiacResult(raw) {
   for (const key of ['year','month','day','hour']) {
     if (rawPillars[key]) pillars[key] = normalizePillar(rawPillars[key]);
   }
-  const dm = b.day_master ?? b.dayMaster ?? null;
+  // FuFirE liefert kein separates day_master-Feld — Tag-Säule (pillars.day)
+  // IS der Day Master im BaZi. Fallback auf rawPillars.day damit die
+  // Personality-Projektion (profile.bazi.day_master.element) nicht leer bleibt.
+  const dm = b.day_master ?? b.dayMaster ?? rawPillars.day ?? null;
 
   // Fusion vectors
   const vecs = f.wu_xing_vectors || f.vectors || {};
