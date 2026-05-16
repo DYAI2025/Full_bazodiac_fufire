@@ -148,3 +148,13 @@ test('validatePayload: location.latitude out of range returns error', () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.some(e => e.toLowerCase().includes('lat')));
 });
+
+test('validatePayload: location.longitude out of range returns error', () => {
+  const result = validatePayload({
+    date: '1990-03-15',
+    location: { latitude: 48.137, longitude: 181 },
+    tz: 'UTC',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.toLowerCase().includes('lon')));
+});
