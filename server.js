@@ -498,8 +498,11 @@ async function orchestrateFullProfile(rawBody) {
 
 // ── Daily experience aggregator ───────────────────────────────────────────
 async function orchestrateDailyExperience(rawBody) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const bootstrapMs = Math.round(API_TIMEOUT_MS * 0.6);
+  const dailyMs = Math.round(API_TIMEOUT_MS * 0.35);
+
+  const bootstrapCtrl = new AbortController();
+  const bootstrapTimer = setTimeout(() => bootstrapCtrl.abort(), bootstrapMs);
 
   try {
     const obj = typeof rawBody === 'string' ? (rawBody ? JSON.parse(rawBody) : {}) : (rawBody || {});
@@ -512,37 +515,43 @@ async function orchestrateDailyExperience(rawBody) {
     const tz = obj.tz || obj.timezone || 'UTC';
 
     const birth = { date, time, lat, lon, tz };
-    const bootstrapResult = await callFuFire('experience/bootstrap', { birth }, controller.signal);
+    const bootstrapResult = await callFuFire('experience/bootstrap', { birth }, bootstrapCtrl.signal);
+    clearTimeout(bootstrapTimer);
     if (!bootstrapResult.ok) {
       return { httpStatus: 502, body: { error: 'Experience bootstrap failed', detail: bootstrapResult.data } };
     }
     const bootstrap = bootstrapResult.data;
     const soulprintSectors = bootstrap.soulprint_sectors || new Array(12).fill(0);
 
-    const today = new Date().toISOString().split('T')[0];
-    const dailyResult = await callFuFire('experience/daily', {
-      birth,
-      soulprint_sectors: soulprintSectors,
-      quiz_sectors: new Array(12).fill(0),
-      target_date: obj.target_date || today,
-    }, controller.signal);
-    if (!dailyResult.ok) {
-      return { httpStatus: 502, body: { error: 'Experience daily failed', detail: dailyResult.data } };
-    }
-    const daily = dailyResult.data;
-
-    return {
-      httpStatus: 200,
-      body: {
-        ...daily,
-        _meta: {
-          bootstrap_profile: bootstrap.profile,
-          computed_at: new Date().toISOString(),
+    const dailyCtrl = new AbortController();
+    const dailyTimer = setTimeout(() => dailyCtrl.abort(), dailyMs);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const dailyResult = await callFuFire('experience/daily', {
+        birth,
+        soulprint_sectors: soulprintSectors,
+        quiz_sectors: new Array(12).fill(0),
+        target_date: obj.target_date || today,
+      }, dailyCtrl.signal);
+      if (!dailyResult.ok) {
+        return { httpStatus: 502, body: { error: 'Experience daily failed', detail: dailyResult.data } };
+      }
+      const daily = dailyResult.data;
+      return {
+        httpStatus: 200,
+        body: {
+          ...daily,
+          _meta: {
+            bootstrap_profile: bootstrap.profile,
+            computed_at: new Date().toISOString(),
+          },
         },
-      },
-    };
+      };
+    } finally {
+      clearTimeout(dailyTimer);
+    }
   } finally {
-    clearTimeout(timer);
+    clearTimeout(bootstrapTimer);
   }
 }
 
