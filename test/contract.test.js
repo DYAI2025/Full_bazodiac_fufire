@@ -139,8 +139,9 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   const day = json.days[0];
   assert.ok(day.date, 'Each day must have a date field');
   assert.ok(day.planets ?? day.planet_positions, 'Each day must have a planets field');
-  assert.ok(Array.isArray(day.sector_intensity ?? day.soulprint_sectors), 'Each day must have sector_intensity array');
-  assert.equal(day.sector_intensity.length, 12, 'Each day sector_intensity must have 12 entries');
+  const sectorIntensity = day.sector_intensity ?? day.soulprint_sectors;
+  assert.ok(Array.isArray(sectorIntensity), 'Each day must have sector_intensity array');
+  assert.equal(sectorIntensity.length, 12, 'Each day sector_intensity must have 12 entries');
 });
 
 // Experience endpoints require split date+time (not ISO datetime string like MINIMAL_PAYLOAD)
