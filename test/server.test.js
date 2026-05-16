@@ -296,6 +296,19 @@ test('/api/azodiac/daily: returns 405 for GET', async () => {
   });
 });
 
+test('/api/azodiac/daily: returns 400 when tz is missing', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '1990-03-15', lat: 48.137, lon: 11.576 }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(body.errors.some(e => e.includes('tz')));
+  });
+});
+
 test('/api/azodiac/daily orchestrates bootstrap → daily and returns 200 with western+eastern+fusion', async () => {
   const seen = [];
   const upstream = createServer((req, res) => {

@@ -193,6 +193,12 @@ export function validatePayload(raw) {
     errors.push(`lon: must be a number between -180 and 180, got "${rawLon}"`);
   }
 
+  // Tz: required — all orchestrators need a valid IANA timezone
+  const rawTz = obj.tz ?? obj.timezone ?? '';
+  if (!rawTz) {
+    errors.push('tz: required — provide IANA timezone, e.g. Europe/Berlin or UTC');
+  }
+
   if (errors.length) return { valid: false, errors };
   return { valid: true };
 }
