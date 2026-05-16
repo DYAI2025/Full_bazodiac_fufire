@@ -830,10 +830,8 @@ async function serveStatic(req, res, pathname) {
   });
   const stream = createReadStream(filePath);
   stream.on('error', () => {
-    if (!res.writableEnded) {
-      if (!res.headersSent) res.writeHead(500, { 'content-type': 'text/plain' });
-      res.end();
-    }
+    // 200 was already committed above; we can only close the connection cleanly.
+    if (!res.writableEnded) res.end();
   });
   stream.pipe(res);
 }
