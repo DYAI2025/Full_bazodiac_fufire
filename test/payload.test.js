@@ -129,3 +129,22 @@ test('validatePayload: Etc/GMT+2 is valid tz', () => {
   const result = validatePayload({ date: '1990-03-15', lat: 48.0, lon: 11.0, tz: 'Etc/GMT+2' });
   assert.deepEqual(result, { valid: true });
 });
+
+test('validatePayload: location.latitude + location.longitude alias works', () => {
+  const result = validatePayload({
+    date: '1990-03-15',
+    location: { latitude: 48.137, longitude: 11.576 },
+    tz: 'UTC',
+  });
+  assert.deepEqual(result, { valid: true });
+});
+
+test('validatePayload: location.latitude out of range returns error', () => {
+  const result = validatePayload({
+    date: '1990-03-15',
+    location: { latitude: 99, longitude: 11.576 },
+    tz: 'UTC',
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.toLowerCase().includes('lat')));
+});
