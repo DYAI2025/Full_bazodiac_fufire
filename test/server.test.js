@@ -431,6 +431,50 @@ test('/api/azodiac/daily returns 502 when daily experience call fails', async ()
   }
 });
 
+test('/api/azodiac/profile: wuxing info fetches info/wuxing-mapping not info/wuxing', async () => {
+  const upstreamPaths = [];
+  const upstream = createServer((req, res) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      upstreamPaths.push(req.url);
+      const responses = {
+        '/calculate/western': { bodies: {}, houses: [], aspects: [] },
+        '/calculate/bazi':    { pillars: {} },
+        '/calculate/fusion':  { wu_xing_vectors: {}, coherence_index: 0.7 },
+        '/calculate/wuxing':  { vector: {} },
+        '/info/wuxing-mapping': { planet_mapping: {} },
+      };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(responses[req.url] ?? { ok: true }));
+    });
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/api/azodiac/profile`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: '1990-06-15T12:00:00', tz: 'Europe/Berlin', lat: 48.137, lon: 11.576 }),
+      });
+      assert.equal(res.status, 200);
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+
+  const bad = upstreamPaths.find(p => p.includes('/info/wuxing') && !p.includes('wuxing-mapping'));
+  assert.ok(!bad, `Must NOT call /info/wuxing — found: ${bad ?? 'none (good)'}`);
+  assert.ok(upstreamPaths.some(p => p.includes('wuxing-mapping')), `Must call /info/wuxing-mapping, got: ${JSON.stringify(upstreamPaths)}`);
+});
+
 test('/api/azodiac/daily: missing lat with empty location returns 400', async () => {
   await withServer(async (base) => {
     const res = await fetch(`${base}/api/azodiac/daily`, {
@@ -445,5 +489,18 @@ test('/api/azodiac/daily: missing lat with empty location returns 400', async ()
     assert.equal(res.status, 400);
     const body = await res.json();
     assert.ok(body.errors.some(e => e.toLowerCase().includes('lat')));
+  });
+});
+
+test('/api/azodiac/daily: null lat (not missing, but null) returns 400 not Gulf-of-Guinea result', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '1990-03-15', tz: 'Europe/Berlin', lat: null, lon: null }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.errors), 'errors must be array');
   });
 });
