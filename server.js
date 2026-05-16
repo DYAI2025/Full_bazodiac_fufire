@@ -194,7 +194,7 @@ export function validatePayload(raw) {
     errors.push(`lon: must be a number between -180 and 180, got "${rawLon}"`);
   }
 
-  // Tz: required — basic format guard (IANA name or UTC offset)
+  // Tz: required — basic format guard; must start with a letter (IANA names and Etc/GMT variants pass; raw numeric offsets like +05:30 do not)
   const rawTz = obj.tz ?? obj.timezone ?? '';
   if (!rawTz) {
     errors.push('tz: required — provide IANA timezone, e.g. Europe/Berlin or UTC');
