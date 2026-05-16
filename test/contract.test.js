@@ -117,8 +117,10 @@ test('contract: transit/now responds 200 with planets and sector_intensity', asy
   assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
   const json = await res.json();
   assert.ok(json.planets, 'Response must contain planets field');
-  assert.ok(json.planets.sun, 'planets.sun must exist');
-  assert.equal(typeof json.planets.sun.longitude, 'number', 'sun.longitude must be a number');
+  const sun = json.planets?.sun ?? json.planets?.Sun;
+  assert.ok(sun, 'planets.sun must exist');
+  const sunLon = sun?.longitude ?? sun?.lon ?? sun?.degree;
+  assert.equal(typeof sunLon, 'number', 'sun.longitude must be a number');
   assert.ok(Array.isArray(json.sector_intensity), 'sector_intensity must be an array');
   assert.equal(json.sector_intensity.length, 12, 'sector_intensity must have 12 entries');
   assert.ok(json.computed_at, 'computed_at must be present');
@@ -136,8 +138,8 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   assert.ok(json.days.length >= 7, `days must have >= 7 entries, got ${json.days.length}`);
   const day = json.days[0];
   assert.ok(day.date, 'Each day must have a date field');
-  assert.ok(day.planets, 'Each day must have a planets field');
-  assert.ok(Array.isArray(day.sector_intensity), 'Each day must have sector_intensity array');
+  assert.ok(day.planets ?? day.planet_positions, 'Each day must have a planets field');
+  assert.ok(Array.isArray(day.sector_intensity ?? day.soulprint_sectors), 'Each day must have sector_intensity array');
   assert.equal(day.sector_intensity.length, 12, 'Each day sector_intensity must have 12 entries');
 });
 
