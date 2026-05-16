@@ -1,6 +1,10 @@
 // public/src/pages/TransitCalendarPage.js
 import { getTransitNow, getTransitTimeline } from '../api/client.js';
 
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 const SIGN_DE = {
   aries: 'Widder', taurus: 'Stier', gemini: 'Zwillinge', cancer: 'Krebs',
   leo: 'Löwe', virgo: 'Jungfrau', libra: 'Waage', scorpio: 'Skorpion',
@@ -20,7 +24,7 @@ const PLANET_LABELS_DE = {
 const PLANET_ORDER = Object.keys(PLANET_SYMBOLS);
 
 function signDE(s) {
-  return s ? (SIGN_DE[s.toLowerCase()] || s) : '—';
+  return s ? (SIGN_DE[s.toLowerCase()] || esc(s)) : '—';
 }
 
 function formatDate(dateStr) {
@@ -57,7 +61,7 @@ function renderNow(planets, sectorIntensity) {
       <span class="transit-planet-name">${PLANET_LABELS_DE[name] || name}</span>
       <span class="transit-planet-sign">${signDE(p.sign)}</span>
       ${isRetro ? '<span class="transit-retro" title="Rückläufig">℞</span>' : ''}
-      <span class="transit-planet-deg">${p.longitude?.toFixed(1)}°</span>
+      <span class="transit-planet-deg">${p.longitude != null ? p.longitude.toFixed(1) + '°' : '—'}</span>
     `;
     grid.appendChild(card);
   });
@@ -89,7 +93,7 @@ function renderTimeline(days) {
       <div class="transit-day-planets">
         ${activePlanets.map(p => `
           <div class="transit-day-planet">
-            <span class="tdp-sym">${PLANET_SYMBOLS[p.name] || p.name}</span>
+            <span class="tdp-sym">${PLANET_SYMBOLS[p.name] || esc(p.name)}</span>
             <span class="tdp-sign">${signDE(p.sign)}</span>
             ${p.retro ? '<span class="tdp-retro">℞</span>' : ''}
           </div>

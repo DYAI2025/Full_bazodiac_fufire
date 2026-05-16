@@ -1,14 +1,18 @@
 // public/src/pages/DailyPage.js
 import { getDailyExperience } from '../api/client.js';
 
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function renderThemes(themes) {
   if (!themes?.length) return '';
-  return `<div class="daily-themes">${themes.map(t => `<span class="daily-theme-tag">${t}</span>`).join('')}</div>`;
+  return `<div class="daily-themes">${themes.map(t => `<span class="daily-theme-tag">${esc(t)}</span>`).join('')}</div>`;
 }
 
 function renderPillar(pillar) {
   if (!pillar) return '';
-  return `<span class="daily-pillar">${pillar.stem || ''}${pillar.branch || ''}</span>`;
+  return `<span class="daily-pillar">${esc(pillar.stem)}${esc(pillar.branch)}</span>`;
 }
 
 function renderSection(label, data, variant) {
@@ -17,12 +21,12 @@ function renderSection(label, data, variant) {
   el.className = `daily-section daily-section--${variant}`;
   el.innerHTML = `
     <h2 class="daily-section-title">${label}</h2>
-    <p class="daily-summary">${data.summary || ''}</p>
+    <p class="daily-summary">${esc(data.summary)}</p>
     ${renderThemes(data.themes)}
-    ${data.opportunity ? `<div class="daily-callout daily-callout--opportunity"><strong>Chance:</strong> ${data.opportunity}</div>` : ''}
-    ${data.caution ? `<div class="daily-callout daily-callout--caution"><strong>Achtung:</strong> ${data.caution}</div>` : ''}
-    ${data.jieqi_note ? `<p class="daily-note daily-note--jieqi">${data.jieqi_note}</p>` : ''}
-    ${data.weekday_note ? `<p class="daily-note">${data.weekday_note}</p>` : ''}
+    ${data.opportunity ? `<div class="daily-callout daily-callout--opportunity"><strong>Chance:</strong> ${esc(data.opportunity)}</div>` : ''}
+    ${data.caution ? `<div class="daily-callout daily-callout--caution"><strong>Achtung:</strong> ${esc(data.caution)}</div>` : ''}
+    ${data.jieqi_note ? `<p class="daily-note daily-note--jieqi">${esc(data.jieqi_note)}</p>` : ''}
+    ${data.weekday_note ? `<p class="daily-note">${esc(data.weekday_note)}</p>` : ''}
     ${data.evidence?.daily_pillar ? `<p class="daily-note">Tagessäule: ${renderPillar(data.evidence.daily_pillar)}</p>` : ''}
   `;
   return el;
@@ -34,9 +38,9 @@ function renderFusion(fusion) {
   el.className = 'daily-section daily-section--fusion';
   el.innerHTML = `
     <h2 class="daily-section-title">Fusion — Synthese</h2>
-    <p class="daily-summary">${fusion.summary || ''}</p>
-    <p class="daily-synthesis">${fusion.synthesis || ''}</p>
-    ${fusion.action ? `<div class="daily-action">${fusion.action}</div>` : ''}
+    <p class="daily-summary">${esc(fusion.summary)}</p>
+    <p class="daily-synthesis">${esc(fusion.synthesis)}</p>
+    ${fusion.action ? `<div class="daily-action">${esc(fusion.action)}</div>` : ''}
     ${fusion.pushworthy ? '<div class="daily-pushworthy">Heute ist ein besonders aktiver Tag — nutze ihn.</div>' : ''}
   `;
   return el;

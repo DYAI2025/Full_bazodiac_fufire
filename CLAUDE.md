@@ -28,12 +28,14 @@ All logic lives in `server.js` — there are no modules, no routes directory, no
 - `/health`, `/api/config` — introspection (no upstream call)
 - `/chart` — POST only; calls `orchestrateChart` (parallel western + bazi + fusion)
 - `/api/azodiac/profile` — POST only; calls `orchestrateFullProfile` (parallel western + bazi + fusion + wuxing, plus optional TST and wuxing-info)
+- `/api/azodiac/daily` — POST only; calls `orchestrateDailyExperience` (sequential: experience/bootstrap → experience/daily)
 - `/api/geocode?q=…` — Nominatim + timeapi.io; IP rate-limited + LRU-cached
 - `/api/fufire/:endpoint` — compatibility proxy path (allowlisted only)
 - `/{endpoint}` — explicit v3 shortcut routes (also allowlisted)
 - everything else — static files from `public/`
 
 **Data flow for calculation requests:**
+0. `validatePayload(raw)` (exported) validates date/lat/lon before orchestration; returns `{ valid, errors }`
 1. `translatePayload` normalises browser field names (`date`/`datetime`, `tz`/`timezone`, `lat`/`latitude`, etc.) into the FuFirE wire format
 2. `callFuFire` fires a single upstream fetch with `AbortController` timeout
 3. `normalizeAzodiacResult` (exported) reshapes the raw multi-subsystem response into a stable ViewModel with German element names (`Holz/Feuer/Erde/Metall/Wasser`) and a `view_model_version` stamp

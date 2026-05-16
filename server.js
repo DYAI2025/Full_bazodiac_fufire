@@ -96,6 +96,20 @@ const FUFIRE_ENDPOINTS = [
     category: 'transit',
     description: '7-Tage-Transitkalender: tägliche Planetenpositionen und Sektor-Intensitäten.',
   },
+  {
+    method: 'POST',
+    path: '/experience/bootstrap',
+    upstreamPath: 'experience/bootstrap',
+    category: 'experience',
+    description: 'Soulprint-Bootstrap: berechnet persönliche Sektor-Intensitäten aus Geburtsdaten.',
+  },
+  {
+    method: 'POST',
+    path: '/experience/daily',
+    upstreamPath: 'experience/daily',
+    category: 'experience',
+    description: 'Tageserlebnis: westlicher + östlicher Impuls + Fusion-Synthese für ein Datum.',
+  },
 ];
 
 const ENDPOINTS_BY_PATH = new Map(FUFIRE_ENDPOINTS.map((e) => [e.path, e]));
@@ -154,7 +168,7 @@ export function validatePayload(raw) {
 
   // Date: required, must match YYYY-MM-DD or YYYY-MM-DDTHH:MM[:SS]
   const dateStr = obj.date || obj.datetime || '';
-  const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/;
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
   if (!dateStr) {
     errors.push('date: required — provide date (YYYY-MM-DD) or datetime (YYYY-MM-DDTHH:MM)');
   } else if (!DATE_RE.test(dateStr)) {
@@ -163,8 +177,8 @@ export function validatePayload(raw) {
 
   // Lat: required, finite, [-90, 90]
   const rawLat = obj.lat ?? obj.latitude ?? obj.location?.latitude;
-  const lat = rawLat !== undefined && rawLat !== '' ? Number(rawLat) : NaN;
-  if (rawLat === undefined || rawLat === '') {
+  const lat = rawLat !== undefined && rawLat !== null && rawLat !== '' ? Number(rawLat) : NaN;
+  if (rawLat === undefined || rawLat === null || rawLat === '') {
     errors.push('lat: required — provide lat (decimal degrees, e.g. 48.137)');
   } else if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
     errors.push(`lat: must be a number between -90 and 90, got "${rawLat}"`);
@@ -172,8 +186,8 @@ export function validatePayload(raw) {
 
   // Lon: required, finite, [-180, 180]
   const rawLon = obj.lon ?? obj.longitude ?? obj.location?.longitude;
-  const lon = rawLon !== undefined && rawLon !== '' ? Number(rawLon) : NaN;
-  if (rawLon === undefined || rawLon === '') {
+  const lon = rawLon !== undefined && rawLon !== null && rawLon !== '' ? Number(rawLon) : NaN;
+  if (rawLon === undefined || rawLon === null || rawLon === '') {
     errors.push('lon: required — provide lon (decimal degrees, e.g. 11.576)');
   } else if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
     errors.push(`lon: must be a number between -180 and 180, got "${rawLon}"`);
@@ -473,21 +487,20 @@ async function orchestrateFullProfile(rawBody) {
 
 // ── Daily experience aggregator ───────────────────────────────────────────
 async function orchestrateDailyExperience(rawBody) {
-  const obj = typeof rawBody === 'string' ? (rawBody ? JSON.parse(rawBody) : {}) : (rawBody || {});
-
-  const date = (obj.date || obj.datetime || '').split('T')[0];
-  let time = obj.time || '12:00';
-  if (time.length === 5) time = `${time}:00`;
-  const lat = Number(obj.lat ?? obj.latitude ?? 0);
-  const lon = Number(obj.lon ?? obj.longitude ?? 0);
-  const tz = obj.tz || obj.timezone || 'UTC';
-
-  const birth = { date, time, lat, lon, tz };
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
+    const obj = typeof rawBody === 'string' ? (rawBody ? JSON.parse(rawBody) : {}) : (rawBody || {});
+
+    const date = (obj.date || obj.datetime || '').split('T')[0];
+    let time = obj.time || '12:00';
+    if (time.length === 5) time = `${time}:00`;
+    const lat = Number(obj.lat ?? obj.latitude ?? 0);
+    const lon = Number(obj.lon ?? obj.longitude ?? 0);
+    const tz = obj.tz || obj.timezone || 'UTC';
+
+    const birth = { date, time, lat, lon, tz };
     const bootstrapResult = await callFuFire('experience/bootstrap', { birth }, controller.signal);
     if (!bootstrapResult.ok) {
       return { httpStatus: 502, body: { error: 'Experience bootstrap failed', detail: bootstrapResult.data } };
