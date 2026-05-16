@@ -333,6 +333,9 @@ input:focus { border-color: var(--accent); }
 .transit-day-intensity { display: flex; align-items: flex-end; gap: 1px; height: 30px; margin-top: auto; }
 .tdi-bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; }
 .tdi-bar--empty { background: var(--border); height: 2px; }
+.tdi-bar--low  { height: 20%; opacity: 0.4; }
+.tdi-bar--mid  { height: 55%; opacity: 0.7; }
+.tdi-bar--high { height: 90%; opacity: 1.0; }
 
 .transit-now-section { margin-bottom: 2rem; }
 .transit-timeline-section { margin-bottom: 2rem; }
