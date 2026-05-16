@@ -78,7 +78,7 @@ const FUFIRE_ENDPOINTS = [
   {
     method: 'GET',
     path: '/info/wuxing',
-    upstreamPath: 'info/wuxing',
+    upstreamPath: 'info/wuxing-mapping',
     category: 'reference',
     description: 'Statische FuFirE-Referenz: Planet-zu-Element-Mapping.',
   },
@@ -194,10 +194,12 @@ export function validatePayload(raw) {
     errors.push(`lon: must be a number between -180 and 180, got "${rawLon}"`);
   }
 
-  // Tz: required — all orchestrators need a valid IANA timezone
+  // Tz: required — basic format guard (IANA name or UTC offset)
   const rawTz = obj.tz ?? obj.timezone ?? '';
   if (!rawTz) {
     errors.push('tz: required — provide IANA timezone, e.g. Europe/Berlin or UTC');
+  } else if (!/^[A-Za-z][A-Za-z0-9_+\-\/]{1,39}$/.test(rawTz)) {
+    errors.push(`tz: invalid format "${rawTz}" — expected IANA timezone, e.g. Europe/Berlin or UTC`);
   }
 
   if (errors.length) return { valid: false, errors };
@@ -496,8 +498,11 @@ async function orchestrateFullProfile(rawBody) {
 
 // ── Daily experience aggregator ───────────────────────────────────────────
 async function orchestrateDailyExperience(rawBody) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const bootstrapMs = Math.round(API_TIMEOUT_MS * 0.6);
+  const dailyMs = Math.round(API_TIMEOUT_MS * 0.35);
+
+  const bootstrapCtrl = new AbortController();
+  const bootstrapTimer = setTimeout(() => bootstrapCtrl.abort(), bootstrapMs);
 
   try {
     const obj = typeof rawBody === 'string' ? (rawBody ? JSON.parse(rawBody) : {}) : (rawBody || {});
@@ -505,42 +510,51 @@ async function orchestrateDailyExperience(rawBody) {
     const date = (obj.date || obj.datetime || '').split('T')[0];
     let time = obj.time || '12:00';
     if (time.length === 5) time = `${time}:00`;
-    const lat = Number(obj.lat ?? obj.latitude ?? 0);
-    const lon = Number(obj.lon ?? obj.longitude ?? 0);
+    const lat = Number(obj.lat ?? obj.latitude ?? obj.location?.latitude ?? 0);
+    const lon = Number(obj.lon ?? obj.longitude ?? obj.location?.longitude ?? 0);
     const tz = obj.tz || obj.timezone || 'UTC';
 
     const birth = { date, time, lat, lon, tz };
-    const bootstrapResult = await callFuFire('experience/bootstrap', { birth }, controller.signal);
+    const bootstrapResult = await callFuFire('experience/bootstrap', { birth }, bootstrapCtrl.signal);
+    clearTimeout(bootstrapTimer);
     if (!bootstrapResult.ok) {
       return { httpStatus: 502, body: { error: 'Experience bootstrap failed', detail: bootstrapResult.data } };
     }
     const bootstrap = bootstrapResult.data;
     const soulprintSectors = bootstrap.soulprint_sectors || new Array(12).fill(0);
 
-    const today = new Date().toISOString().split('T')[0];
-    const dailyResult = await callFuFire('experience/daily', {
-      birth,
-      soulprint_sectors: soulprintSectors,
-      quiz_sectors: new Array(12).fill(0),
-      target_date: obj.target_date || today,
-    }, controller.signal);
-    if (!dailyResult.ok) {
-      return { httpStatus: 502, body: { error: 'Experience daily failed', detail: dailyResult.data } };
-    }
-    const daily = dailyResult.data;
-
-    return {
-      httpStatus: 200,
-      body: {
-        ...daily,
-        _meta: {
-          bootstrap_profile: bootstrap.profile,
-          computed_at: new Date().toISOString(),
+    const dailyCtrl = new AbortController();
+    const dailyTimer = setTimeout(() => dailyCtrl.abort(), dailyMs);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const dailyResult = await callFuFire('experience/daily', {
+        birth,
+        soulprint_sectors: soulprintSectors,
+        quiz_sectors: new Array(12).fill(0),
+        target_date: obj.target_date || today,
+      }, dailyCtrl.signal);
+      if (!dailyResult.ok) {
+        return { httpStatus: 502, body: { error: 'Experience daily failed', detail: dailyResult.data } };
+      }
+      const daily = dailyResult.data;
+      return {
+        httpStatus: 200,
+        body: {
+          date:    daily.date    ?? null,
+          western: daily.western ?? null,
+          eastern: daily.eastern ?? null,
+          fusion:  daily.fusion  ?? null,
+          _meta: {
+            bootstrap_profile: bootstrap.profile,
+            computed_at: new Date().toISOString(),
+          },
         },
-      },
-    };
+      };
+    } finally {
+      clearTimeout(dailyTimer);
+    }
   } finally {
-    clearTimeout(timer);
+    clearTimeout(bootstrapTimer);
   }
 }
 
@@ -815,7 +829,12 @@ async function serveStatic(req, res, pathname) {
     'cache-control': ext === '.html' ? 'no-cache' : 'public, max-age=3600',
   });
   const stream = createReadStream(filePath);
-  stream.on('error', () => { if (!res.writableEnded) res.end(); });
+  stream.on('error', () => {
+    if (!res.writableEnded) {
+      if (!res.headersSent) res.writeHead(500, { 'content-type': 'text/plain' });
+      res.end();
+    }
+  });
   stream.pipe(res);
 }
 

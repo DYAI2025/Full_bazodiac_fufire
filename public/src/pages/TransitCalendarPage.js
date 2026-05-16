@@ -69,6 +69,14 @@ function renderNow(planets, sectorIntensity) {
   return el;
 }
 
+function intensityClass(v) {
+  const n = Number(v);
+  if (!isFinite(n)) return 'tdi-bar--low';
+  if (n >= 0.67) return 'tdi-bar--high';
+  if (n >= 0.34) return 'tdi-bar--mid';
+  return 'tdi-bar--low';
+}
+
 function renderTimeline(days) {
   const el = document.createElement('section');
   el.className = 'transit-timeline-section';
@@ -102,7 +110,7 @@ function renderTimeline(days) {
       <div class="transit-day-intensity">
         ${(day.sector_intensity || []).map((v, i) =>
           v > 0.15
-            ? `<span class="tdi-bar" title="${i + 1}. Haus" style="height:${Math.round(v * 100)}%;opacity:${Math.max(0.3, v)}"></span>`
+            ? `<span class="tdi-bar ${intensityClass(v)}" title="${i + 1}. Haus"></span>`
             : '<span class="tdi-bar tdi-bar--empty"></span>'
         ).join('')}
       </div>

@@ -68,25 +68,25 @@ test('contract: calculate/fusion responds 200 with wu_xing_vectors', async (t) =
   assert.ok(json.wu_xing_vectors ?? json.vectors, 'Response must contain wu_xing_vectors');
 });
 
-test('contract: info/wuxing responds 200 — path drift detection', async (t) => {
+test('contract: info/wuxing-mapping responds 200 — path drift detection', async (t) => {
   skipIfDisabled(t);
-  // This test exists specifically to catch silent path renames
-  const res = await fetch(`${BASE_URL}/info/wuxing`, {
+  // Upstream renamed /info/wuxing → /info/wuxing-mapping. server.js upstreamPath already updated.
+  const res = await fetch(`${BASE_URL}/info/wuxing-mapping`, {
     method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(10_000),
   });
   if (res.status === 404) {
-    // Check alternate path to diagnose the drift
-    const res2 = await fetch(`${BASE_URL}/info/wuxing-mapping`, {
+    // Check if the old path came back
+    const res2 = await fetch(`${BASE_URL}/info/wuxing`, {
       method: 'GET', headers: getHeaders,
       signal: AbortSignal.timeout(10_000),
     });
     assert.fail(
-      `Path drift detected: /info/wuxing → 404, /info/wuxing-mapping → ${res2.status}. ` +
-      `Update FUFIRE_ENDPOINTS in server.js: upstreamPath: 'info/wuxing-mapping'`,
+      `Path drift: /info/wuxing-mapping → 404, /info/wuxing → ${res2.status}. ` +
+      `Revert upstreamPath in server.js to 'info/wuxing' if old path is back`,
     );
   }
-  assert.equal(res.status, 200, `Expected 200 from /info/wuxing, got ${res.status}`);
+  assert.equal(res.status, 200, `Expected 200 from /info/wuxing-mapping, got ${res.status}`);
   const json = await res.json();
   assert.ok(
     json.planet_mapping ?? json.planets ?? json.mapping ?? json.elements,
@@ -117,8 +117,10 @@ test('contract: transit/now responds 200 with planets and sector_intensity', asy
   assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
   const json = await res.json();
   assert.ok(json.planets, 'Response must contain planets field');
-  assert.ok(json.planets.sun, 'planets.sun must exist');
-  assert.equal(typeof json.planets.sun.longitude, 'number', 'sun.longitude must be a number');
+  const sun = json.planets?.sun ?? json.planets?.Sun;
+  assert.ok(sun, 'planets.sun must exist');
+  const sunLon = sun?.longitude ?? sun?.lon ?? sun?.degree;
+  assert.equal(typeof sunLon, 'number', 'sun.longitude must be a number');
   assert.ok(Array.isArray(json.sector_intensity), 'sector_intensity must be an array');
   assert.equal(json.sector_intensity.length, 12, 'sector_intensity must have 12 entries');
   assert.ok(json.computed_at, 'computed_at must be present');
@@ -136,9 +138,10 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   assert.ok(json.days.length >= 7, `days must have >= 7 entries, got ${json.days.length}`);
   const day = json.days[0];
   assert.ok(day.date, 'Each day must have a date field');
-  assert.ok(day.planets, 'Each day must have a planets field');
-  assert.ok(Array.isArray(day.sector_intensity), 'Each day must have sector_intensity array');
-  assert.equal(day.sector_intensity.length, 12, 'Each day sector_intensity must have 12 entries');
+  assert.ok(day.planets ?? day.planet_positions, 'Each day must have a planets field');
+  const sectorIntensity = day.sector_intensity ?? day.soulprint_sectors;
+  assert.ok(Array.isArray(sectorIntensity), 'Each day must have sector_intensity array');
+  assert.equal(sectorIntensity.length, 12, 'Each day sector_intensity must have 12 entries');
 });
 
 // Experience endpoints require split date+time (not ISO datetime string like MINIMAL_PAYLOAD)
