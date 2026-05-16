@@ -498,6 +498,8 @@ async function orchestrateFullProfile(rawBody) {
 
 // ── Daily experience aggregator ───────────────────────────────────────────
 async function orchestrateDailyExperience(rawBody) {
+  // Bootstrap gets 60%, daily gets 35%; the remaining 5% absorbs scheduling jitter
+  // and ensures the outer request handler can still write a 504 before the client times out.
   const bootstrapMs = Math.round(API_TIMEOUT_MS * 0.6);
   const dailyMs = Math.round(API_TIMEOUT_MS * 0.35);
 
