@@ -449,7 +449,7 @@ async function orchestrateFullProfile(rawBody) {
     // Optional: wuxing reference info (GET, no body needed)
     let wuxingInfo = { data: null };
     try {
-      const url = new URL('info/wuxing', getFuFireBaseUrl());
+      const url = new URL('info/wuxing-mapping', getFuFireBaseUrl());
       const r = await fetch(url, { headers: getFuFireHeaders(true), signal: controller.signal });
       wuxingInfo = { data: r.ok ? await r.json() : null };
     } catch { /* absorb — info endpoint is optional */ }
