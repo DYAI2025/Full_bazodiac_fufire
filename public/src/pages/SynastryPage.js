@@ -117,27 +117,35 @@ export function SynastryPage(app, { onNavigate }) {
       ? calculateProfile({ date: dateB.value, time: timeB.value || '12:00', lat: placeB.lat, lon: placeB.lon, tz: placeB.tz })
       : Promise.resolve(null);
 
-    const [resA, resB] = await Promise.all([calculateProfile(inputA), fetchB]);
+    try {
+      const [resA, resB] = await Promise.all([calculateProfile(inputA), fetchB]);
 
-    pg.stop();
-    progress.remove();
-    calcBtn.disabled = false;
+      pg.stop();
+      progress.remove();
+      calcBtn.disabled = false;
 
-    if (!resA.ok) {
-      errorEl.textContent = `Person A: ${resA.error || `HTTP ${resA.status}`}`;
+      if (!resA.ok) {
+        errorEl.textContent = `Person A: ${resA.error || `HTTP ${resA.status}`}`;
+        errorEl.hidden = false;
+        return;
+      }
+
+      const profileA = resA.data;
+      const profileB = resB?.ok ? resB.data : null;
+
+      if (resB && !resB.ok) {
+        errorEl.textContent = `Person B: ${resB.error || `HTTP ${resB.status}`} — Vergleich nur mit Person A.`;
+        errorEl.hidden = false;
+      }
+
+      renderResult(profileA, profileB);
+    } catch (err) {
+      pg.stop();
+      progress.remove();
+      calcBtn.disabled = false;
+      errorEl.textContent = `Netzwerkfehler: ${err.message}`;
       errorEl.hidden = false;
-      return;
     }
-
-    const profileA = resA.data;
-    const profileB = resB?.ok ? resB.data : null;
-
-    if (resB && !resB.ok) {
-      errorEl.textContent = `Person B: ${resB.error || `HTTP ${resB.status}`} — Vergleich nur mit Person A.`;
-      errorEl.hidden = false;
-    }
-
-    renderResult(profileA, profileB);
   });
 
   function renderResult(profileA, profileB) {
