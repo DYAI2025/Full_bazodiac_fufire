@@ -74,7 +74,11 @@ export function DailyPage(app) {
 
   if (!birthInput) {
     loading.hidden = true;
-    errorEl.innerHTML = 'Kein Geburts-Datensatz gefunden. <a href="#/">Bitte zuerst ein Profil berechnen.</a>';
+    errorEl.textContent = 'Kein Geburts-Datensatz gefunden. ';
+    const link = document.createElement('a');
+    link.href = '#/';
+    link.textContent = 'Bitte zuerst ein Profil berechnen.';
+    errorEl.appendChild(link);
     errorEl.hidden = false;
     return;
   }

@@ -56,7 +56,7 @@ router
     });
   })
   .register('/synastry', (app) => {
-    SynastryPage(app, { onNavigate: (path) => router.navigate(path) });
+    SynastryPage(app);
   })
   .register('/transit-calendar', (app) => {
     TransitCalendarPage(app);

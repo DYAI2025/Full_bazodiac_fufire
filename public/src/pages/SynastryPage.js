@@ -8,7 +8,7 @@ function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-export function SynastryPage(app, { onNavigate }) {
+export function SynastryPage(app) {
   app.innerHTML = `
     <main class="synastry-page">
       <nav class="page-nav">
