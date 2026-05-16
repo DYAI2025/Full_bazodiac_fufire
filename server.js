@@ -78,7 +78,7 @@ const FUFIRE_ENDPOINTS = [
   {
     method: 'GET',
     path: '/info/wuxing',
-    upstreamPath: 'info/wuxing',
+    upstreamPath: 'info/wuxing-mapping',
     category: 'reference',
     description: 'Statische FuFirE-Referenz: Planet-zu-Element-Mapping.',
   },

@@ -68,25 +68,25 @@ test('contract: calculate/fusion responds 200 with wu_xing_vectors', async (t) =
   assert.ok(json.wu_xing_vectors ?? json.vectors, 'Response must contain wu_xing_vectors');
 });
 
-test('contract: info/wuxing responds 200 — path drift detection', async (t) => {
+test('contract: info/wuxing-mapping responds 200 — path drift detection', async (t) => {
   skipIfDisabled(t);
-  // This test exists specifically to catch silent path renames
-  const res = await fetch(`${BASE_URL}/info/wuxing`, {
+  // Upstream renamed /info/wuxing → /info/wuxing-mapping. server.js upstreamPath already updated.
+  const res = await fetch(`${BASE_URL}/info/wuxing-mapping`, {
     method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(10_000),
   });
   if (res.status === 404) {
-    // Check alternate path to diagnose the drift
-    const res2 = await fetch(`${BASE_URL}/info/wuxing-mapping`, {
+    // Check if the old path came back
+    const res2 = await fetch(`${BASE_URL}/info/wuxing`, {
       method: 'GET', headers: getHeaders,
       signal: AbortSignal.timeout(10_000),
     });
     assert.fail(
-      `Path drift detected: /info/wuxing → 404, /info/wuxing-mapping → ${res2.status}. ` +
-      `Update FUFIRE_ENDPOINTS in server.js: upstreamPath: 'info/wuxing-mapping'`,
+      `Path drift: /info/wuxing-mapping → 404, /info/wuxing → ${res2.status}. ` +
+      `Revert upstreamPath in server.js to 'info/wuxing' if old path is back`,
     );
   }
-  assert.equal(res.status, 200, `Expected 200 from /info/wuxing, got ${res.status}`);
+  assert.equal(res.status, 200, `Expected 200 from /info/wuxing-mapping, got ${res.status}`);
   const json = await res.json();
   assert.ok(
     json.planet_mapping ?? json.planets ?? json.mapping ?? json.elements,
