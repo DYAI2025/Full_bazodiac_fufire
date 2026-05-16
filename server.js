@@ -295,10 +295,18 @@ export function normalizeAzodiacResult(raw) {
   // Western
   const bodies = {};
   for (const [name, body] of Object.entries(w.bodies || w.planets || {})) {
+    const bodyLon = Number(body.longitude ?? body.lon ?? body.degree ?? 0);
+    // FuFirE may return zodiac_sign as a string name or as an integer index;
+    // prefer the explicit 'sign' field, fall back to zodiac_sign if it is already
+    // a human-readable string, and lastly derive from longitude.
+    const rawZodiacSign = body.zodiac_sign;
+    const resolvedSign  = body.sign
+      ?? (typeof rawZodiacSign === 'string' ? rawZodiacSign : null)
+      ?? lonToSign(bodyLon);
     bodies[name] = {
-      longitude:      Number(body.longitude ?? body.lon ?? body.degree ?? 0),
-      sign:           body.sign ?? null,
-      zodiac_sign:    body.zodiac_sign ?? null,
+      longitude:      bodyLon,
+      sign:           resolvedSign,
+      zodiac_sign:    rawZodiacSign ?? null,
       house:          body.house ?? null,
       retrograde:     Boolean(body.is_retrograde ?? body.retrograde),
       degree_in_sign: body.degree_in_sign ?? null,
@@ -349,8 +357,34 @@ export function normalizeAzodiacResult(raw) {
   return {
     western: {
       bodies,
-      // Pass houses through as-is — frontend handles both object {"1":50.26} and array forms
-      houses:    w.houses  ?? [],
+      // Normalize houses: FuFirE returns {"1": 283.4, "2": 314.1, ...} (raw longitudes).
+      // Convert each entry to {longitude, sign} so projections can call entry?.sign reliably.
+      houses: (() => {
+        const raw = w.houses;
+        if (!raw) return [];
+        if (Array.isArray(raw)) {
+          return raw.map(entry =>
+            typeof entry === 'number'
+              ? { longitude: entry, sign: lonToSign(entry) }
+              : (entry && entry.sign == null && entry.longitude != null
+                  ? { ...entry, sign: lonToSign(entry.longitude) }
+                  : entry)
+          );
+        }
+        // Object form: {"1": 283.4, ...} or {"1": {cusp: 283.4}, ...}
+        const result = {};
+        for (const [k, v] of Object.entries(raw)) {
+          if (typeof v === 'number') {
+            result[k] = { longitude: v, sign: lonToSign(v) };
+          } else if (v && typeof v === 'object') {
+            const lon = v.longitude ?? v.cusp ?? v.lon ?? null;
+            result[k] = { ...v, longitude: lon, sign: v.sign ?? lonToSign(lon) };
+          } else {
+            result[k] = v;
+          }
+        }
+        return result;
+      })(),
       aspects:   Array.isArray(w.aspects) ? w.aspects : [],
       ascendant: ascSign,                 // always a sign name or null
       // Keep raw angles for any downstream calculation (e.g. degree-in-sign)
