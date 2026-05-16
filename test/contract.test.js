@@ -136,7 +136,9 @@ test('contract: transit/timeline responds 200 with 7-day days array', async (t) 
   const json = await res.json();
   assert.ok(Array.isArray(json.days), 'Response must contain days array');
   assert.ok(json.days.length >= 7, `days must have >= 7 entries, got ${json.days.length}`);
+  assert.ok(json.days.length > 0, 'days array must not be empty');
   const day = json.days[0];
+  assert.ok(day, 'days[0] must exist');
   assert.ok(day.date, 'Each day must have a date field');
   assert.ok(day.planets ?? day.planet_positions, 'Each day must have a planets field');
   const sectorIntensity = day.sector_intensity ?? day.soulprint_sectors;
