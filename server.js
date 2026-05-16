@@ -829,7 +829,12 @@ async function serveStatic(req, res, pathname) {
     'cache-control': ext === '.html' ? 'no-cache' : 'public, max-age=3600',
   });
   const stream = createReadStream(filePath);
-  stream.on('error', () => { if (!res.writableEnded) res.end(); });
+  stream.on('error', () => {
+    if (!res.writableEnded) {
+      if (!res.headersSent) res.writeHead(500, { 'content-type': 'text/plain' });
+      res.end();
+    }
+  });
   stream.pipe(res);
 }
 
