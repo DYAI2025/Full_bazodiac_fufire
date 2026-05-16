@@ -510,8 +510,11 @@ async function orchestrateDailyExperience(rawBody) {
     const date = (obj.date || obj.datetime || '').split('T')[0];
     let time = obj.time || '12:00';
     if (time.length === 5) time = `${time}:00`;
-    const lat = Number(obj.lat ?? obj.latitude ?? obj.location?.latitude ?? 0);
-    const lon = Number(obj.lon ?? obj.longitude ?? obj.location?.longitude ?? 0);
+    const lat = Number(obj.lat ?? obj.latitude ?? obj.location?.latitude);
+    const lon = Number(obj.lon ?? obj.longitude ?? obj.location?.longitude);
+    if (!isFinite(lat) || !isFinite(lon)) {
+      return { httpStatus: 400, body: { errors: ['lat/lon missing or not a number'] } };
+    }
     const tz = obj.tz || obj.timezone || 'UTC';
 
     const birth = { date, time, lat, lon, tz };

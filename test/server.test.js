@@ -491,3 +491,16 @@ test('/api/azodiac/daily: missing lat with empty location returns 400', async ()
     assert.ok(body.errors.some(e => e.toLowerCase().includes('lat')));
   });
 });
+
+test('/api/azodiac/daily: null lat (not missing, but null) returns 400 not Gulf-of-Guinea result', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '1990-03-15', tz: 'Europe/Berlin', lat: null, lon: null }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.errors), 'errors must be array');
+  });
+});
