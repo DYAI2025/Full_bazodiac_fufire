@@ -294,7 +294,7 @@ export function normalizeAzodiacResult(raw) {
 
   // Western
   const bodies = {};
-  for (const [name, body] of Object.entries(w.bodies || {})) {
+  for (const [name, body] of Object.entries(w.bodies || w.planets || {})) {
     bodies[name] = {
       longitude:      Number(body.longitude ?? body.lon ?? body.degree ?? 0),
       sign:           body.sign ?? null,

@@ -123,6 +123,23 @@ test('normalizeAzodiacResult extracts coherence_index from FuFirE harmony_index 
   );
 });
 
+test('normalizeAzodiacResult falls back to planets field when bodies is absent', () => {
+  const vm = normalizeAzodiacResult({
+    western: {
+      planets: {
+        Sun:  { longitude: 45.0, sign: 'Taurus',  house: 2, is_retrograde: false },
+        Moon: { longitude: 92.0, sign: 'Cancer',  house: 4, is_retrograde: false },
+      },
+    },
+    bazi: null, fusion: null, _meta: {},
+  });
+
+  assert.ok(vm.western.bodies.Sun,  'Sun must be present when upstream sends planets field');
+  assert.equal(vm.western.bodies.Sun.sign,  'Taurus');
+  assert.ok(vm.western.bodies.Moon, 'Moon must be present when upstream sends planets field');
+  assert.equal(vm.western.bodies.Moon.sign, 'Cancer');
+});
+
 test('normalizePillar keeps API-supplied hidden_stems unchanged', () => {
   const vm = normalizeAzodiacResult({
     western: null, fusion: null,
