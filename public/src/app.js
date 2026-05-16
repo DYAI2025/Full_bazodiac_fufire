@@ -6,6 +6,8 @@ import { LovePage }            from './pages/LovePage.js';
 import { CareerFinancePage }  from './pages/CareerFinancePage.js';
 import { PersonalityPage }    from './pages/PersonalityPage.js';
 import { SynastryPage }       from './pages/SynastryPage.js';
+import { TransitCalendarPage } from './pages/TransitCalendarPage.js';
+import { DailyPage }           from './pages/DailyPage.js';
 
 let currentProfile = null;
 
@@ -54,6 +56,12 @@ router
     });
   })
   .register('/synastry', (app) => {
-    SynastryPage(app, { onNavigate: (path) => router.navigate(path) });
+    SynastryPage(app);
+  })
+  .register('/transit-calendar', (app) => {
+    TransitCalendarPage(app);
+  })
+  .register('/daily', (app) => {
+    DailyPage(app);
   })
   .start();

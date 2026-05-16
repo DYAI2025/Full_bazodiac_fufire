@@ -82,6 +82,34 @@ const FUFIRE_ENDPOINTS = [
     category: 'reference',
     description: 'Statische FuFirE-Referenz: Planet-zu-Element-Mapping.',
   },
+  {
+    method: 'GET',
+    path: '/transit/now',
+    upstreamPath: 'transit/now',
+    category: 'transit',
+    description: 'Aktuelle Transitplaneten-Positionen mit Sektor-Intensitäten (12 Häuser).',
+  },
+  {
+    method: 'GET',
+    path: '/transit/timeline',
+    upstreamPath: 'transit/timeline',
+    category: 'transit',
+    description: '7-Tage-Transitkalender: tägliche Planetenpositionen und Sektor-Intensitäten.',
+  },
+  {
+    method: 'POST',
+    path: '/experience/bootstrap',
+    upstreamPath: 'experience/bootstrap',
+    category: 'experience',
+    description: 'Soulprint-Bootstrap: berechnet persönliche Sektor-Intensitäten aus Geburtsdaten.',
+  },
+  {
+    method: 'POST',
+    path: '/experience/daily',
+    upstreamPath: 'experience/daily',
+    category: 'experience',
+    description: 'Tageserlebnis: westlicher + östlicher Impuls + Fusion-Synthese für ein Datum.',
+  },
 ];
 
 const ENDPOINTS_BY_PATH = new Map(FUFIRE_ENDPOINTS.map((e) => [e.path, e]));
@@ -129,6 +157,8 @@ function translatePayload(raw) {
   };
 }
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
 export function validatePayload(raw) {
   const errors = [];
   let obj;
@@ -140,7 +170,6 @@ export function validatePayload(raw) {
 
   // Date: required, must match YYYY-MM-DD or YYYY-MM-DDTHH:MM[:SS]
   const dateStr = obj.date || obj.datetime || '';
-  const DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/;
   if (!dateStr) {
     errors.push('date: required — provide date (YYYY-MM-DD) or datetime (YYYY-MM-DDTHH:MM)');
   } else if (!DATE_RE.test(dateStr)) {
@@ -149,8 +178,8 @@ export function validatePayload(raw) {
 
   // Lat: required, finite, [-90, 90]
   const rawLat = obj.lat ?? obj.latitude ?? obj.location?.latitude;
-  const lat = rawLat !== undefined && rawLat !== '' ? Number(rawLat) : NaN;
-  if (rawLat === undefined || rawLat === '') {
+  const lat = rawLat !== undefined && rawLat !== null && rawLat !== '' ? Number(rawLat) : NaN;
+  if (rawLat === undefined || rawLat === null || rawLat === '') {
     errors.push('lat: required — provide lat (decimal degrees, e.g. 48.137)');
   } else if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
     errors.push(`lat: must be a number between -90 and 90, got "${rawLat}"`);
@@ -158,11 +187,17 @@ export function validatePayload(raw) {
 
   // Lon: required, finite, [-180, 180]
   const rawLon = obj.lon ?? obj.longitude ?? obj.location?.longitude;
-  const lon = rawLon !== undefined && rawLon !== '' ? Number(rawLon) : NaN;
-  if (rawLon === undefined || rawLon === '') {
+  const lon = rawLon !== undefined && rawLon !== null && rawLon !== '' ? Number(rawLon) : NaN;
+  if (rawLon === undefined || rawLon === null || rawLon === '') {
     errors.push('lon: required — provide lon (decimal degrees, e.g. 11.576)');
   } else if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
     errors.push(`lon: must be a number between -180 and 180, got "${rawLon}"`);
+  }
+
+  // Tz: required — all orchestrators need a valid IANA timezone
+  const rawTz = obj.tz ?? obj.timezone ?? '';
+  if (!rawTz) {
+    errors.push('tz: required — provide IANA timezone, e.g. Europe/Berlin or UTC');
   }
 
   if (errors.length) return { valid: false, errors };
@@ -240,6 +275,14 @@ function normalizePillar(raw) {
   };
 }
 
+const ASC_SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                   'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+
+function lonToSign(lon) {
+  if (lon == null || typeof lon !== 'number') return null;
+  return ASC_SIGNS[Math.floor(((lon % 360) + 360) % 360 / 30)];
+}
+
 // ── ViewModel normalizer ──────────────────────────────────────────────────
 export function normalizeAzodiacResult(raw) {
   const w = raw?.western || {};
@@ -291,12 +334,6 @@ export function normalizeAzodiacResult(raw) {
   // FuFirE returns angles.Ascendant = ecliptic longitude (number, e.g. 185.34).
   // OverviewPage expects a zodiac sign name string like "Scorpio" / "Libra".
   // Derive from longitude if no direct sign string is available.
-  const ASC_SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
-                     'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-  function lonToSign(lon) {
-    if (lon == null || typeof lon !== 'number') return null;
-    return ASC_SIGNS[Math.floor(((lon % 360) + 360) % 360 / 30)];
-  }
 
   // Resolve ascendant: prefer a string (sign name or sign lookup via longitude)
   const ascRaw = w.ascendant;
@@ -451,6 +488,56 @@ async function orchestrateFullProfile(rawBody) {
     return {
       httpStatus: mandatoryOk ? 200 : 502,
       body: normalizeAzodiacResult(rawResult),
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ── Daily experience aggregator ───────────────────────────────────────────
+async function orchestrateDailyExperience(rawBody) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const obj = typeof rawBody === 'string' ? (rawBody ? JSON.parse(rawBody) : {}) : (rawBody || {});
+
+    const date = (obj.date || obj.datetime || '').split('T')[0];
+    let time = obj.time || '12:00';
+    if (time.length === 5) time = `${time}:00`;
+    const lat = Number(obj.lat ?? obj.latitude ?? 0);
+    const lon = Number(obj.lon ?? obj.longitude ?? 0);
+    const tz = obj.tz || obj.timezone || 'UTC';
+
+    const birth = { date, time, lat, lon, tz };
+    const bootstrapResult = await callFuFire('experience/bootstrap', { birth }, controller.signal);
+    if (!bootstrapResult.ok) {
+      return { httpStatus: 502, body: { error: 'Experience bootstrap failed', detail: bootstrapResult.data } };
+    }
+    const bootstrap = bootstrapResult.data;
+    const soulprintSectors = bootstrap.soulprint_sectors || new Array(12).fill(0);
+
+    const today = new Date().toISOString().split('T')[0];
+    const dailyResult = await callFuFire('experience/daily', {
+      birth,
+      soulprint_sectors: soulprintSectors,
+      quiz_sectors: new Array(12).fill(0),
+      target_date: obj.target_date || today,
+    }, controller.signal);
+    if (!dailyResult.ok) {
+      return { httpStatus: 502, body: { error: 'Experience daily failed', detail: dailyResult.data } };
+    }
+    const daily = dailyResult.data;
+
+    return {
+      httpStatus: 200,
+      body: {
+        ...daily,
+        _meta: {
+          bootstrap_profile: bootstrap.profile,
+          computed_at: new Date().toISOString(),
+        },
+      },
     };
   } finally {
     clearTimeout(timer);
@@ -791,6 +878,36 @@ export async function handleRequest(req, res) {
   // ── Geocoder ──
   if (url.pathname === '/api/geocode') {
     return handleGeocodeRequest(req, res, requestOrigin);
+  }
+
+  // ── Daily experience aggregator ──
+  if (url.pathname === '/api/azodiac/daily') {
+    if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
+    if (req.method !== 'POST') {
+      return sendJson(res, 405, { error: 'Method not allowed', allowed: ['POST'] }, requestOrigin);
+    }
+    let body = '';
+    try {
+      body = await readRequestBody(req);
+      if (body) JSON.parse(body);
+    } catch (error) {
+      return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
+    }
+    const validation = validatePayload(body || '{}');
+    if (!validation.valid) {
+      return sendJson(res, 400, { error: 'Invalid request payload', errors: validation.errors }, requestOrigin);
+    }
+    try {
+      const result = await orchestrateDailyExperience(body || '{}');
+      return sendJson(res, result.httpStatus, result.body, requestOrigin);
+    } catch (error) {
+      const isAbort = error.name === 'AbortError';
+      return sendJson(res, 502, {
+        error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
+        detail: error.message,
+        hint: 'Check FUFIRE_BASE_URL and FUFIRE_API_KEY environment variables.',
+      }, requestOrigin);
+    }
   }
 
   // ── Proxy (allowlist) ──

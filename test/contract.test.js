@@ -17,6 +17,11 @@ const headers = {
   ...(API_KEY ? { 'x-api-key': API_KEY } : {}),
 };
 
+const getHeaders = {
+  'accept': 'application/json',
+  ...(API_KEY ? { 'x-api-key': API_KEY } : {}),
+};
+
 const MINIMAL_PAYLOAD = {
   date: '1990-06-15T12:00:00',
   tz: 'Europe/Berlin',
@@ -66,7 +71,6 @@ test('contract: calculate/fusion responds 200 with wu_xing_vectors', async (t) =
 test('contract: info/wuxing responds 200 — path drift detection', async (t) => {
   skipIfDisabled(t);
   // This test exists specifically to catch silent path renames
-  const getHeaders = { accept: 'application/json', ...(API_KEY ? { 'x-api-key': API_KEY } : {}) };
   const res = await fetch(`${BASE_URL}/info/wuxing`, {
     method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(10_000),
@@ -102,4 +106,95 @@ test('contract: response shape stability — Sun longitude is a number', async (
   assert.ok(sun, 'Sun must be present in bodies');
   const lon = sun.longitude ?? sun.lon ?? sun.degree;
   assert.equal(typeof lon, 'number', `Sun longitude must be number, got ${typeof lon}`);
+});
+
+test('contract: transit/now responds 200 with planets and sector_intensity', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/transit/now`, {
+    method: 'GET', headers: getHeaders,
+    signal: AbortSignal.timeout(15_000),
+  });
+  assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
+  const json = await res.json();
+  assert.ok(json.planets, 'Response must contain planets field');
+  assert.ok(json.planets.sun, 'planets.sun must exist');
+  assert.equal(typeof json.planets.sun.longitude, 'number', 'sun.longitude must be a number');
+  assert.ok(Array.isArray(json.sector_intensity), 'sector_intensity must be an array');
+  assert.equal(json.sector_intensity.length, 12, 'sector_intensity must have 12 entries');
+  assert.ok(json.computed_at, 'computed_at must be present');
+});
+
+test('contract: transit/timeline responds 200 with 7-day days array', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/transit/timeline`, {
+    method: 'GET', headers: getHeaders,
+    signal: AbortSignal.timeout(15_000),
+  });
+  assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
+  const json = await res.json();
+  assert.ok(Array.isArray(json.days), 'Response must contain days array');
+  assert.ok(json.days.length >= 7, `days must have >= 7 entries, got ${json.days.length}`);
+  const day = json.days[0];
+  assert.ok(day.date, 'Each day must have a date field');
+  assert.ok(day.planets, 'Each day must have a planets field');
+  assert.ok(Array.isArray(day.sector_intensity), 'Each day must have sector_intensity array');
+  assert.equal(day.sector_intensity.length, 12, 'Each day sector_intensity must have 12 entries');
+});
+
+// Experience endpoints require split date+time (not ISO datetime string like MINIMAL_PAYLOAD)
+const BIRTH_PAYLOAD = {
+  date: '1990-03-15',
+  time: '14:30:00',
+  lat: 48.137,
+  lon: 11.576,
+  tz: 'Europe/Berlin',
+};
+
+test('contract: experience/bootstrap responds 200 with soulprint_sectors', async (t) => {
+  skipIfDisabled(t);
+  const res = await fetch(`${BASE_URL}/experience/bootstrap`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ birth: BIRTH_PAYLOAD }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
+  const json = await res.json();
+  assert.ok(Array.isArray(json.soulprint_sectors), 'soulprint_sectors must be an array');
+  assert.equal(json.soulprint_sectors.length, 12, 'soulprint_sectors must have 12 entries');
+  assert.ok(json.profile, 'profile field must exist');
+});
+
+test('contract: experience/daily responds 200 with western + eastern + fusion', async (t) => {
+  skipIfDisabled(t);
+  const bootstrapRes = await fetch(`${BASE_URL}/experience/bootstrap`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ birth: BIRTH_PAYLOAD }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(bootstrapRes.status, 200, `Expected 200, got ${bootstrapRes.status}`);
+  const bootstrap = await bootstrapRes.json();
+  assert.equal(bootstrap.soulprint_sectors?.length, 12, 'bootstrap soulprint_sectors must have 12 entries before daily call');
+
+  const today = new Date().toISOString().split('T')[0];
+  const dailyRes = await fetch(`${BASE_URL}/experience/daily`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      birth: BIRTH_PAYLOAD,
+      soulprint_sectors: bootstrap.soulprint_sectors,
+      quiz_sectors: new Array(12).fill(0),
+      target_date: today,
+    }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(dailyRes.status, 200, `Expected 200, got ${dailyRes.status}`);
+  const json = await dailyRes.json();
+  assert.equal(typeof json.date, 'string', 'date must be a string');
+  assert.ok(json.western, 'western field must exist');
+  assert.ok(json.eastern, 'eastern field must exist');
+  assert.ok(json.fusion, 'fusion field must exist');
+  assert.ok(Array.isArray(json.western.themes), 'western.themes must be an array');
+  assert.equal(typeof json.fusion.pushworthy, 'boolean', 'fusion.pushworthy must be boolean');
 });

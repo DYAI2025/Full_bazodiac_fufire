@@ -31,6 +31,10 @@ test('health endpoint exposes Railway and explicit FuFirE v3 endpoint catalog', 
       'calculate/fusion',
       'calculate/wuxing',
       'info/wuxing',
+      'transit/now',
+      'transit/timeline',
+      'experience/bootstrap',
+      'experience/daily',
     ]);
     assert.deepEqual(
       json.endpoints.map(({ method, path }) => `${method} ${path}`),
@@ -41,6 +45,10 @@ test('health endpoint exposes Railway and explicit FuFirE v3 endpoint catalog', 
         'POST /calculate/fusion',
         'POST /calculate/wuxing',
         'GET /info/wuxing',
+        'GET /transit/now',
+        'GET /transit/timeline',
+        'POST /experience/bootstrap',
+        'POST /experience/daily',
       ],
     );
   });
@@ -265,4 +273,160 @@ test('/api/azodiac/profile: returns 400 when body is empty', async () => {
     assert.ok(Array.isArray(body.errors));
     assert.ok(body.errors.length >= 3);
   });
+});
+
+test('/api/azodiac/daily: returns 400 when date is missing', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ lat: 48.137, lon: 11.576 }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.errors));
+    assert.ok(body.errors.some(e => e.includes('date')));
+  });
+});
+
+test('/api/azodiac/daily: returns 405 for GET', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`);
+    assert.equal(res.status, 405);
+  });
+});
+
+test('/api/azodiac/daily: returns 400 when tz is missing', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/daily`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ date: '1990-03-15', lat: 48.137, lon: 11.576 }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(body.errors.some(e => e.includes('tz')));
+  });
+});
+
+test('/api/azodiac/daily orchestrates bootstrap → daily and returns 200 with western+eastern+fusion', async () => {
+  const seen = [];
+  const upstream = createServer((req, res) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      seen.push({ method: req.method, url: req.url });
+      const responses = {
+        '/experience/bootstrap': {
+          soulprint_sectors: new Array(12).fill(0.5),
+          profile: { sun_sign: 'aries', day_master: 'Wasser-Ratte' },
+        },
+        '/experience/daily': {
+          date: '2026-05-16',
+          western: { summary: 'Guter Tag', themes: ['Klarheit'] },
+          eastern: { summary: 'Holz-Energie', themes: ['Wachstum'] },
+          fusion: { summary: 'Harmonisch', synthesis: 'Nutze den Moment', pushworthy: true },
+        },
+      };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(responses[req.url] ?? { ok: true }));
+    });
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/api/azodiac/daily`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: '1990-03-15', time: '14:30', lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' }),
+      });
+      assert.equal(res.status, 200);
+      const json = await res.json();
+      assert.ok('western' in json, 'western must be present');
+      assert.ok('eastern' in json, 'eastern must be present');
+      assert.ok('fusion' in json, 'fusion must be present');
+      assert.ok('_meta' in json, '_meta must be present');
+      assert.ok(json._meta.bootstrap_profile, 'bootstrap_profile must be in _meta');
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+
+  assert.equal(seen.length, 2);
+  assert.equal(seen[0].url, '/experience/bootstrap');
+  assert.equal(seen[1].url, '/experience/daily');
+});
+
+test('/api/azodiac/daily returns 502 when bootstrap fails', async () => {
+  const upstream = createServer((req, res) => {
+    res.writeHead(500, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'upstream exploded' }));
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/api/azodiac/daily`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: '1990-03-15', time: '14:30', lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' }),
+      });
+      assert.equal(res.status, 502);
+      const json = await res.json();
+      assert.ok(json.error.toLowerCase().includes('bootstrap'), `error should mention bootstrap, got: ${json.error}`);
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+});
+
+test('/api/azodiac/daily returns 502 when daily experience call fails', async () => {
+  let callCount = 0;
+  const upstream = createServer((req, res) => {
+    callCount++;
+    if (callCount === 1) {
+      // bootstrap succeeds
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ soulprint_sectors: new Array(12).fill(0), profile: {} }));
+    } else {
+      // daily fails
+      res.writeHead(503, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: 'daily unavailable' }));
+    }
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/api/azodiac/daily`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: '1990-03-15', time: '14:30', lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' }),
+      });
+      assert.equal(res.status, 502);
+      const json = await res.json();
+      assert.ok(json.error.toLowerCase().includes('daily'), `error should mention daily, got: ${json.error}`);
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
 });

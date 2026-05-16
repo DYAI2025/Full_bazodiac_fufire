@@ -14,7 +14,7 @@ test('validatePayload: valid full payload returns { valid: true }', () => {
 });
 
 test('validatePayload: ISO datetime date string accepted', () => {
-  const result = validatePayload({ date: '1990-03-15T14:30:00', lat: 48.0, lon: 11.0 });
+  const result = validatePayload({ date: '1990-03-15T14:30:00', lat: 48.0, lon: 11.0, tz: 'UTC' });
   assert.deepEqual(result, { valid: true });
 });
 
@@ -67,7 +67,7 @@ test('validatePayload: non-numeric lat returns error', () => {
 });
 
 test('validatePayload: lat=0, lon=0 is valid (Gulf of Guinea)', () => {
-  const result = validatePayload({ date: '1990-03-15', lat: 0, lon: 0 });
+  const result = validatePayload({ date: '1990-03-15', lat: 0, lon: 0, tz: 'UTC' });
   assert.deepEqual(result, { valid: true });
 });
 
@@ -78,21 +78,32 @@ test('validatePayload: multiple errors collected at once', () => {
 });
 
 test('validatePayload: accepts datetime alias field', () => {
-  const result = validatePayload({ datetime: '1990-03-15', lat: 48.0, lon: 11.0 });
+  const result = validatePayload({ datetime: '1990-03-15', lat: 48.0, lon: 11.0, tz: 'UTC' });
   assert.deepEqual(result, { valid: true });
 });
 
 test('validatePayload: accepts latitude/longitude aliases', () => {
-  const result = validatePayload({ date: '1990-03-15', latitude: 48.0, longitude: 11.0 });
+  const result = validatePayload({ date: '1990-03-15', latitude: 48.0, longitude: 11.0, tz: 'UTC' });
   assert.deepEqual(result, { valid: true });
 });
 
 test('validatePayload: string body is parsed', () => {
-  const result = validatePayload(JSON.stringify({ date: '1990-03-15', lat: 48.0, lon: 11.0 }));
+  const result = validatePayload(JSON.stringify({ date: '1990-03-15', lat: 48.0, lon: 11.0, tz: 'UTC' }));
   assert.deepEqual(result, { valid: true });
 });
 
 test('validatePayload: invalid JSON string returns error', () => {
   const result = validatePayload('{not json}');
   assert.equal(result.valid, false);
+});
+
+test('validatePayload: missing tz returns error', () => {
+  const result = validatePayload({ date: '1990-03-15', lat: 48.137, lon: 11.576 });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some(e => e.includes('tz')), `expected tz error, got: ${JSON.stringify(result.errors)}`);
+});
+
+test('validatePayload: accepts timezone alias', () => {
+  const result = validatePayload({ date: '1990-03-15', lat: 48.137, lon: 11.576, timezone: 'Europe/Berlin' });
+  assert.deepEqual(result, { valid: true });
 });

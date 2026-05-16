@@ -4,7 +4,11 @@ import { SourceBadge }           from '../components/SourceBadge.js';
 import { calculateProfile }      from '../api/client.js';
 import { createSynastryProjection } from '../domain/projections.js';
 
-export function SynastryPage(app, { onNavigate }) {
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+export function SynastryPage(app) {
   app.innerHTML = `
     <main class="synastry-page">
       <nav class="page-nav">
@@ -117,27 +121,35 @@ export function SynastryPage(app, { onNavigate }) {
       ? calculateProfile({ date: dateB.value, time: timeB.value || '12:00', lat: placeB.lat, lon: placeB.lon, tz: placeB.tz })
       : Promise.resolve(null);
 
-    const [resA, resB] = await Promise.all([calculateProfile(inputA), fetchB]);
+    try {
+      const [resA, resB] = await Promise.all([calculateProfile(inputA), fetchB]);
 
-    pg.stop();
-    progress.remove();
-    calcBtn.disabled = false;
+      pg.stop();
+      progress.remove();
+      calcBtn.disabled = false;
 
-    if (!resA.ok) {
-      errorEl.textContent = `Person A: ${resA.error || `HTTP ${resA.status}`}`;
+      if (!resA.ok) {
+        errorEl.textContent = `Person A: ${resA.error || `HTTP ${resA.status}`}`;
+        errorEl.hidden = false;
+        return;
+      }
+
+      const profileA = resA.data;
+      const profileB = resB?.ok ? resB.data : null;
+
+      if (resB && !resB.ok) {
+        errorEl.textContent = `Person B: ${resB.error || `HTTP ${resB.status}`} — Vergleich nur mit Person A.`;
+        errorEl.hidden = false;
+      }
+
+      renderResult(profileA, profileB);
+    } catch (err) {
+      pg.stop();
+      progress.remove();
+      calcBtn.disabled = false;
+      errorEl.textContent = `Netzwerkfehler: ${err.message}`;
       errorEl.hidden = false;
-      return;
     }
-
-    const profileA = resA.data;
-    const profileB = resB?.ok ? resB.data : null;
-
-    if (resB && !resB.ok) {
-      errorEl.textContent = `Person B: ${resB.error || `HTTP ${resB.status}`} — Vergleich nur mit Person A.`;
-      errorEl.hidden = false;
-    }
-
-    renderResult(profileA, profileB);
   });
 
   function renderResult(profileA, profileB) {
@@ -178,10 +190,10 @@ export function SynastryPage(app, { onNavigate }) {
     const header = document.createElement('div');
     header.className = 'synastry-compat-header';
     header.innerHTML = `
-      <span class="synastry-element element-a">${proj.wuxing.elementA}</span>
+      <span class="synastry-element element-a">${esc(proj.wuxing.elementA)}</span>
       <span class="synastry-relation-arrow">→</span>
-      <span class="synastry-element element-b">${proj.wuxing.elementB}</span>
-      <span class="synastry-cycle-label">${proj.wuxing.cycle}</span>
+      <span class="synastry-element element-b">${esc(proj.wuxing.elementB)}</span>
+      <span class="synastry-cycle-label">${esc(proj.wuxing.cycle)}</span>
     `;
     header.appendChild(SourceBadge('static_interpretation'));
 
@@ -217,9 +229,9 @@ export function SynastryPage(app, { onNavigate }) {
     const stems = document.createElement('div');
     stems.className = 'synastry-bazi-stems';
     stems.innerHTML = `
-      <span class="bazi-stem-a">${proj.bazi.stemA} ${proj.bazi.elementA}</span>
+      <span class="bazi-stem-a">${esc(proj.bazi.stemA)} ${esc(proj.bazi.elementA)}</span>
       <span class="bazi-stem-sep">×</span>
-      <span class="bazi-stem-b">${proj.bazi.stemB} ${proj.bazi.elementB}</span>
+      <span class="bazi-stem-b">${esc(proj.bazi.stemB)} ${esc(proj.bazi.elementB)}</span>
     `;
     stems.appendChild(SourceBadge('static_interpretation'));
 

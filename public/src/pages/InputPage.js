@@ -95,6 +95,8 @@ export function InputPage(app, { onResult }) {
       location: selectedPlace.display,
     };
 
+    try { sessionStorage.setItem('azodiac_birth_input', JSON.stringify(input)); } catch { /* storage unavailable — DailyPage falls back to re-entry */ }
+
     onResult?.(res.data);
   });
 }
