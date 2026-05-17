@@ -640,7 +640,9 @@ async function orchestrateSynastry(rawBody) {
       ]);
       if (ra.ok) fA = ra;
       if (rb.ok) fB = rb;
-    } catch { /* absorb */ }
+    } catch (e) {
+      console.warn('Fusion calculation failed, continuing without it:', e.message);
+    }
 
     const mandatoryOk = wA.ok && bA.ok && wB.ok && bB.ok;
 
