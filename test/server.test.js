@@ -525,3 +525,47 @@ test('normalizeAzodiacResult passiert fusion.aspects, house_overlay, dominant_pa
   assert.deepStrictEqual(vm.fusion.dominant_patterns, raw.fusion.dominant_patterns);
   assert.strictEqual(vm.fusion.synthesis_notes, 'Starke Integration');
 });
+
+test('POST /api/azodiac/fusion existiert — kein 404', async () => {
+  const upstream = createServer((req, res) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      const responses = {
+        '/calculate/western': { bodies: {}, houses: [], aspects: [] },
+        '/calculate/bazi':    { pillars: {} },
+        '/calculate/fusion':  { wu_xing_vectors: {}, coherence_index: 0.7 },
+      };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(responses[req.url] ?? { ok: true }));
+    });
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const body = JSON.stringify({ date: '1990-06-15', time: '12:00', lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' });
+      const res = await fetch(`${base}/api/azodiac/fusion`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      });
+      // Route must exist — 404 is the only unacceptable status
+      assert.notEqual(res.status, 404, `Expected a non-404 response, got ${res.status}`);
+      // With mock upstream returning valid data, we expect 200
+      assert.equal(res.status, 200);
+      const json = await res.json();
+      assert.ok('fusion' in json, 'fusion key must be present in response');
+      assert.ok('_meta' in json, '_meta key must be present in response');
+      assert.equal(json._meta.endpoint, '/api/azodiac/fusion');
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+});

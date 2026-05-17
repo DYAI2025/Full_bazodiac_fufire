@@ -57,6 +57,10 @@ export async function getDailyExperience(birthInput) {
   return request('POST', '/api/azodiac/daily', birthInput);
 }
 
+export async function calculateFusion(input) {
+  return request('POST', '/api/azodiac/fusion', input);
+}
+
 export function noFakeDataGuard(data, label = '') {
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'development') return;
   const DUMMY_SIGNATURES = ['Lorem', 'dummy', 'fake', 'random', 'placeholder', 'test123'];

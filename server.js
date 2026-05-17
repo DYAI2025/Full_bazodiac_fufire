@@ -538,6 +538,40 @@ async function orchestrateFullProfile(rawBody) {
   }
 }
 
+// ── Standalone fusion calculator ──────────────────────────────────────────
+async function orchestrateFusion(rawBody) {
+  const payload = translatePayload(rawBody);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  try {
+    const [w, b, f] = await Promise.all([
+      callFuFire('calculate/western', payload, controller.signal),
+      callFuFire('calculate/bazi',    payload, controller.signal),
+      callFuFire('calculate/fusion',  payload, controller.signal),
+    ]);
+    const allOk = w.ok && b.ok && f.ok;
+    const rawResult = {
+      western: w.data,
+      bazi:    b.data,
+      fusion:  f.data,
+      _meta: {
+        input: payload,
+        upstream_status: { western: w.status, bazi: b.status, fusion: f.status },
+      },
+    };
+    const vm = normalizeAzodiacResult(rawResult);
+    return {
+      httpStatus: allOk ? 200 : 502,
+      body: {
+        fusion: vm.fusion,
+        _meta:  { ...vm._meta, endpoint: '/api/azodiac/fusion' },
+      },
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── Daily experience aggregator ───────────────────────────────────────────
 async function orchestrateDailyExperience(rawBody) {
   // Bootstrap gets 60%, daily gets 35%; the remaining 5% absorbs scheduling jitter
@@ -935,6 +969,35 @@ export async function handleRequest(req, res) {
         error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
         detail: error.message,
         hint: 'Check FUFIRE_BASE_URL and FUFIRE_API_KEY environment variables.',
+      }, requestOrigin);
+    }
+  }
+
+  // ── Standalone fusion calculator ──
+  if (url.pathname === '/api/azodiac/fusion') {
+    if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
+    if (req.method !== 'POST') {
+      return sendJson(res, 405, { error: 'Method not allowed', allowed: ['POST'] }, requestOrigin);
+    }
+    let body = '';
+    try {
+      body = await readRequestBody(req);
+      if (body) JSON.parse(body);
+    } catch (error) {
+      return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
+    }
+    const validation = validatePayload(body || '{}');
+    if (!validation.valid) {
+      return sendJson(res, 400, { error: 'Invalid request payload', errors: validation.errors }, requestOrigin);
+    }
+    try {
+      const result = await orchestrateFusion(body || '{}');
+      return sendJson(res, result.httpStatus, result.body, requestOrigin);
+    } catch (error) {
+      const isAbort = error.name === 'AbortError';
+      return sendJson(res, 502, {
+        error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
+        detail: error.message,
       }, requestOrigin);
     }
   }
