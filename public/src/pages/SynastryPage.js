@@ -757,5 +757,3 @@ export function SynastryPage(app) {
     section.appendChild(grid);
     container.appendChild(section);
   }
-
-}
