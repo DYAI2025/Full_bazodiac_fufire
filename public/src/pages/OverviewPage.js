@@ -103,6 +103,17 @@ function renderWesternHouses(profile) {
   intro.textContent = 'Die 12 Häuser zeigen, in welchen Lebensbereichen deine Planetenenergien wirken. Jedes Haus beginnt im Zeichen des Hauskuspids.';
   section.appendChild(intro);
 
+  // Element-Legende
+  const legend = document.createElement('div');
+  legend.className = 'houses-element-legend';
+  legend.innerHTML = `
+    <span class="hel-item hel-item--feuer">🔴 Feuer: Widder, Löwe, Schütze</span>
+    <span class="hel-item hel-item--erde">🟢 Erde: Stier, Jungfrau, Steinbock</span>
+    <span class="hel-item hel-item--luft">⚪ Luft: Zwillinge, Waage, Wassermann</span>
+    <span class="hel-item hel-item--wasser">🔵 Wasser: Krebs, Skorpion, Fische</span>
+  `;
+  section.appendChild(legend);
+
   const houses = profile?.western?.houses;
   const bodies  = profile?.western?.bodies || {};
 
@@ -171,6 +182,18 @@ function renderWesternHouses(profile) {
     }
 
     card.appendChild(header);
+
+    // Quick context preview — visible without opening details
+    if (sign) {
+      const contextFn = SIGN_HOUSE_CONTEXT[sign];
+      if (contextFn) {
+        const preview = document.createElement('p');
+        preview.className = 'house-card-preview';
+        const fullText = contextFn(info?.theme || `Haus ${i}`);
+        preview.textContent = fullText.length > 90 ? fullText.slice(0, 88) + '…' : fullText;
+        card.appendChild(preview);
+      }
+    }
 
     // ── Aufklappbare Deutung ───────────────────────────────────────────────
     const details = document.createElement('details');

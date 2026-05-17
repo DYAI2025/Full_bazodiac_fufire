@@ -18,6 +18,26 @@ const BRANCH_ANIMAL = {
   '亥': { animal: 'Schwein',  romanized: 'Hài',  element: 'Wasser', polarity: 'Yang' },
 };
 
+// Fallback: romanisiert → Tierzeichen (wenn API romanisiert statt chinesisch liefert)
+const BRANCH_ANIMAL_ROMANIZED = {
+  zi: '子', chou: '丑', yin: '寅', mao: '卯', chen: '辰', si: '巳',
+  wu: '午', wei: '未', shen: '申', you: '酉', xu: '戌', hai: '亥',
+};
+
+function lookupBranch(branch) {
+  if (!branch) return {};
+  // Try direct Chinese char lookup first
+  if (BRANCH_ANIMAL[branch]) return BRANCH_ANIMAL[branch];
+  // Try romanized (case-insensitive, strip tones)
+  const normalized = branch.toLowerCase().replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/g, c => {
+    const map = {ā:'a',á:'a',ǎ:'a',à:'a',ē:'e',é:'e',ě:'e',è:'e',ī:'i',í:'i',ǐ:'i',ì:'i',ō:'o',ó:'o',ǒ:'o',ò:'o',ū:'u',ú:'u',ǔ:'u',ù:'u',ǖ:'u',ǘ:'u',ǚ:'u',ǜ:'u'};
+    return map[c] || c;
+  });
+  const chineseChar = BRANCH_ANIMAL_ROMANIZED[normalized];
+  if (chineseChar && BRANCH_ANIMAL[chineseChar]) return BRANCH_ANIMAL[chineseChar];
+  return {};
+}
+
 // Himmelsstamm → Details
 const STEM_INFO = {
   '甲': { romanized: 'Jiǎ',  element: 'Holz',   polarity: 'Yang', desc: 'Aufwärtsstrebend wie ein großer Baum — Pioniergeist, Direktheit, Führungswille' },
@@ -108,7 +128,7 @@ export function renderBaziPillars(bazi, { timeCertainty = 'exact' } = {}) {
     stemBlock.append(stemChar, stemMeta, stemDesc);
 
     // ── Erdzweig + Tierzeichen ────────────────────────────────────────────────
-    const branchInfo = BRANCH_ANIMAL[p.branch] || {};
+    const branchInfo = lookupBranch(p.branch);
     const branchBlock = document.createElement('div');
     branchBlock.className = 'pillar-branch-block';
 
@@ -146,10 +166,15 @@ export function renderBaziPillars(bazi, { timeCertainty = 'exact' } = {}) {
     const summary = document.createElement('summary');
     summary.className = 'hs-summary';
     const summaryText = document.createElement('span');
-    summaryText.textContent = `藏干 · ${stems.length > 0 ? stems.map(s => s.stem).join(' ') : 'Verborgene Stämme'}`;
+    summaryText.textContent = `Verborgene Stämme · ${stems.length > 0 ? stems.map(s => s.stem).join(' ') : ''}`;
     summary.appendChild(summaryText);
     if (hsBadge) summary.appendChild(hsBadge);
     details.appendChild(summary);
+
+    const hsExpl = document.createElement('p');
+    hsExpl.className = 'hs-concept-expl';
+    hsExpl.textContent = 'Jeder Erdzweig trägt verborgene Himmelsstämme in sich — unsichtbare Kräfte, die erst in bestimmten Lebensabschnitten oder Beziehungen aktiviert werden. Der Hauptstamm (ca. 60–70%) prägt den Charakter am stärksten; Mittel- und Residualstamm wirken subtil, aber messbar.';
+    details.appendChild(hsExpl);
 
     const hsList = document.createElement('div');
     hsList.className = 'hs-list';

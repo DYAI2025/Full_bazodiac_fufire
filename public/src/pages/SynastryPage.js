@@ -1,7 +1,7 @@
 import { GeoInput }              from '../components/GeoInput.js';
 import { CalculationProgress }   from '../components/CalculationProgress.js';
 import { SourceBadge }           from '../components/SourceBadge.js';
-import { calculateProfile }      from '../api/client.js';
+import { calculateProfile, calculateSynastry } from '../api/client.js';
 import { createSynastryProjection } from '../domain/projections.js';
 
 function esc(s) {
@@ -117,32 +117,47 @@ export function SynastryPage(app) {
     const pg = CalculationProgress();
     progress.appendChild(pg);
 
-    const fetchB = (dateB.value && placeB)
-      ? calculateProfile({ date: dateB.value, time: timeB.value || '12:00', lat: placeB.lat, lon: placeB.lon, tz: placeB.tz })
-      : Promise.resolve(null);
-
     try {
-      const [resA, resB] = await Promise.all([calculateProfile(inputA), fetchB]);
+      let profileA, profileB, synastrySummary;
 
-      pg.stop();
-      progress.remove();
-      calcBtn.disabled = false;
-
-      if (!resA.ok) {
-        errorEl.textContent = `Person A: ${resA.error || `HTTP ${resA.status}`}`;
-        errorEl.hidden = false;
-        return;
+      if (dateB.value && placeB) {
+        // Use combined synastry endpoint — one call, server does parallel fetch
+        const inputB = {
+          date: dateB.value,
+          time: timeB.value || '12:00',
+          lat:  placeB.lat,
+          lon:  placeB.lon,
+          tz:   placeB.tz,
+        };
+        const res = await calculateSynastry(inputA, inputB);
+        pg.stop();
+        progress.remove();
+        calcBtn.disabled = false;
+        if (!res.ok) {
+          errorEl.textContent = res.error || `HTTP ${res.status}`;
+          errorEl.hidden = false;
+          return;
+        }
+        profileA       = res.data.personA;
+        profileB       = res.data.personB;
+        synastrySummary = res.data.synastry || null;
+      } else {
+        // Solo profile — no Person B
+        const res = await calculateProfile(inputA);
+        pg.stop();
+        progress.remove();
+        calcBtn.disabled = false;
+        if (!res.ok) {
+          errorEl.textContent = `Person A: ${res.error || `HTTP ${res.status}`}`;
+          errorEl.hidden = false;
+          return;
+        }
+        profileA       = res.data;
+        profileB       = null;
+        synastrySummary = null;
       }
 
-      const profileA = resA.data;
-      const profileB = resB?.ok ? resB.data : null;
-
-      if (resB && !resB.ok) {
-        errorEl.textContent = `Person B: ${resB.error || `HTTP ${resB.status}`} — Vergleich nur mit Person A.`;
-        errorEl.hidden = false;
-      }
-
-      renderResult(profileA, profileB);
+      renderResult(profileA, profileB, synastrySummary);
     } catch (err) {
       pg.stop();
       progress.remove();
@@ -152,7 +167,7 @@ export function SynastryPage(app) {
     }
   });
 
-  function renderResult(profileA, profileB) {
+  function renderResult(profileA, profileB, synastrySummary = null) {
     resultEl.hidden = false;
     resultEl.querySelector('.synastry-wuxing-section').innerHTML = '';
     resultEl.querySelector('.synastry-bazi-section').innerHTML = '';
@@ -164,7 +179,7 @@ export function SynastryPage(app) {
     renderWuXing(resultEl.querySelector('.synastry-wuxing-section'), proj);
     renderBazi(resultEl.querySelector('.synastry-bazi-section'), proj);
     renderAspects(resultEl.querySelector('.synastry-aspects-section'), proj);
-    renderExtensionPlaceholder(resultEl.querySelector('.synastry-extension-placeholder'), proj);
+    renderExtensionPlaceholder(resultEl.querySelector('.synastry-extension-placeholder'), proj, synastrySummary);
   }
 
   function renderHarmonyGauge(score, label) {
@@ -444,10 +459,16 @@ export function SynastryPage(app) {
     container.appendChild(section);
   }
 
-  function renderExtensionPlaceholder(container, proj) {
+  function renderExtensionPlaceholder(container, proj, synastrySummary = null) {
     if (!proj || (!proj.wuxing && !proj.aspects.length)) return;
 
-    const score = proj.harmonyScore;
+    // Prefer server-computed combined_coherence if available, fall back to client-side harmonyScore
+    const serverCoherence = typeof synastrySummary?.combined_coherence === 'number'
+      ? synastrySummary.combined_coherence : null;
+    const score = serverCoherence ?? proj.harmonyScore;
+
+    // Element tension from server
+    const tension = synastrySummary?.element_tension || null;
 
     // ── Was ist das Fusionschart? ──────────────────────────────────────────────
     const section = document.createElement('section');
@@ -536,6 +557,39 @@ export function SynastryPage(app) {
     if (score != null) {
       const gauge = renderHarmonyGauge(score, 'Gesamt-Fusions-Balance');
       if (gauge) section.appendChild(gauge);
+    }
+
+    // ── Element-Spannung (server-side) ────────────────────────────────────────
+    if (tension) {
+      const tensionBox = document.createElement('div');
+      tensionBox.className = 'synastry-tension-box';
+
+      const tensionTitle = document.createElement('p');
+      tensionTitle.className = 'synastry-expl-title';
+      tensionTitle.textContent = 'Elementare Spannung & Zyklus';
+      tensionBox.appendChild(tensionTitle);
+
+      const cycleMap = {
+        generates: 'Erzeugungszyklus — A nährt B: fließende, unterstützende Energie.',
+        controls:  'Kontrollzyklus — A begrenzt B: strukturierende, aber herausfordernde Kraft.',
+        generated_by: 'Erzeugungszyklus — B nährt A: du wirst gestärkt und genährt.',
+        controlled_by: 'Kontrollzyklus — B begrenzt A: du wirst herausgefordert und geformt.',
+        same:      'Gleiches Element — Resonanz und Verstärkung eurer gemeinsamen Grundkraft.',
+      };
+
+      const cycleDesc = cycleMap[tension.cycle_relation] || tension.cycle_relation || '';
+      const tensionPct = tension.tension_score != null ? Math.round(tension.tension_score * 100) : null;
+
+      tensionBox.innerHTML += `
+        <div class="synastry-tension-row">
+          <span class="synastry-tension-elem synastry-tension-elem--a">${esc(tension.dominant_a || '—')}</span>
+          <span class="synastry-tension-arrow">⟷</span>
+          <span class="synastry-tension-elem synastry-tension-elem--b">${esc(tension.dominant_b || '—')}</span>
+          ${tensionPct != null ? `<span class="synastry-tension-score">${tensionPct}% Intensität</span>` : ''}
+        </div>
+        <p class="synastry-tension-desc">${esc(cycleDesc)}</p>
+      `;
+      section.appendChild(tensionBox);
     }
 
     container.appendChild(section);

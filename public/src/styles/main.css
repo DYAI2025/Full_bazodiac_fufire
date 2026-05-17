@@ -477,11 +477,12 @@ input:focus { border-color: var(--accent); }
 }
 
 .pillar-animal {
-  font-size: .82rem;
-  font-weight: 700;
-  color: var(--text);
+  font-size: .92rem;
+  font-weight: 800;
+  color: var(--accent);
   line-height: 1.3;
-  margin-top: 2px;
+  margin-top: 4px;
+  letter-spacing: .02em;
 }
 .pillar-animal-element {
   font-size: .68rem;
@@ -489,6 +490,16 @@ input:focus { border-color: var(--accent); }
   color: var(--muted);
   margin-top: 1px;
   line-height: 1.3;
+}
+
+.hs-concept-expl {
+  font-size: .72rem;
+  color: var(--muted);
+  line-height: 1.55;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  border-left: 2px solid var(--border);
+  font-style: italic;
 }
 
 /* Hidden stems — expanded detail rows */
@@ -581,10 +592,34 @@ input:focus { border-color: var(--accent); }
 }
 
 /* Häuser-Element-Farbcodierung (Western Zodiac) */
-.house-card--feuer  { border-left: 3px solid #f87171; }
-.house-card--wasser { border-left: 3px solid #60a5fa; }
-.house-card--erde   { border-left: 3px solid #4ade80; }
-.house-card--luft   { border-left: 3px solid #e2e8f0; }
+.house-card--feuer  { border-left: 4px solid #f87171; background: rgba(248, 113, 113, 0.05); }
+.house-card--wasser { border-left: 4px solid #60a5fa; background: rgba(96, 165, 250, 0.05); }
+.house-card--erde   { border-left: 4px solid #4ade80; background: rgba(74, 222, 128, 0.05); }
+.house-card--luft   { border-left: 4px solid #e2e8f0; background: rgba(226, 232, 240, 0.04); }
+
+/* Haus-Nummer erhält Elementfarbe */
+.house-card--feuer  .house-num { color: #f87171; }
+.house-card--wasser .house-num { color: #60a5fa; }
+.house-card--erde   .house-num { color: #4ade80; }
+.house-card--luft   .house-num { color: #c8d3e0; }
+
+.houses-element-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  font-size: .72rem;
+  color: var(--muted);
+}
+.hel-item { white-space: nowrap; }
+.house-card-preview {
+  font-size: .75rem;
+  color: var(--muted);
+  line-height: 1.45;
+  padding: 0 14px 10px 14px;
+  margin: 0;
+  border-top: 1px solid var(--border);
+}
 
 .house-sign-badge--feuer  { color: #f87171; border-color: #f87171; }
 .house-sign-badge--wasser { color: #60a5fa; border-color: #60a5fa; }
