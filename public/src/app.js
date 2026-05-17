@@ -76,7 +76,7 @@ router
     SynastryPage(app);
   })
   .register('/transit-calendar', (app) => {
-    TransitCalendarPage(app);
+    TransitCalendarPage(app, { profile: currentProfile });
   })
   .register('/daily', (app) => {
     DailyPage(app);

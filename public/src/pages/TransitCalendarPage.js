@@ -23,6 +23,34 @@ const PLANET_LABELS_DE = {
 
 const PLANET_ORDER = Object.keys(PLANET_SYMBOLS);
 
+// Transit-Planet → Lebensbereiche (für Tooltip-Kontext)
+const TRANSIT_CONTEXT = {
+  sun:     'Vitalität, Identität, Lebensrichtung',
+  moon:    'Emotionen, Stimmungen, Intuition',
+  mercury: 'Denken, Kommunikation, Entscheidungen',
+  venus:   'Beziehungen, Werte, Schönheit',
+  mars:    'Antrieb, Energie, Konflikte',
+  jupiter: 'Wachstum, Chancen, Expansion',
+  saturn:  'Struktur, Grenzen, Reife',
+  uranus:  'Wandel, Überraschungen, Befreiung',
+  neptune: 'Intuition, Auflösung, Spiritualität',
+  pluto:   'Tiefe Transformation, Macht, Erneuerung',
+};
+
+// Aspekt-Check: welche Natal-Planeten ist ein Transit-Planet nahe?
+function findNatalAspects(transitLon, natalBodies, orbDeg = 8) {
+  if (!natalBodies || transitLon == null) return [];
+  const hits = [];
+  for (const [name, body] of Object.entries(natalBodies)) {
+    if (body?.longitude == null) continue;
+    const diff = Math.abs(((transitLon - body.longitude + 540) % 360) - 180);
+    if (diff <= orbDeg) {
+      hits.push({ name, orb: Math.round(diff * 10) / 10 });
+    }
+  }
+  return hits.sort((a, b) => a.orb - b.orb);
+}
+
 function signDE(s) {
   return s ? (SIGN_DE[s.toLowerCase()] || esc(s)) : '—';
 }
@@ -32,7 +60,7 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-function renderNow(planets, sectorIntensity) {
+function renderNow(planets, sectorIntensity, profile) {
   const el = document.createElement('section');
   el.className = 'transit-now-section';
   el.setAttribute('aria-label', 'Aktuelle Transitpositionen');
@@ -56,12 +84,22 @@ function renderNow(planets, sectorIntensity) {
     const card = document.createElement('div');
     card.className = 'transit-planet-card';
     const isRetro = p.speed < 0;
+    const natalBodies = profile?.western?.bodies || {};
+    const natalHits = findNatalAspects(p.longitude, natalBodies);
+    const hitText = natalHits.length > 0
+      ? `Nahe deinem Natal-${natalHits[0].name} (${natalHits[0].orb}°)`
+      : '';
+    const context = TRANSIT_CONTEXT[name] || '';
+    const tooltip = [context, hitText].filter(Boolean).join(' · ');
+
+    card.setAttribute('title', tooltip);
     card.innerHTML = `
       <span class="transit-planet-symbol" title="${PLANET_LABELS_DE[name] || name}">${PLANET_SYMBOLS[name] || name}</span>
       <span class="transit-planet-name">${PLANET_LABELS_DE[name] || name}</span>
       <span class="transit-planet-sign">${signDE(p.sign)}</span>
       ${isRetro ? '<span class="transit-retro" title="Rückläufig">℞</span>' : ''}
       <span class="transit-planet-deg">${p.longitude != null ? p.longitude.toFixed(1) + '°' : '—'}</span>
+      ${hitText ? `<span class="transit-natal-hit" title="${esc(tooltip)}">${esc(hitText)}</span>` : ''}
     `;
     grid.appendChild(card);
   });
@@ -77,7 +115,7 @@ function intensityClass(v) {
   return 'tdi-bar--low';
 }
 
-function renderTimeline(days) {
+function renderTimeline(days, profile) {
   const el = document.createElement('section');
   el.className = 'transit-timeline-section';
   el.setAttribute('aria-label', '7-Tage Transitkalender');
@@ -91,8 +129,19 @@ function renderTimeline(days) {
     col.className = 'transit-day-col';
     if (day.date === today) col.classList.add('transit-day-col--today');
 
+    const natalBodies = profile?.western?.bodies || {};
     const activePlanets = Object.entries(day.planets || {})
-      .map(([name, p]) => ({ name, sign: p.sign, speed: Math.abs(p.speed || 0), retro: (p.speed || 0) < 0 }))
+      .map(([name, p]) => {
+        const hits = findNatalAspects(p.longitude, natalBodies, 6);
+        const hitNote = hits.length > 0 ? ` · nahe Natal-${hits[0].name}` : '';
+        const ctx = TRANSIT_CONTEXT[name] || '';
+        return {
+          name, sign: p.sign,
+          speed: Math.abs(p.speed || 0),
+          retro: (p.speed || 0) < 0,
+          tooltip: ctx + hitNote,
+        };
+      })
       .sort((a, b) => b.speed - a.speed)
       .slice(0, 3);
 
@@ -100,7 +149,7 @@ function renderTimeline(days) {
       <div class="transit-day-date">${formatDate(day.date)}</div>
       <div class="transit-day-planets">
         ${activePlanets.map(p => `
-          <div class="transit-day-planet">
+          <div class="transit-day-planet" title="${esc(p.tooltip)}">
             <span class="tdp-sym">${PLANET_SYMBOLS[p.name] || esc(p.name)}</span>
             <span class="tdp-sign">${signDE(p.sign)}</span>
             ${p.retro ? '<span class="tdp-retro">℞</span>' : ''}
@@ -121,7 +170,7 @@ function renderTimeline(days) {
   return el;
 }
 
-export function TransitCalendarPage(app) {
+export function TransitCalendarPage(app, { profile } = {}) {
   app.innerHTML = `
     <main class="transit-calendar-page">
       <header class="transit-header">
@@ -148,8 +197,8 @@ export function TransitCalendarPage(app) {
       return;
     }
 
-    content.appendChild(renderNow(nowRes.data.planets, nowRes.data.sector_intensity || []));
-    content.appendChild(renderTimeline(timelineRes.data.days || []));
+    content.appendChild(renderNow(nowRes.data.planets, nowRes.data.sector_intensity || [], profile));
+    content.appendChild(renderTimeline(timelineRes.data.days || [], profile));
     content.hidden = false;
   }).catch((err) => {
     loading.hidden = true;
