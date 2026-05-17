@@ -194,7 +194,7 @@ export function validatePayload(raw) {
     errors.push(`lon: must be a number between -180 and 180, got "${rawLon}"`);
   }
 
-  // Tz: required — basic format guard (IANA name or UTC offset)
+  // Tz: required — basic format guard; must start with a letter (IANA names and Etc/GMT variants pass; raw numeric offsets like +05:30 do not)
   const rawTz = obj.tz ?? obj.timezone ?? '';
   if (!rawTz) {
     errors.push('tz: required — provide IANA timezone, e.g. Europe/Berlin or UTC');
@@ -486,7 +486,7 @@ async function orchestrateFullProfile(rawBody) {
     // Optional: wuxing reference info (GET, no body needed)
     let wuxingInfo = { data: null };
     try {
-      const url = new URL('info/wuxing', getFuFireBaseUrl());
+      const url = new URL('info/wuxing-mapping', getFuFireBaseUrl());
       const r = await fetch(url, { headers: getFuFireHeaders(true), signal: controller.signal });
       wuxingInfo = { data: r.ok ? await r.json() : null };
     } catch { /* absorb — info endpoint is optional */ }
@@ -549,8 +549,11 @@ async function orchestrateDailyExperience(rawBody) {
     const date = (obj.date || obj.datetime || '').split('T')[0];
     let time = obj.time || '12:00';
     if (time.length === 5) time = `${time}:00`;
-    const lat = Number(obj.lat ?? obj.latitude ?? obj.location?.latitude ?? 0);
-    const lon = Number(obj.lon ?? obj.longitude ?? obj.location?.longitude ?? 0);
+    const lat = Number(obj.lat ?? obj.latitude ?? obj.location?.latitude);
+    const lon = Number(obj.lon ?? obj.longitude ?? obj.location?.longitude);
+    if (!isFinite(lat) || !isFinite(lon)) {
+      return { httpStatus: 400, body: { errors: ['lat/lon missing or not a number'] } };
+    }
     const tz = obj.tz || obj.timezone || 'UTC';
 
     const birth = { date, time, lat, lon, tz };
@@ -869,10 +872,8 @@ async function serveStatic(req, res, pathname) {
   });
   const stream = createReadStream(filePath);
   stream.on('error', () => {
-    if (!res.writableEnded) {
-      if (!res.headersSent) res.writeHead(500, { 'content-type': 'text/plain' });
-      res.end();
-    }
+    // 200 was already committed above; we can only close the connection cleanly.
+    if (!res.writableEnded) res.end();
   });
   stream.pipe(res);
 }
