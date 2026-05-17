@@ -603,7 +603,7 @@ const TENSION_SCORES = {
 };
 
 // Helper: dominante Elementspannung zwischen zwei Profilen
-function elementTension(profileA, profileB) {
+export function elementTension(profileA, profileB) {
   const vecsA = profileA.fusion?.wu_xing_vectors?.fusion
               || profileA.fusion?.wu_xing_vectors?.western_planets || {};
   const vecsB = profileB.fusion?.wu_xing_vectors?.fusion
