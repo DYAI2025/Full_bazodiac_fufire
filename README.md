@@ -24,6 +24,92 @@ Railway-deployable FuFirE dashboard. The app serves a live browser UI and a smal
 
 The same endpoints are also available under `/api/fufire/...` for backward-compatible same-origin proxy calls.
 
+## API endpoints
+
+### Fusion endpoint
+
+**Path:** `POST /api/azodiac/fusion`
+
+Calculates WuXing fusion between two birth charts.
+
+**Request format:**
+```json
+{
+  "person1": {
+    "date": "1990-01-01",
+    "time": "12:00",
+    "timezone": "Europe/Berlin",
+    "latitude": 52.52,
+    "longitude": 13.405
+  },
+  "person2": {
+    "date": "1995-05-15",
+    "time": "14:30",
+    "timezone": "Europe/Berlin",
+    "latitude": 48.8566,
+    "longitude": 2.3522
+  }
+}
+```
+
+**Response format:**
+```json
+{
+  "fusion": {
+    "overall_score": 75,
+    "element_balance": { ... },
+    "relationship_dynamics": { ... }
+  }
+}
+```
+
+### Synastry endpoint
+
+**Path:** `POST /api/azodiac/synastry`
+
+Calculates comprehensive synastry analysis between two birth charts, including optional fusion calculation.
+
+**Query parameters:**
+- `includeFusion` (optional, boolean): Whether to include fusion calculations. Default: `true`. Set to `false` for faster response when fusion data is not needed.
+
+**Request format:**
+```json
+{
+  "person1": {
+    "date": "1990-01-01",
+    "time": "12:00",
+    "timezone": "Europe/Berlin",
+    "latitude": 52.52,
+    "longitude": 13.405
+  },
+  "person2": {
+    "date": "1995-05-15",
+    "time": "14:30",
+    "timezone": "Europe/Berlin",
+    "latitude": 48.8566,
+    "longitude": 2.3522
+  }
+}
+```
+
+**Example with includeFusion=false:**
+```bash
+curl -X POST "http://127.0.0.1:3000/api/azodiac/synastry?includeFusion=false" \
+  -H "Content-Type: application/json" \
+  -d '{"person1": {...}, "person2": {...}}'
+```
+
+**Response format:**
+```json
+{
+  "synastry": {
+    "aspect_patterns": [ ... ],
+    "compatibility_analysis": { ... },
+    "fusion": { ... }  // Included only when includeFusion=true (default)
+  }
+}
+```
+
 ## Required Railway variables
 
 ```bash
