@@ -135,8 +135,10 @@ export function renderBaziPillars(bazi, { timeCertainty = 'exact' } = {}) {
     const details = document.createElement('details');
     details.className = 'pillar-hidden-stems';
 
-    const hsBadge = p.hidden_stems?.length
-      ? (p.hidden_stems[0].source === 'derived_from_branch_table'
+    const stems = p.hidden_stems || [];
+
+    const hsBadge = stems.length
+      ? (stems[0].source === 'derived_from_branch_table'
           ? SourceBadge('derived_mapping')
           : SourceBadge('api'))
       : null;
@@ -151,8 +153,6 @@ export function renderBaziPillars(bazi, { timeCertainty = 'exact' } = {}) {
 
     const hsList = document.createElement('div');
     hsList.className = 'hs-list';
-
-    const stems = p.hidden_stems || [];
     if (stems.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'hs-empty';
