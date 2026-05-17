@@ -9,13 +9,30 @@ import { SynastryPage }       from './pages/SynastryPage.js';
 import { TransitCalendarPage } from './pages/TransitCalendarPage.js';
 import { DailyPage }           from './pages/DailyPage.js';
 
-let currentProfile = null;
+// ── Session-Persistenz ────────────────────────────────────────────────────────
+// Das berechnete Profil wird in sessionStorage gesichert, damit es bei
+// Back-Navigation und Seiten-Reload erhalten bleibt.
+const SESSION_KEY = 'azodiac_profile';
+
+function saveProfile(profile) {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(profile)); } catch { /* quota or private mode */ }
+}
+
+function restoreProfile() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+let currentProfile = restoreProfile();
 
 router
   .register('/', (app) => {
     InputPage(app, {
       onResult: (profile) => {
         currentProfile = profile;
+        saveProfile(profile);
         router.navigate('/overview');
       },
     });

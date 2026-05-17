@@ -59,6 +59,11 @@ export function GeoInput({ onSelect }) {
     selected.hidden = false;
     wrapper.querySelector('.geo-selected-name').textContent = p.display.split(',')[0];
     wrapper.querySelector('.geo-selected-coords').textContent = `${p.lat.toFixed(3)}, ${p.lon.toFixed(3)} · ${p.tz}`;
+    // Immer die manuellen Felder mit den aufgelösten Koordinaten befüllen,
+    // damit sie nicht leer erscheinen wenn der Bereich geöffnet wird.
+    manualDiv.querySelector('.geo-lat').value = p.lat;
+    manualDiv.querySelector('.geo-lon').value = p.lon;
+    manualDiv.querySelector('.geo-tz').value  = p.tz;
     onSelect?.({ display: p.display, lat: p.lat, lon: p.lon, tz: p.tz });
   }
 
