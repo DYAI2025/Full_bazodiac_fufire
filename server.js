@@ -595,6 +595,13 @@ async function orchestrateFusion(rawBody) {
   }
 }
 
+// Tension score constants for element cycle relations
+const TENSION_SCORES = {
+  DESTRUCTION: 0.8,  // Zerstörung (conflict cycle)
+  SAME: 0.1,         // Gleich (same element)
+  NEUTRAL: 0.4,      // Neutral
+};
+
 // Helper: dominante Elementspannung zwischen zwei Profilen
 function elementTension(profileA, profileB) {
   const vecsA = profileA.fusion?.wu_xing_vectors?.fusion
@@ -611,7 +618,7 @@ function elementTension(profileA, profileB) {
     dominant_a: domA,
     dominant_b: domB,
     cycle_relation: inConflict ? 'Zerstörung' : same ? 'Gleich' : 'Neutral',
-    tension_score: inConflict ? 0.8 : same ? 0.1 : 0.4,
+    tension_score: inConflict ? TENSION_SCORES.DESTRUCTION : same ? TENSION_SCORES.SAME : TENSION_SCORES.NEUTRAL,
   };
 }
 
