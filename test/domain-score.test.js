@@ -130,3 +130,38 @@ test('computeDomainScores handles missing optional fields gracefully', () => {
   };
   assert.doesNotThrow(() => computeDomainScores(sparse, sparse));
 });
+
+test('communication harmony never goes negative (airComplement underflow)', () => {
+  const highAir = {
+    western: { bodies: {}, houses: [], aspects: [] },
+    bazi: { pillars: { year:{}, month:{}, day:{}, hour:{} }, day_master: null },
+    fusion: { wu_xing_vectors: { bazi_pillars: null, western_planets: null }, coherence_index: null },
+    wuxing: { vector: { Holz:0, Feuer:0, Erde:0, Metall:0, Luft:0.6, Wasser:0 } },
+  };
+  const zeroAir = {
+    western: { bodies: {}, houses: [], aspects: [] },
+    bazi: { pillars: { year:{}, month:{}, day:{}, hour:{} }, day_master: null },
+    fusion: { wu_xing_vectors: { bazi_pillars: null, western_planets: null }, coherence_index: null },
+    wuxing: { vector: null },
+  };
+  const scores = computeDomainScores(highAir, zeroAir);
+  assert.ok(scores.communication.harmony >= 0, 'communication harmony went negative');
+  assert.ok(scores.communication.tension >= 0, 'communication tension went negative');
+});
+
+test('signHarmony returns 0.5 for unknown sign (null element guard)', () => {
+  const weirdSign = {
+    western: {
+      bodies: { Mercury: { sign: 'UNKNOWNSIGN', house: 3 } },
+      houses: [],
+      aspects: [],
+    },
+    bazi: { pillars: { year:{}, month:{}, day:{}, hour:{} }, day_master: null },
+    fusion: { wu_xing_vectors: { bazi_pillars: null, western_planets: null }, coherence_index: null },
+    wuxing: { vector: null },
+  };
+  assert.doesNotThrow(() => computeDomainScores(weirdSign, weirdSign));
+  const scores = computeDomainScores(weirdSign, weirdSign);
+  assert.ok(typeof scores.communication.harmony === 'number');
+  assert.ok(scores.communication.harmony >= 0 && scores.communication.harmony <= 100);
+});

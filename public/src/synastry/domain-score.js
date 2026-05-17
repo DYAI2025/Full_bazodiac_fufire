@@ -3,8 +3,10 @@ import { signToElement, elementPairTone } from '../data/astro-mappings.js';
 
 function signHarmony(signA, signB) {
   if (!signA || !signB) return 0.5;
-  const { score } = elementPairTone(signToElement(signA), signToElement(signB));
-  return score;
+  const elA = signToElement(signA);
+  const elB = signToElement(signB);
+  if (!elA || !elB) return 0.5;
+  return elementPairTone(elA, elB).score;
 }
 
 function houseHarmony(profileA, profileB, houseIndex) {
@@ -47,7 +49,7 @@ export function computeDomainScores(profileA, profileB) {
   const h3Tone        = houseHarmony(pA, pB, 3);
   const airDeltaA     = pA.wuxing?.vector?.Luft ?? pA.fusion?.wu_xing_vectors?.bazi_pillars?.Luft ?? 0;
   const airDeltaB     = pB.wuxing?.vector?.Luft ?? pB.fusion?.wu_xing_vectors?.bazi_pillars?.Luft ?? 0;
-  const airComplement = 1 - Math.abs(airDeltaA - airDeltaB) * 2;
+  const airComplement = Math.max(0, 1 - Math.abs(airDeltaA - airDeltaB) * 2);
   const commHarmony   = avg(mercuryTone, h3Tone, airComplement);
 
   // FINANCE
