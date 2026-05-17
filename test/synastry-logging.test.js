@@ -19,6 +19,8 @@ async function withServer(fn) {
 
 describe('Synastry fusion failure logging', () => {
   it('should log warning when fusion calculation fails', async () => {
+    // Note: This test modifies process.env.FUFIRE_BASE_URL global state.
+    // The cleanup in the finally block ensures proper restoration.
     // Spy on console.warn
     const originalWarn = console.warn;
     const warnCalls = [];
@@ -32,8 +34,8 @@ describe('Synastry fusion failure logging', () => {
       const upstream = createServer((req, res) => {
         const url = new URL(req.url, `http://${req.headers.host}`);
         if (url.pathname.includes('fusion')) {
-          // Close the connection to trigger a network error
-          res.destroy();
+          // Close the socket immediately to trigger a deterministic network error
+          req.socket.destroy();
         } else {
           res.writeHead(200);
           res.end(JSON.stringify({ bodies: {}, pillars: {} }));
@@ -49,6 +51,10 @@ describe('Synastry fusion failure logging', () => {
 
       try {
         await withServer(async (base) => {
+          // Add timeout to prevent test hanging
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
           const response = await fetch(`${base}/api/azodiac/synastry`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -67,8 +73,11 @@ describe('Synastry fusion failure logging', () => {
                 lon: 2.3522,
                 tz: 'Europe/Paris'
               }
-            })
+            }),
+            signal: controller.signal
           });
+
+          clearTimeout(timeoutId);
 
           // Request should succeed (fusion failure is non-blocking)
           assert.equal(response.status, 200);
@@ -77,12 +86,16 @@ describe('Synastry fusion failure logging', () => {
         // Verify console.warn was called with fusion failure message
         assert.ok(warnCalls.length > 0, 'console.warn should be called');
         const fusionWarnCall = warnCalls.find(call =>
-          call.some(arg => typeof arg === 'string' && arg.includes('Fusion calculation failed'))
+          call.length >= 2 &&
+          call[0] === 'Fusion calculation failed, continuing without it:' &&
+          typeof call[1] === 'string'
         );
-        assert.ok(fusionWarnCall, 'console.warn should be called with fusion failure message');
+        assert.ok(fusionWarnCall, 'console.warn should be called with fusion failure message in format: "Fusion calculation failed, continuing without it:", error_message');
 
       } finally {
-        process.env.FUFIRE_BASE_URL = originalBaseUrl;
+        // Restore original FUFIRE_BASE_URL (delete if it was undefined)
+        if (originalBaseUrl === undefined) delete process.env.FUFIRE_BASE_URL;
+        else process.env.FUFIRE_BASE_URL = originalBaseUrl;
         upstream.close();
         await once(upstream, 'close');
       }
