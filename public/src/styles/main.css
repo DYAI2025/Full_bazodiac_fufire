@@ -297,6 +297,23 @@ input:focus { border-color: var(--accent); }
 
 .synastry-error { color: var(--bad); font-size: 0.875rem; margin-bottom: 0.5rem; }
 
+.partner-b-toggle-btn {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-top: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.partner-b-toggle-btn:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
 /* ── Harmoniegauge (Synastrie) ──────────────────────────────────────────── */
 .harmony-gauge-wrap {
   display: flex;
