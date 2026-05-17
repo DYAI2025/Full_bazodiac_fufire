@@ -1,10 +1,7 @@
-import { createLoveProjection }                    from '../domain/projections.js';
-import { SourceBadge }                             from '../components/SourceBadge.js';
-import { ConfidenceBar }                           from '../components/ConfidenceBar.js';
-import { UnavailableCard }                         from '../components/UnavailableCard.js';
-import { WuxingBar }                               from '../components/WuxingBar.js';
-import { calculateProfile, geocodePlace }          from '../api/client.js';
-import { buildHouseComparisons, DOMAIN_HOUSES }    from '../synastry/house-comparison.js';
+import { createLoveProjection } from '../domain/projections.js';
+import { SourceBadge }          from '../components/SourceBadge.js';
+import { ConfidenceBar }        from '../components/ConfidenceBar.js';
+import { UnavailableCard }      from '../components/UnavailableCard.js';
 
 // Western sign → element group
 const SIGN_ELEMENT = {
@@ -29,29 +26,6 @@ const ELEMENT_TENSION = {
   'Wasser-Feuer': 'Feuer und Wasser in deiner Liebeslandschaft — Leidenschaft und Schutzbedürfnis können einander herausfordern und bereichern.',
   'Luft-Erde': 'Luftige Freiheit und erdige Beständigkeit: dein Wunsch nach Leichtigkeit trifft auf das Bedürfnis nach Stabilität.',
   'Erde-Luft': 'Erde und Luft in deiner emotionalen Struktur — Sicherheitsbedürfnis und Freiheitsdrang suchen Balance.',
-};
-
-// Dominant element love qualities
-const LOVE_QUALITIES = {
-  Holz:   'Wachstum, Aufbruch, Idealismus',
-  Feuer:  'Leidenschaft, Spontanität, Direktheit',
-  Erde:   'Verlässlichkeit, Sinnlichkeit, Beständigkeit',
-  Metall: 'Klarheit, Anspruch, Präzision',
-  Wasser: 'Tiefe, Intuition, Empathie',
-};
-
-// Day-Master love archetypes (10 stems)
-const DAY_MASTER_LOVE = {
-  '甲': 'Yang Holz — Du liebst mit Aufbruch und Wachstum. Wer an deiner Seite ist, muss dir Raum lassen — und bekommt dafür einen Partner, der aufblüht.',
-  '乙': 'Yin Holz — Deine Liebe rankt sich behutsam um wen, dem du vertraust. Du gibst viel, wenn du dich sicher fühlst.',
-  '丙': 'Yang Feuer — Leidenschaft, Direktheit, Wärme. Du entzündest, was dich berührt — und willst gesehen werden.',
-  '丁': 'Yin Feuer — Die stille Flamme. Du liebst tief und konstant, weniger laut. Wer deine Temperatur kennt, kommt nie mehr in die Kälte.',
-  '戊': 'Yang Erde — Du bist das Fundament. Verlässlich, geduldig, stabil. Deine Liebe ist ein Ort, kein Ereignis.',
-  '己': 'Yin Erde — Fürsorge mit Tiefgang. Du nährst, was dir wichtig ist — und weißt genau, was du brauchst, auch wenn du es selten sagst.',
-  '庚': 'Yang Metall — Klarheit und Anspruch. Du liebst präzise, erwartest Aufrichtigkeit — und gibst sie auch.',
-  '辛': 'Yin Metall — Feine Wahrnehmung, hohe Sensibilität. Deine Liebe ist selektiv und tief zugleich.',
-  '壬': 'Yang Wasser — Fluss und Tiefe. Du verbindest dich leicht, aber vollständige Intimität braucht Zeit und Vertrauen.',
-  '癸': 'Yin Wasser — Der stille Tieftaucher. Du liebst in Resonanz, nicht in Projektion. Wer dich wirklich kennt, wird von dir treu begleitet.',
 };
 
 function getElementTension(venusSign, moonSign) {
@@ -104,24 +78,6 @@ function factorCard(factor) {
   return el;
 }
 
-function renderHouseEntry(entry) {
-  const div = document.createElement('div');
-  div.className = 'factor-card';
-  div.innerHTML = `
-    <div class="factor-card-header">
-      <span class="factor-label">${entry.house}. Haus — ${entry.label}</span>
-      <span>${entry.tone}</span>
-    </div>
-    <div style="display:flex;gap:8px;margin:6px 0;font-size:0.8rem;color:#999;">
-      <span>A: ${entry.signA} (${entry.elemA})</span>
-      <span>·</span>
-      <span>B: ${entry.signB} (${entry.elemB})</span>
-    </div>
-    <p class="factor-value">${entry.text}</p>
-  `;
-  return div;
-}
-
 export function LovePage(app, { profile, onNavigate }) {
   const proj   = createLoveProjection(profile);
   const headline = generateHeadline(proj);
@@ -138,12 +94,6 @@ export function LovePage(app, { profile, onNavigate }) {
     for (const [k, v] of Object.entries(wxEl)) { if (v > max) { max = v; dominantEl = k; } }
   }
   const wxLove = dominantEl ? WUXING_LOVE[dominantEl] : null;
-
-  // BaZi pillar vector and Day-Master stem for fusion layer
-  const fusionVec = profile?.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
-  const dayMasterStem = profile?.bazi?.day_master?.stem ?? null;
-  const dayMasterText = dayMasterStem ? DAY_MASTER_LOVE[dayMasterStem] ?? null : null;
-  const coherenceIndex = profile?.fusion?.coherence_index ?? null;
 
   app.innerHTML = `
     <main class="love-page">
@@ -178,10 +128,6 @@ export function LovePage(app, { profile, onNavigate }) {
         <h2>Wu-Xing Beziehungsmuster</h2>
         <div class="wuxing-content"></div>
       </section>
-
-      <section class="fusion-layer-section" aria-label="Fusion-Layer"></section>
-
-      <section class="partner-b-section" aria-label="Partner B Vergleich"></section>
 
       <footer class="page-footer">
         <button class="new-calc-btn">Neue Berechnung</button>
@@ -288,203 +234,6 @@ export function LovePage(app, { profile, onNavigate }) {
 
     content.append(cycle, desc, disclaimer);
   }
-
-  // ── Fusion-Layer section ─────────────────────────────────────────────────
-  const fusionSection = app.querySelector('.fusion-layer-section');
-
-  // a) WuxingBar — Element-Resonanz
-  const wuxingContainer = document.createElement('div');
-  wuxingContainer.className = 'fusion-wuxing-container';
-
-  if (fusionVec) {
-    const wuxingHeading = document.createElement('h2');
-    wuxingHeading.textContent = 'Element-Resonanz';
-    fusionSection.appendChild(wuxingHeading);
-
-    wuxingContainer.appendChild(WuxingBar(fusionVec, null, 'love'));
-    fusionSection.appendChild(wuxingContainer);
-
-    if (dominantEl && LOVE_QUALITIES[dominantEl]) {
-      const elQuality = document.createElement('p');
-      elQuality.className = 'fusion-element-quality';
-      elQuality.style.cssText = 'font-size:0.85rem;color:#aaa;margin-top:8px;';
-      elQuality.textContent = `Dein dominantes Liebeselement: ${dominantEl} — ${LOVE_QUALITIES[dominantEl]}`;
-      fusionSection.appendChild(elQuality);
-    }
-  }
-
-  // b) Day-Master love archetype
-  if (dayMasterText) {
-    const dmHeading = document.createElement('h2');
-    dmHeading.textContent = 'Day-Master-Archetyp';
-    dmHeading.style.marginTop = '24px';
-    fusionSection.appendChild(dmHeading);
-
-    const dmCard = document.createElement('div');
-    dmCard.className = 'factor-card';
-
-    const dmHeader = document.createElement('div');
-    dmHeader.className = 'factor-card-header';
-
-    const dmLabel = document.createElement('span');
-    dmLabel.className = 'factor-label';
-    dmLabel.textContent = `Day-Master: ${dayMasterStem}`;
-    dmHeader.appendChild(dmLabel);
-    dmCard.appendChild(dmHeader);
-
-    const dmText = document.createElement('p');
-    dmText.className = 'factor-value';
-    dmText.textContent = dayMasterText;
-    dmCard.appendChild(dmText);
-
-    fusionSection.appendChild(dmCard);
-  }
-
-  // c) Kohärenz-Brücke
-  if (coherenceIndex !== null) {
-    const pct = Math.round(coherenceIndex * 100);
-
-    const kohHeading = document.createElement('h2');
-    kohHeading.textContent = 'Kohärenz-Brücke';
-    kohHeading.style.marginTop = '24px';
-    fusionSection.appendChild(kohHeading);
-
-    const kohText = document.createElement('p');
-    kohText.className = 'factor-value';
-    kohText.style.marginBottom = '8px';
-    if (coherenceIndex >= 0.75) {
-      kohText.textContent = `Dein Kohärenzwert (${pct}%) zeigt: Dein westliches und dein BaZi-Profil sprechen in der Liebe dieselbe Sprache.`;
-    } else if (coherenceIndex >= 0.50) {
-      kohText.textContent = `Dein Kohärenzwert (${pct}%) zeigt eine leichte innere Spannung — dein westliches und BaZi-Liebesmuster sind nicht deckungsgleich.`;
-    } else {
-      kohText.textContent = `Dein Kohärenzwert (${pct}%) zeigt schöpferische Spannung: dein westliches Liebes-Profil und dein BaZi-Muster ziehen in verschiedene Richtungen.`;
-    }
-    fusionSection.appendChild(kohText);
-    fusionSection.appendChild(ConfidenceBar(coherenceIndex, { label: 'Kohärenz (West ↔ BaZi)' }));
-  }
-
-  // ── Partner B section ────────────────────────────────────────────────────
-  const partnerBSection = app.querySelector('.partner-b-section');
-
-  const toggleBtn = document.createElement('button');
-  toggleBtn.className = 'partner-b-toggle-btn';
-  toggleBtn.style.cssText = 'margin-top:32px;padding:10px 18px;cursor:pointer;border-radius:6px;';
-  toggleBtn.textContent = 'Partner B für Haus-Vergleich hinzufügen';
-  partnerBSection.appendChild(toggleBtn);
-
-  const partnerBForm = document.createElement('div');
-  partnerBForm.className = 'partner-b-form';
-  partnerBForm.hidden = true;
-  partnerBForm.style.cssText = 'margin-top:16px;display:flex;flex-direction:column;gap:10px;max-width:360px;';
-
-  const dateInput = document.createElement('input');
-  dateInput.type = 'date';
-  dateInput.className = 'partner-b-date';
-  dateInput.style.cssText = 'padding:8px;border-radius:4px;';
-
-  const timeInput = document.createElement('input');
-  timeInput.type = 'time';
-  timeInput.className = 'partner-b-time';
-  timeInput.style.cssText = 'padding:8px;border-radius:4px;';
-
-  const placeInput = document.createElement('input');
-  placeInput.type = 'text';
-  placeInput.placeholder = 'Geburtsort';
-  placeInput.className = 'partner-b-place';
-  placeInput.style.cssText = 'padding:8px;border-radius:4px;';
-
-  const calcBtn = document.createElement('button');
-  calcBtn.type = 'button';
-  calcBtn.textContent = 'Berechnen';
-  calcBtn.className = 'partner-b-calc-btn';
-  calcBtn.style.cssText = 'padding:10px 18px;cursor:pointer;border-radius:6px;';
-
-  const partnerBError = document.createElement('p');
-  partnerBError.className = 'partner-b-error';
-  partnerBError.style.cssText = 'color:#e55;font-size:0.85rem;';
-  partnerBError.hidden = true;
-
-  const partnerBLoading = document.createElement('p');
-  partnerBLoading.className = 'partner-b-loading';
-  partnerBLoading.textContent = 'Wird berechnet…';
-  partnerBLoading.hidden = true;
-
-  partnerBForm.append(dateInput, timeInput, placeInput, calcBtn, partnerBError, partnerBLoading);
-  partnerBSection.appendChild(partnerBForm);
-
-  const houseResultSection = document.createElement('section');
-  houseResultSection.className = 'house-comparison-section';
-  houseResultSection.hidden = true;
-  partnerBSection.appendChild(houseResultSection);
-
-  toggleBtn.addEventListener('click', () => {
-    partnerBForm.hidden = !partnerBForm.hidden;
-  });
-
-  calcBtn.addEventListener('click', async () => {
-    partnerBError.hidden = true;
-    partnerBLoading.hidden = false;
-    calcBtn.disabled = true;
-
-    const date  = dateInput.value;
-    const time  = timeInput.value;
-    const place = placeInput.value.trim();
-
-    if (!date || !place) {
-      partnerBError.textContent = 'Bitte Geburtsdatum und Geburtsort eingeben.';
-      partnerBError.hidden = false;
-      partnerBLoading.hidden = true;
-      calcBtn.disabled = false;
-      return;
-    }
-
-    try {
-      // 1. Geocode place
-      const geoResult = await geocodePlace(place);
-      if (!geoResult.ok || !geoResult.data) {
-        throw new Error(geoResult.error || 'Geokodierung fehlgeschlagen.');
-      }
-      const { lat, lon, tz } = geoResult.data;
-
-      // 2. Calculate profile for partner B
-      const profileResult = await calculateProfile({ date, time, lat, lon, tz });
-      if (!profileResult.ok || !profileResult.data) {
-        throw new Error(profileResult.error || 'Profilberechnung fehlgeschlagen.');
-      }
-      const profileB = profileResult.data;
-
-      // 3. Update WuxingBar with partner B overlay
-      const vecB = profileB?.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
-      if (fusionVec && vecB) {
-        wuxingContainer.innerHTML = '';
-        wuxingContainer.appendChild(WuxingBar(fusionVec, vecB, 'love'));
-      }
-
-      // 4. Build house comparisons
-      const comparisons = buildHouseComparisons(profile, profileB, DOMAIN_HOUSES.love);
-
-      // 5. Render house comparison results
-      houseResultSection.innerHTML = '';
-      houseResultSection.hidden = false;
-
-      const houseHeading = document.createElement('h2');
-      houseHeading.textContent = 'Eure Häuser im Vergleich';
-      houseHeading.style.marginTop = '24px';
-      houseResultSection.appendChild(houseHeading);
-
-      const houseGrid = document.createElement('div');
-      houseGrid.className = 'factors-grid';
-      comparisons.forEach((entry) => houseGrid.appendChild(renderHouseEntry(entry)));
-      houseResultSection.appendChild(houseGrid);
-
-    } catch (err) {
-      partnerBError.textContent = err.message || 'Ein Fehler ist aufgetreten.';
-      partnerBError.hidden = false;
-    } finally {
-      partnerBLoading.hidden = true;
-      calcBtn.disabled = false;
-    }
-  });
 
   app.querySelector('.new-calc-btn').addEventListener('click', () => onNavigate?.('/'));
 }
