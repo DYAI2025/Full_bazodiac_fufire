@@ -30,35 +30,74 @@ The same endpoints are also available under `/api/fufire/...` for backward-compa
 
 **Path:** `POST /api/azodiac/fusion`
 
-Calculates WuXing fusion between two birth charts.
+Calculates WuXing fusion for a single birth chart (combines western astrology and BaZi into a WuXing vector analysis).
 
 **Request format:**
 ```json
 {
-  "person1": {
-    "date": "1990-01-01",
-    "time": "12:00",
-    "timezone": "Europe/Berlin",
-    "latitude": 52.52,
-    "longitude": 13.405
-  },
-  "person2": {
-    "date": "1995-05-15",
-    "time": "14:30",
-    "timezone": "Europe/Berlin",
-    "latitude": 48.8566,
-    "longitude": 2.3522
-  }
+  "date": "1990-01-01",
+  "time": "12:00",
+  "tz": "Europe/Berlin",
+  "lat": 52.52,
+  "lon": 13.405
 }
 ```
+
+Alternative field names are also supported:
+- `datetime` or `date`
+- `timezone` or `tz`
+- `latitude` or `lat`
+- `longitude` or `lon`
 
 **Response format:**
 ```json
 {
   "fusion": {
-    "overall_score": 75,
-    "element_balance": { ... },
-    "relationship_dynamics": { ... }
+    "wu_xing_vectors": {
+      "western_planets": {
+        "Holz": 0.2,
+        "Feuer": 0.3,
+        "Erde": 0.15,
+        "Metall": 0.2,
+        "Wasser": 0.15
+      },
+      "bazi_pillars": {
+        "Holz": 0.25,
+        "Feuer": 0.25,
+        "Erde": 0.15,
+        "Metall": 0.2,
+        "Wasser": 0.15
+      },
+      "fusion": {
+        "Holz": 0.225,
+        "Feuer": 0.275,
+        "Erde": 0.15,
+        "Metall": 0.2,
+        "Wasser": 0.15
+      }
+    },
+    "coherence_index": 0.73,
+    "fusion_interpretation": "Harmonische Balance der Elemente...",
+    "aspects": [],
+    "house_overlay": null,
+    "dominant_patterns": [],
+    "synthesis_notes": null
+  },
+  "_meta": {
+    "view_model_version": "1",
+    "fetched_at": "2024-01-15T10:30:00.000Z",
+    "endpoint": "/api/azodiac/fusion",
+    "input": {
+      "date": "1990-01-01T12:00:00",
+      "tz": "Europe/Berlin",
+      "lat": 52.52,
+      "lon": 13.405
+    },
+    "upstream_status": {
+      "western": 200,
+      "bazi": 200,
+      "fusion": 200
+    }
   }
 }
 ```
@@ -67,27 +106,27 @@ Calculates WuXing fusion between two birth charts.
 
 **Path:** `POST /api/azodiac/synastry`
 
-Calculates comprehensive synastry analysis between two birth charts, including optional fusion calculation.
+Calculates comprehensive synastry analysis between two birth charts, including optional fusion calculation for each person.
 
 **Query parameters:**
-- `includeFusion` (optional, boolean): Whether to include fusion calculations. Default: `true`. Set to `false` for faster response when fusion data is not needed.
+- `includeFusion` (optional, boolean): Whether to include fusion calculations for each person. Default: `true`. Set to `false` for faster response when fusion data is not needed.
 
 **Request format:**
 ```json
 {
-  "person1": {
+  "personA": {
     "date": "1990-01-01",
     "time": "12:00",
-    "timezone": "Europe/Berlin",
-    "latitude": 52.52,
-    "longitude": 13.405
+    "tz": "Europe/Berlin",
+    "lat": 52.52,
+    "lon": 13.405
   },
-  "person2": {
+  "personB": {
     "date": "1995-05-15",
     "time": "14:30",
-    "timezone": "Europe/Berlin",
-    "latitude": 48.8566,
-    "longitude": 2.3522
+    "tz": "Europe/Berlin",
+    "lat": 48.8566,
+    "lon": 2.3522
   }
 }
 ```
@@ -96,17 +135,112 @@ Calculates comprehensive synastry analysis between two birth charts, including o
 ```bash
 curl -X POST "http://127.0.0.1:3000/api/azodiac/synastry?includeFusion=false" \
   -H "Content-Type: application/json" \
-  -d '{"person1": {...}, "person2": {...}}'
+  -d '{"personA": {...}, "personB": {...}}'
 ```
 
 **Response format:**
 ```json
 {
+  "personA": {
+    "western": {
+      "bodies": { ... },
+      "houses": [ ... ],
+      "aspects": [ ... ],
+      "ascendant": "Scorpio",
+      "angles": { ... }
+    },
+    "bazi": {
+      "pillars": { ... },
+      "day_master": { ... }
+    },
+    "fusion": {
+      "wu_xing_vectors": { ... },
+      "coherence_index": 0.73,
+      "fusion_interpretation": "...",
+      "aspects": [],
+      "house_overlay": null,
+      "dominant_patterns": [],
+      "synthesis_notes": null
+    },
+    "_meta": {
+      "view_model_version": "1",
+      "fetched_at": "2024-01-15T10:30:00.000Z",
+      "input": { ... }
+    }
+  },
+  "personB": {
+    "western": { ... },
+    "bazi": { ... },
+    "fusion": { ... },
+    "_meta": { ... }
+  },
   "synastry": {
-    "aspect_patterns": [ ... ],
-    "compatibility_analysis": { ... },
-    "fusion": { ... }  // Included only when includeFusion=true (default)
+    "combined_coherence": 0.71,
+    "element_tension": {
+      "dominant_a": "Feuer",
+      "dominant_b": "Wasser",
+      "cycle_relation": "Zerstörung",
+      "tension_score": 0.8
+    }
+  },
+  "_meta": {
+    "upstream_status": {
+      "western_a": 200,
+      "bazi_a": 200,
+      "western_b": 200,
+      "bazi_b": 200,
+      "fusion_a": 200,
+      "fusion_b": 200
+    },
+    "computed_at": "2024-01-15T10:30:00.000Z"
   }
+}
+```
+
+### Error responses
+
+All endpoints return JSON error responses with appropriate HTTP status codes:
+
+**400 Bad Request** - Invalid JSON or missing required fields:
+```json
+{
+  "error": "Invalid request payload",
+  "errors": [
+    "date: required — provide date (YYYY-MM-DD) or datetime (YYYY-MM-DDTHH:MM)",
+    "lat: required — provide lat (decimal degrees, e.g. 48.137)"
+  ]
+}
+```
+
+**405 Method Not Allowed** - Wrong HTTP method:
+```json
+{
+  "error": "Method not allowed",
+  "allowed": ["POST"],
+  "endpoint": "/api/azodiac/fusion"
+}
+```
+
+**502 Bad Gateway** - Upstream error or timeout:
+```json
+{
+  "error": "Upstream timeout",
+  "detail": "Connection timeout after 20000ms",
+  "hint": "Check FUFIRE_BASE_URL and FUFIRE_API_KEY environment variables."
+}
+```
+
+**404 Not Found** - Endpoint does not exist:
+```json
+{
+  "error": "Not found"
+}
+```
+
+**429 Too Many Requests** - Rate limit exceeded (geocode only):
+```json
+{
+  "error": "Geocode rate limit exceeded. Max 10 requests/minute per IP."
 }
 ```
 
