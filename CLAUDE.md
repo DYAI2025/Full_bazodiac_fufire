@@ -28,6 +28,8 @@ All logic lives in `server.js` — there are no modules, no routes directory, no
 - `/health`, `/api/config` — introspection (no upstream call)
 - `/chart` — POST only; calls `orchestrateChart` (parallel western + bazi + fusion)
 - `/api/azodiac/profile` — POST only; calls `orchestrateFullProfile` (parallel western + bazi + fusion + wuxing, plus optional TST and wuxing-info)
+- `/api/azodiac/fusion` — POST only; calls `orchestrateFusion` (single-person WuXing fusion ViewModel)
+- `/api/azodiac/synastry` — POST only; calls `orchestrateSynastry` for two charts. Query param `includeFusion=false` skips per-person fusion for faster response
 - `/api/azodiac/daily` — POST only; calls `orchestrateDailyExperience` (sequential: experience/bootstrap → experience/daily)
 - `/api/geocode?q=…` — Nominatim + timeapi.io; IP rate-limited + LRU-cached
 - `/api/fufire/:endpoint` — compatibility proxy path (allowlisted only)
@@ -59,12 +61,34 @@ All logic lives in `server.js` — there are no modules, no routes directory, no
 
 `FUFIRE_ALLOWED_ORIGINS` is a comma-separated list of allowed CORS origins. If unset, all origins are allowed.
 
+## Frontend (`public/`)
+
+`public/index.html` boots a vanilla-ESM SPA under `public/src/`:
+
+- `src/router.js` — hash router that mounts page modules into the main shell
+- `src/api/client.js` — wraps fetch calls to local `/api/azodiac/*` endpoints
+- `src/pages/*` — top-level routes (`DashboardPage`, `InputPage`, `OverviewPage`, `PersonalityPage`, `LovePage`, `CareerFinancePage`, `SynastryPage`, `TransitCalendarPage`, `DailyPage`)
+- `src/domain/*` — pure transforms from server ViewModel into page-specific projections (`projections.js`, `baziRenderer.js`, `coreStatement.js`)
+- `src/components/*` — reusable widgets (`GeoInput`, `ConfidenceBar`, `SourceBadge`, etc.)
+
+No bundler. Browsers load modules directly. `public/reference.html` is the static FuFirE API reference (not part of the SPA).
+
 ## Tests
 
 - `test/server.test.js` — integration tests; spins a real `node:http` server on port 0, mocks the upstream by pointing `FUFIRE_BASE_URL` at a local stub server
 - `test/view_model.test.js` — pure unit tests for `normalizeAzodiacResult` and pillar normalisation
 - `test/geocode.test.js` — unit tests for `makeGeoCache` and `geocodeRateLimiter`
+- `test/payload.test.js` — `validatePayload` and `translatePayload` field-name normalisation
+- `test/projections.test.js` — frontend domain projections (`public/src/domain/projections.js`)
+- `test/api_client.test.js` — frontend `src/api/client.js` against a stub server
+- `test/element-tension.test.js` — synastry element-tension scoring
+- `test/synastry-logging.test.js` — observability of synastry orchestration
+- `test/documentation.test.js` — README ↔ implementation sync check (endpoint catalog, examples)
 - `test/contract.test.js` — **opt-in only** (`FUFIRE_CONTRACT_TEST=true`); fires real requests at `FUFIRE_BASE_URL` to detect upstream path drift
+
+## Planning docs
+
+`docs/plans/YYYY-MM-DD-*.md` capture historical and in-flight feature plans (backend hardening, synastry, transit, fusion endpoint, UI improvements). Read the matching plan before extending an area — it explains the intent the tests are pinned to.
 
 ## Deployment
 
