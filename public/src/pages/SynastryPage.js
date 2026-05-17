@@ -3,6 +3,11 @@ import { CalculationProgress }   from '../components/CalculationProgress.js';
 import { SourceBadge }           from '../components/SourceBadge.js';
 import { calculateProfile, calculateSynastry } from '../api/client.js';
 import { createSynastryProjection } from '../domain/projections.js';
+import { computeDomainScores }    from '../synastry/domain-score.js';
+import { HeatmapOverview }        from '../synastry/HeatmapOverview.js';
+import { buildDynastyResonance }  from '../synastry/dynasty-resonance.js';
+import { buildHouseComparisons, DOMAIN_HOUSES } from '../synastry/house-comparison.js';
+import { ELEMENT_COLORS }         from '../data/astro-mappings.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -66,6 +71,9 @@ export function SynastryPage(app) {
         <div class="synastry-bazi-section"></div>
         <div class="synastry-aspects-section"></div>
         <div class="synastry-extension-placeholder"></div>
+        <div class="synastry-heatmap-section"></div>
+        <div class="synastry-dynasty-section"></div>
+        <div class="synastry-houses-section"></div>
       </div>
     </main>
   `;
@@ -173,6 +181,9 @@ export function SynastryPage(app) {
     resultEl.querySelector('.synastry-bazi-section').innerHTML = '';
     resultEl.querySelector('.synastry-aspects-section').innerHTML = '';
     resultEl.querySelector('.synastry-extension-placeholder').innerHTML = '';
+    resultEl.querySelector('.synastry-heatmap-section').innerHTML = '';
+    resultEl.querySelector('.synastry-dynasty-section').innerHTML = '';
+    resultEl.querySelector('.synastry-houses-section').innerHTML = '';
 
     const proj = createSynastryProjection(profileA, profileB);
 
@@ -180,6 +191,9 @@ export function SynastryPage(app) {
     renderBazi(resultEl.querySelector('.synastry-bazi-section'), proj);
     renderAspects(resultEl.querySelector('.synastry-aspects-section'), proj);
     renderExtensionPlaceholder(resultEl.querySelector('.synastry-extension-placeholder'), proj, synastrySummary);
+    renderHeatmap(resultEl.querySelector('.synastry-heatmap-section'), profileA, profileB);
+    renderDynasty(resultEl.querySelector('.synastry-dynasty-section'), profileA, profileB);
+    renderHouses(resultEl.querySelector('.synastry-houses-section'), profileA, profileB);
   }
 
   function renderHarmonyGauge(score, label) {
@@ -594,4 +608,102 @@ export function SynastryPage(app) {
 
     container.appendChild(section);
   }
+  function renderHeatmap(container, profileA, profileB) {
+    if (!profileB) return;
+
+    const section = document.createElement('section');
+    section.className = 'synastry-section';
+
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Eure Dynamik auf einen Blick';
+    section.appendChild(h2);
+
+    const scores = computeDomainScores(profileA, profileB);
+    section.appendChild(HeatmapOverview(scores));
+
+    const note = document.createElement('p');
+    note.className = 'empty-hint';
+    note.style.marginTop = '8px';
+    note.textContent = 'Quelle: /api/azodiac/profile × 2 — alle Werte aus echten API-Daten';
+    section.appendChild(note);
+
+    container.appendChild(section);
+  }
+
+  function renderDynasty(container, profileA, profileB) {
+    if (!profileB) return;
+
+    const section = document.createElement('section');
+    section.className = 'synastry-section';
+
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Dynastische Resonanz — Jahr-Pillar Paar';
+    section.appendChild(h2);
+
+    const dynasty = buildDynastyResonance(profileA, profileB);
+    const elColorA = ELEMENT_COLORS[dynasty.elA] ?? '#888';
+    const elColorB = ELEMENT_COLORS[dynasty.elB] ?? '#888';
+
+    const card = document.createElement('div');
+    card.className = 'synastry-bazi-card';
+    card.innerHTML = `
+      <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="flex:1;padding:10px;background:var(--surface-2,#111);border-radius:8px;text-align:center;">
+          <p style="font-size:0.65rem;color:#666;font-family:monospace;margin-bottom:4px;">PARTNER A — JAHR</p>
+          <p style="font-size:1.4rem;font-weight:bold;color:${elColorA};">${esc(dynasty.yearA.stem ?? '?')}</p>
+          <p style="font-size:0.75rem;color:${elColorA}88;">${esc(dynasty.elA ?? '?')} · ${esc(dynasty.yearA.branch ?? '?')}</p>
+        </div>
+        <div style="flex:1;padding:10px;background:var(--surface-2,#111);border-radius:8px;text-align:center;">
+          <p style="font-size:0.65rem;color:#666;font-family:monospace;margin-bottom:4px;">PARTNER B — JAHR</p>
+          <p style="font-size:1.4rem;font-weight:bold;color:${elColorB};">${esc(dynasty.yearB.stem ?? '?')}</p>
+          <p style="font-size:0.75rem;color:${elColorB}88;">${esc(dynasty.elB ?? '?')} · ${esc(dynasty.yearB.branch ?? '?')}</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:1.2rem;">${esc(dynasty.tone)}</span>
+        <span style="font-size:0.75rem;color:#666;font-family:monospace;">DYNASTISCHE RESONANZ</span>
+      </div>
+      <p class="synastry-compat-desc">${esc(dynasty.text)}</p>
+    `;
+    section.appendChild(card);
+    container.appendChild(section);
+  }
+
+  function renderHouses(container, profileA, profileB) {
+    if (!profileB) return;
+
+    const section = document.createElement('section');
+    section.className = 'synastry-section';
+
+    const h2 = document.createElement('h2');
+    h2.textContent = 'Alle 12 Häuser im Vergleich';
+    section.appendChild(h2);
+
+    const note = document.createElement('p');
+    note.className = 'section-intro';
+    note.textContent = 'Quelle: western.houses aus /calculate/western — zeichenbasierter Elementvergleich.';
+    section.appendChild(note);
+
+    const entries = buildHouseComparisons(profileA, profileB, DOMAIN_HOUSES.synastry);
+    const grid = document.createElement('div');
+    grid.className = 'synastry-aspects-grid';
+
+    entries.forEach(entry => {
+      const card = document.createElement('div');
+      card.className = 'synastry-aspect-card';
+      card.innerHTML = `
+        <div class="factor-card-header">
+          <span class="factor-label">${entry.house}. Haus — ${esc(entry.label)}</span>
+          <span>${esc(entry.tone)}</span>
+        </div>
+        <div class="synastry-orb">A: ${esc(entry.signA)} (${esc(entry.elemA)}) · B: ${esc(entry.signB)} (${esc(entry.elemB)})</div>
+        <p class="factor-value">${esc(entry.text)}</p>
+      `;
+      grid.appendChild(card);
+    });
+
+    section.appendChild(grid);
+    container.appendChild(section);
+  }
+
 }
