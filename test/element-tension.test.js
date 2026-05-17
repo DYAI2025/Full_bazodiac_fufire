@@ -111,10 +111,10 @@ test('elementTension handles missing fusion data gracefully', () => {
   const result = elementTension(profileA, profileB);
 
   // Should not crash, returns default first element when all values are 0
-  assert.ok(result.dominant_a);
-  assert.ok(result.dominant_b);
-  assert.ok(result.cycle_relation);
-  assert.strictEqual(typeof result.tension_score, 'number');
+  assert.strictEqual(result.dominant_a, 'Holz');
+  assert.strictEqual(result.dominant_b, 'Holz');
+  assert.strictEqual(result.cycle_relation, 'Gleich');
+  assert.strictEqual(result.tension_score, 0.1);
 });
 
 test('elementTension handles missing wu_xing_vectors gracefully', () => {
@@ -128,10 +128,10 @@ test('elementTension handles missing wu_xing_vectors gracefully', () => {
   const result = elementTension(profileA, profileB);
 
   // Should not crash, returns default first element when all values are 0
-  assert.ok(result.dominant_a);
-  assert.ok(result.dominant_b);
-  assert.ok(result.cycle_relation);
-  assert.strictEqual(typeof result.tension_score, 'number');
+  assert.strictEqual(result.dominant_a, 'Holz');
+  assert.strictEqual(result.dominant_b, 'Holz');
+  assert.strictEqual(result.cycle_relation, 'Gleich');
+  assert.strictEqual(result.tension_score, 0.1);
 });
 
 test('elementTension handles all zero vectors (edge case)', () => {
@@ -157,4 +157,29 @@ test('elementTension handles all zero vectors (edge case)', () => {
   assert.strictEqual(result.dominant_b, 'Holz');
   assert.strictEqual(result.cycle_relation, 'Gleich');
   assert.strictEqual(result.tension_score, 0.1);
+});
+
+test('elementTension calculates destruction cycle (Erde destroys Wasser)', () => {
+  // Erde destroys Wasser (bidirectional validation)
+  const profileA = {
+    fusion: {
+      wu_xing_vectors: {
+        fusion: { Holz: 1, Feuer: 1, Erde: 10, Metall: 1, Wasser: 1 }
+      }
+    }
+  };
+  const profileB = {
+    fusion: {
+      wu_xing_vectors: {
+        fusion: { Holz: 1, Feuer: 1, Erde: 1, Metall: 1, Wasser: 10 }
+      }
+    }
+  };
+
+  const result = elementTension(profileA, profileB);
+
+  assert.strictEqual(result.dominant_a, 'Erde');
+  assert.strictEqual(result.dominant_b, 'Wasser');
+  assert.strictEqual(result.cycle_relation, 'Zerstörung');
+  assert.strictEqual(result.tension_score, 0.8);
 });
