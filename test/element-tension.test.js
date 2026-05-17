@@ -183,3 +183,4 @@ test('elementTension calculates destruction cycle (Erde destroys Wasser)', () =>
   assert.strictEqual(result.cycle_relation, 'Zerstörung');
   assert.strictEqual(result.tension_score, 0.8);
 });
+
