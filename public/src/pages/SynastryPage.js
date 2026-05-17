@@ -170,32 +170,135 @@ export function SynastryPage(app) {
   function renderHarmonyGauge(score, label) {
     if (score == null) return null;
     const pct = Math.round(score * 100);
-    const angleDeg = -90 + score * 180;
+    const uid = Math.random().toString(36).slice(2, 7);
+
+    // Gauge geometry — arc from 135° to 45° CW (270° sweep through the top)
+    // 0% = 135° (lower-left / Spannung), 50% = 270° (top / Balance), 100% = 45° (lower-right / Harmonie)
+    const cx = 100, cy = 100;
+    const Rm = 70;      // midpoint radius of arc track
+    const sw = 14;      // track stroke-width
+    const START = 135;  // start angle in SVG degrees
+    const SWEEP = 270;  // total sweep
+
+    const toRad = d => d * Math.PI / 180;
+    const px = (a, r = Rm) => (cx + r * Math.cos(toRad(a))).toFixed(2);
+    const py = (a, r = Rm) => (cy + r * Math.sin(toRad(a))).toFixed(2);
+
+    // CW arc path from f° to t°
+    const arcD = (f, t) => {
+      const sweep = ((t - f) % 360 + 360) % 360;
+      if (sweep < 0.01) return '';
+      const large = sweep > 180 ? 1 : 0;
+      return `M ${px(f)},${py(f)} A ${Rm},${Rm} 0 ${large} 1 ${px(t)},${py(t)}`;
+    };
+
+    const a0  = START;
+    const a40 = START + 0.4 * SWEEP;   // 243° → 40%
+    const a60 = START + 0.6 * SWEEP;   // 297° → 60%
+    const aE  = START + SWEEP;         // 405°=45° → 100%
+    const aN  = START + score * SWEEP; // needle angle
+
+    const nX = px(aN, 56);
+    const nY = py(aN, 56);
+
+    const col = pct >= 65 ? '#f87171' : pct >= 45 ? '#c084fc' : '#60a5fa';
+    const status = pct >= 65 ? 'HARMONISCH' : pct >= 45 ? 'AUSGEWOGEN' : 'SPANNUNGSGELADEN';
+
+    // Tick marks (outside the track at r=79-86)
+    const ticks = Array.from({length: 11}, (_, i) => {
+      const ta = START + (i / 10) * SWEEP;
+      const major = i % 5 === 0;
+      const tc = i < 4 ? '#60a5fa' : i === 5 ? '#c084fc' : '#f87171';
+      return `<line x1="${px(ta, 79)}" y1="${py(ta, 79)}" x2="${px(ta, major ? 86 : 83)}" y2="${py(ta, major ? 86 : 83)}" stroke="${tc}" stroke-width="${major ? 1.5 : 0.8}" opacity="0.65"/>`;
+    }).join('');
+
+    // Spannung / Harmonie label positions (near arc endpoints)
+    const lsx = (Number(px(START, 78)) + 2).toFixed(1);
+    const lsy = (Number(py(START, 78)) + 16).toFixed(1);
+    const lex = (Number(px(aE, 78)) - 2).toFixed(1);
+    const ley = (Number(py(aE, 78)) + 16).toFixed(1);
+
+    const activeD = score > 0.01 ? arcD(a0, aN) : '';
 
     const wrap = document.createElement('div');
     wrap.className = 'harmony-gauge-wrap';
     wrap.innerHTML = `
-      <div class="harmony-gauge-label">${label || 'Energie-Balance'}</div>
-      <svg class="harmony-gauge-svg" viewBox="0 0 200 110" aria-label="${pct}% Harmonie">
+      <div class="harmony-gauge-label">${esc(label || 'Energie-Balance')}</div>
+      <svg class="harmony-gauge-svg" viewBox="0 0 200 178"
+           xmlns="http://www.w3.org/2000/svg"
+           role="img" aria-label="${pct}% — ${esc(status)}">
         <defs>
-          <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stop-color="#60a5fa"/>
-            <stop offset="50%"  stop-color="#a78bfa"/>
-            <stop offset="100%" stop-color="#f87171"/>
-          </linearGradient>
+          <filter id="${uid}-glow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="${uid}-soft" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="${uid}-bg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#14142e"/>
+            <stop offset="100%" stop-color="#070710"/>
+          </radialGradient>
         </defs>
-        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none"
-              stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"/>
-        <g transform="translate(100,100) rotate(${angleDeg})">
-          <line x1="0" y1="0" x2="0" y2="-68" stroke="var(--text)" stroke-width="3"
-                stroke-linecap="round"/>
-          <circle cx="0" cy="0" r="5" fill="var(--text)"/>
-        </g>
-        <text x="15"  y="108" font-size="9" fill="#60a5fa" text-anchor="middle">Spannung</text>
-        <text x="100" y="22"  font-size="9" fill="var(--muted)" text-anchor="middle">Balance</text>
-        <text x="185" y="108" font-size="9" fill="#f87171" text-anchor="middle">Harmonie</text>
+
+        <!-- Metallic frame -->
+        <circle cx="${cx}" cy="${cy}" r="89" fill="url(#${uid}-bg)" stroke="#2a3060" stroke-width="3.5"/>
+        <circle cx="${cx}" cy="${cy}" r="85.5" fill="none" stroke="#1a1e40" stroke-width="1"/>
+        <circle cx="${cx}" cy="${cy}" r="60" fill="none" stroke="#1a1e40" stroke-width="0.5"/>
+
+        <!-- Track background -->
+        <path d="${arcD(a0, aE)}" fill="none" stroke="#0a0a1c" stroke-width="${sw + 4}" stroke-linecap="butt"/>
+
+        <!-- Spannung segment — blue (0-40%) -->
+        <path d="${arcD(a0, a40)}" fill="none" stroke="#1d4ed8" stroke-width="${sw}" stroke-linecap="butt" opacity="0.9"/>
+        <path d="${arcD(a0, a40)}" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="butt" filter="url(#${uid}-glow)" opacity="0.55"/>
+
+        <!-- Balance segment — purple (40-60%) -->
+        <path d="${arcD(a40, a60)}" fill="none" stroke="#6d28d9" stroke-width="${sw}" stroke-linecap="butt" opacity="0.85"/>
+        <path d="${arcD(a40, a60)}" fill="none" stroke="#c084fc" stroke-width="3" stroke-linecap="butt" opacity="0.4"/>
+
+        <!-- Harmonie segment — red (60-100%) -->
+        <path d="${arcD(a60, aE)}" fill="none" stroke="#b91c1c" stroke-width="${sw}" stroke-linecap="butt" opacity="0.9"/>
+        <path d="${arcD(a60, aE)}" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="butt" filter="url(#${uid}-glow)" opacity="0.55"/>
+
+        <!-- Active shimmer from start to needle -->
+        ${activeD ? `<path d="${activeD}" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="${sw + 2}" stroke-linecap="butt"/>` : ''}
+
+        <!-- Tick marks -->
+        ${ticks}
+
+        <!-- Needle glow -->
+        <line x1="${cx}" y1="${cy}" x2="${nX}" y2="${nY}"
+              stroke="${col}" stroke-width="4" stroke-linecap="round"
+              filter="url(#${uid}-glow)" opacity="0.45"/>
+        <!-- Needle -->
+        <line x1="${cx}" y1="${cy}" x2="${nX}" y2="${nY}"
+              stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+
+        <!-- Center hub -->
+        <circle cx="${cx}" cy="${cy}" r="10" fill="#080814" stroke="#2a3060" stroke-width="1.5"/>
+        <circle cx="${cx}" cy="${cy}" r="4" fill="${col}" filter="url(#${uid}-soft)"/>
+
+        <!-- Digital readout -->
+        <rect x="74" y="112" width="52" height="22" rx="3" fill="#05050e" stroke="#1e2248" stroke-width="1"/>
+        <text x="${cx}" y="127.5" text-anchor="middle"
+              fill="${col}" font-size="13" font-weight="bold"
+              font-family="ui-monospace,monospace" letter-spacing="1">${pct}%</text>
+
+        <!-- Status -->
+        <text x="${cx}" y="148" text-anchor="middle"
+              fill="${col}" font-size="6.5" opacity="0.75"
+              font-family="ui-monospace,monospace" letter-spacing="0.5">${esc(status)}</text>
+
+        <!-- Labels -->
+        <text x="${lsx}" y="${lsy}" text-anchor="middle"
+              fill="#60a5fa" font-size="7.5" font-family="system-ui,sans-serif">Spannung</text>
+        <text x="${cx}" y="173" text-anchor="middle"
+              fill="#c084fc" font-size="7.5" font-family="system-ui,sans-serif">Balance</text>
+        <text x="${lex}" y="${ley}" text-anchor="middle"
+              fill="#f87171" font-size="7.5" font-family="system-ui,sans-serif">Harmonie</text>
       </svg>
-      <div class="harmony-gauge-pct">${pct} %</div>
     `;
     return wrap;
   }
@@ -344,6 +447,9 @@ export function SynastryPage(app) {
   function renderExtensionPlaceholder(container, proj) {
     if (!proj || (!proj.wuxing && !proj.aspects.length)) return;
 
+    const score = proj.harmonyScore;
+
+    // ── Was ist das Fusionschart? ──────────────────────────────────────────────
     const section = document.createElement('section');
     section.className = 'synastry-section';
 
@@ -351,22 +457,82 @@ export function SynastryPage(app) {
     h2.textContent = 'Fusions-Bewertung';
     section.appendChild(h2);
 
+    // Erklärungs-Box: Was macht das Fusionschart einzigartig?
+    const fusionExplBox = document.createElement('div');
+    fusionExplBox.className = 'synastry-expl-box';
+    fusionExplBox.innerHTML = `
+      <p class="synastry-expl-title">Was ist ein Fusionschart?</p>
+      <p class="synastry-expl-text">
+        Das Fusionschart kreuzt zwei unabhängige astrologische Systeme:
+        <strong>BaZi / Wu-Xing</strong> liest Zeitenergie — welche elementaren Grundkräfte
+        jede Person in sich trägt (Holz, Feuer, Erde, Metall, Wasser) und wie diese im
+        Erzeugungs- oder Kontrollzyklus zueinanderstehen.
+        <strong>Westliche Aspekte</strong> lesen geometrische Frequenzmuster — in welchen
+        Winkeln die Planeten beider Charts zueinander schwingen (Trigon, Quadrat,
+        Konjunktion&nbsp;…).
+      </p>
+      <p class="synastry-expl-text">
+        Die Fusionsbewertung zeigt, wo diese beiden Ebenen sich verstärken, ergänzen
+        — oder in produktive Spannung geraten. Sie ist kein Urteil über Kompatibilität,
+        sondern eine <em>Bewusstseins-Map</em>: Wo fließt Energie leicht? Wo braucht
+        sie aktive Navigation?
+      </p>
+    `;
+    section.appendChild(fusionExplBox);
+
+    // ── Kohärenzindex-Erklärung ───────────────────────────────────────────────
+    const kohBox = document.createElement('div');
+    kohBox.className = 'synastry-koherenz-box';
+    kohBox.innerHTML = `
+      <p class="synastry-expl-title">Kohärenzindex — was bedeutet der Wert?</p>
+      <div class="synastry-koherenz-rows">
+        <div class="synastry-koherenz-row synastry-koherenz-row--high">
+          <span class="skr-icon">▶▶</span>
+          <div>
+            <strong>Hoch (≥ 65 %)</strong> — Starke Deckungsgleichheit der Energiefelder.
+            Die Grundströmung zwischen euch trägt leicht. Das bedeutet nicht Konfliktfreiheit,
+            sondern: die Kräfte zeigen in die gleiche Richtung. Mögliche Kehrseite: Echoraum,
+            der Wachstumsreibung fehlt.
+          </div>
+        </div>
+        <div class="synastry-koherenz-row synastry-koherenz-row--mid">
+          <span class="skr-icon">◀▶</span>
+          <div>
+            <strong>Ausgewogen (45–65 %)</strong> — Spannung und Fluss halten die Balance.
+            Dieser Bereich ist oft der fruchtbarste Entwicklungsraum: genug Resonanz für
+            Vertrauen, genug Reibung für Wachstum.
+          </div>
+        </div>
+        <div class="synastry-koherenz-row synastry-koherenz-row--low">
+          <span class="skr-icon">◀◀</span>
+          <div>
+            <strong>Spannungsgeladen (< 45 %)</strong> — Gegenpolarische Kräfte dominieren.
+            Das ist keine Unverträglichkeit — es ist intensive, transformative Energie.
+            Sie braucht Bewusstsein, um konstruktiv zu wirken statt zu erschöpfen.
+          </div>
+        </div>
+      </div>
+    `;
+    section.appendChild(kohBox);
+
+    // ── Kontextuelle Score-Interpretation ────────────────────────────────────
     const intro = document.createElement('p');
     intro.className = 'section-intro';
-    const score = proj.harmonyScore;
-    let interpretation = '';
     if (score == null) {
-      interpretation = 'Für eine vollständige Fusions-Bewertung werden Planetenpositionen beider Personen benötigt.';
-    } else if (score >= 0.7) {
-      interpretation = 'Diese Verbindung zeigt eine hohe elementare und aspektuelle Übereinstimmung — Anziehung und Fluss dominieren. Das bedeutet nicht Konfliktfreiheit, sondern eine grundsätzliche Resonanz, die Raum für gemeinsames Wachstum schafft.';
-    } else if (score >= 0.45) {
-      interpretation = 'Diese Verbindung hält Spannung und Harmonie in einem lebendigen Gleichgewicht. Die Reibungspunkte sind echte Wachstumsorte — sie fordern heraus und ermöglichen dadurch Tiefe.';
+      intro.textContent = 'Für eine vollständige Fusions-Bewertung werden Planetenpositionen beider Personen benötigt.';
     } else {
-      interpretation = 'Diese Verbindung ist geprägt von schöpferischer Spannung. Die elementaren und aspektuellen Kräfte wirken oft gegeneinander — das erzeugt Intensität und kann, wenn bewusst genutzt, transformierende Tiefe schaffen.';
+      const pct = Math.round(score * 100);
+      if (score >= 0.65) {
+        intro.innerHTML = `<strong>Kohärenzindex ${pct}%:</strong> Diese Verbindung zeigt eine hohe Deckungsgleichheit zwischen euren elementaren und aspektuellen Mustern — Anziehung und Fluss dominieren. Die elementaren Kräfte (Wu-Xing) und geometrischen Schwingungen (Aspekte) verstärken sich gegenseitig. Raum für gemeinsames Wachstum entsteht durch die geteilte Grundströmung.`;
+      } else if (score >= 0.45) {
+        intro.innerHTML = `<strong>Kohärenzindex ${pct}%:</strong> Diese Verbindung hält Spannung und Harmonie in einem lebendigen Gleichgewicht. Die Reibungspunkte zwischen euren Energiefeldern sind echte Wachstumsorte — sie fordern heraus und ermöglichen dadurch Tiefe und gegenseitige Reifung.`;
+      } else {
+        intro.innerHTML = `<strong>Kohärenzindex ${pct}%:</strong> Diese Verbindung ist geprägt von schöpferischer Spannung. Die elementaren und aspektuellen Kräfte wirken oft gegeneinander — das erzeugt Intensität und kann, wenn bewusst genutzt, eine besonders transformierende Tiefe schaffen.`;
+      }
     }
-    intro.textContent = interpretation;
     section.appendChild(intro);
 
+    // ── Gauge ─────────────────────────────────────────────────────────────────
     if (score != null) {
       const gauge = renderHarmonyGauge(score, 'Gesamt-Fusions-Balance');
       if (gauge) section.appendChild(gauge);

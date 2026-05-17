@@ -40,20 +40,36 @@ const HOUSE_INFO = [
     desc: 'Das 12. Haus berührt das Unbewusste, die Stille und den Rückzug. Hier liegen verborgene Stärken — und verdrängte Muster.' },
 ];
 
-// Zeichen im Hauskontext — kurze Deutung
-const SIGN_IN_HOUSE = {
-  Aries:       'Widder bringt Direktheit, Eigeninitiative und Durchsetzungskraft',
-  Taurus:      'Stier bringt Beständigkeit, Sinnlichkeit und Ausdauer',
-  Gemini:      'Zwillinge bringen Beweglichkeit, Neugier und Kommunikationsstärke',
-  Cancer:      'Krebs bringt Tiefe, Fürsorge und emotionale Sensibilität',
-  Leo:         'Löwe bringt Ausstrahlung, Großzügigkeit und Selbstbewusstsein',
-  Virgo:       'Jungfrau bringt Präzision, Dienst und analytisches Feingefühl',
-  Libra:       'Waage bringt Balance, Harmonie und Beziehungsbewusstsein',
-  Scorpio:     'Skorpion bringt Tiefe, Transformation und magnetische Intensität',
-  Sagittarius: 'Schütze bringt Freiheitsdrang, Weitsicht und Begeisterungsfähigkeit',
-  Capricorn:   'Steinbock bringt Struktur, Ausdauer und zielorientierte Disziplin',
-  Aquarius:    'Wassermann bringt Originalität, Unabhängigkeit und Gemeinschaftssinn',
-  Pisces:      'Fische bringen Empathie, Intuition und spirituelle Tiefe',
+// Zeichen im Hauskontext — Zeichenspezifische Deutung, die den Hausthema nennt
+const SIGN_HOUSE_CONTEXT = {
+  Aries:       (theme) => `Du gehst ${theme}-Themen mit Spontaneität und Direktheit an — du packst an, ohne lang abzuwägen. Eigeninitiative und der Mut, Dinge anzustoßen, prägen diesen Bereich.`,
+  Taurus:      (theme) => `Im ${theme}-Bereich suchst du Beständigkeit und Verlässlichkeit. Du baust hier langsam, aber auf Dauer — Vertrauen in das Solide ist deine stärkste Qualität.`,
+  Gemini:      (theme) => `${theme} lebt für dich durch Vielfalt, Wechsel und geistige Beweglichkeit. Du brauchst hier Abwechslung und geistige Anregung — Routine ermüdet dich schnell.`,
+  Cancer:      (theme) => `Du bringst Fürsorge und emotionale Tiefe in deine ${theme}-Welt. Zugehörigkeit und innere Sicherheit spielen hier eine zentrale, oft unbewusste Rolle.`,
+  Leo:         (theme) => `${theme} ist für dich ein Feld der Selbstentfaltung und Sichtbarkeit. Du willst hier Eindruck hinterlassen — nicht aus Eitelkeit, sondern weil Ausstrahlung dein natürlicher Ausdruck ist.`,
+  Virgo:       (theme) => `Du nähert dich ${theme}-Themen mit Sorgfalt, Analyse und dem Wunsch nach Verbesserung. Perfektion ist dein Kompass — doch Hilfsbereitschaft und Dienst am Detail sind deine Stärke.`,
+  Libra:       (theme) => `Im ${theme}-Bereich suchst du Ausgewogenheit und Harmonie. Du wägst ab, hörst zu, vermittelst — manchmal auf Kosten deiner eigenen Meinung, die du aber dennoch deutlich spürst.`,
+  Scorpio:     (theme) => `${theme} bedeutet für dich Tiefe oder gar nichts. Du bringst intensive, transformierende Energie hierher — Oberfläche reicht dir nicht. Kontrolle, Intensität und Wandel sind deine Themen.`,
+  Sagittarius: (theme) => `Du erlebst ${theme} als Raum für Wachstum, Abenteuer und Sinnsuche. Enge Grenzen erträgst du schlecht — du brauchst Weite, Vision und den Horizont vor Augen.`,
+  Capricorn:   (theme) => `${theme} organisierst du mit Disziplin und langem Atem. Du baust hier auf Substanz und Ergebnis — kurzfristiger Applaus interessiert dich weniger als nachhaltige Wirkung.`,
+  Aquarius:    (theme) => `Im ${theme}-Bereich denkst du unkonventionell und brichst Muster. Du bringst originelle Impulse und den Mut zur Eigenständigkeit — Zugehörigkeit ja, Gleichschaltung nein.`,
+  Pisces:      (theme) => `${theme} erfährst du durch Intuition und Empathie. Grenzen lösen sich hier auf — du spürst Verborgenes, träumst über Definitionen hinaus und empfängst, was andere übersehen.`,
+};
+
+// Planeten in Häusern — kurze kontextuelle Bedeutung
+const PLANET_IN_HOUSE_SHORT = {
+  Sun:         'Die Sonne hier stellt diesen Bereich ins Zentrum deiner Lebensenergie — Selbstverwirklichung findet hier statt.',
+  Moon:        'Der Mond verbindet diesen Bereich tief mit deiner Gefühlswelt — Stimmungen, Bedürfnisse und emotionale Muster wirken hier besonders stark.',
+  Mercury:     'Merkur schärft dein Denken und Kommunizieren in diesem Bereich — du analysierst, vernetzt und sprichst hier mit besonderer Intensität.',
+  Venus:       'Venus bringt Anziehung und ästhetischen Sinn hierher — dieser Bereich berührt, was du begehrst und wertschätzt.',
+  Mars:        'Mars setzt hier Antrieb und Willenskraft frei — du handelst, kämpfst oder behauptest dich in diesem Bereich besonders direkt.',
+  Jupiter:     'Jupiter weitet diesen Bereich aus — Wachstum, Chancen und Großzügigkeit fließen hier leichter als anderswo.',
+  Saturn:      'Saturn legt Anforderungen und Struktur an — Ausdauer in diesem Bereich zahlt sich aus, Abkürzungen kosten mehr.',
+  Uranus:      'Uranus bringt Überraschungen und Wandel — dieser Bereich widersetzt sich Routine und hält dich in Bewegung.',
+  Neptune:     'Neptun verwebt diesen Bereich mit Intuition, Träumen und fließenden Grenzen — Inspiration und Auflösung gehen hier Hand in Hand.',
+  Pluto:       'Pluto trägt Tiefentransformation hierher — wo er steht, gibt es kein Halbherziges. Macht, Wandel und das Unvermeidliche werden spürbar.',
+  'North Node': 'Der Mondknoten markiert hier dein Wachstumspotenzial in diesem Leben — eine Richtung, die sich richtig anfühlt, auch wenn sie fordert.',
+  Chiron:      'Chiron zeigt hier einen verletzlichen Bereich — und zugleich deine tiefste Fähigkeit zu heilen, sobald du dich ihm stellst.',
 };
 
 // Westliche Zeichen → Element (für Farbcodierung)
@@ -180,8 +196,9 @@ function renderWesternHouses(profile) {
       interpDiv.className = 'house-interp';
       const interpLabel = document.createElement('strong');
       interpLabel.textContent = `${signText} im ${i}. Haus: `;
+      const contextFn = SIGN_HOUSE_CONTEXT[sign];
       const interpText = document.createTextNode(
-        `${SIGN_IN_HOUSE[sign] || signText} — dieser Impuls prägt deinen Bereich „${info?.theme || `Haus ${i}`}" auf charakteristische Weise.`
+        contextFn ? contextFn(info?.theme || `Haus ${i}`) : `${signText} prägt deinen ${info?.theme || `${i}. Haus`}-Bereich auf charakteristische Weise.`
       );
       interpDiv.append(interpLabel, interpText);
       content.appendChild(interpDiv);
@@ -212,8 +229,18 @@ function renderWesternHouses(profile) {
         pSign.textContent = body.sign ? `im ${signDE(body.sign)}` : '';
         const pRetro = body.retrograde ? document.createElement('span') : null;
         if (pRetro) { pRetro.className = 'house-planet-retro'; pRetro.textContent = '℞ rückläufig'; }
+
+        // Contextual planet-in-house interpretation
+        const pInterp = PLANET_IN_HOUSE_SHORT[name];
+        const pInterpEl = pInterp ? document.createElement('p') : null;
+        if (pInterpEl) {
+          pInterpEl.className = 'house-planet-interp';
+          pInterpEl.textContent = pInterp;
+        }
+
         pRow.append(pName, pSign);
         if (pRetro) pRow.appendChild(pRetro);
+        if (pInterpEl) pRow.appendChild(pInterpEl);
         planetsDiv.appendChild(pRow);
       });
       content.appendChild(planetsDiv);
