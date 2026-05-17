@@ -164,7 +164,40 @@ export function SynastryPage(app) {
     renderWuXing(resultEl.querySelector('.synastry-wuxing-section'), proj);
     renderBazi(resultEl.querySelector('.synastry-bazi-section'), proj);
     renderAspects(resultEl.querySelector('.synastry-aspects-section'), proj);
-    renderExtensionPlaceholder(resultEl.querySelector('.synastry-extension-placeholder'));
+    renderExtensionPlaceholder(resultEl.querySelector('.synastry-extension-placeholder'), proj);
+  }
+
+  function renderHarmonyGauge(score, label) {
+    if (score == null) return null;
+    const pct = Math.round(score * 100);
+    const angleDeg = -90 + score * 180;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'harmony-gauge-wrap';
+    wrap.innerHTML = `
+      <div class="harmony-gauge-label">${label || 'Energie-Balance'}</div>
+      <svg class="harmony-gauge-svg" viewBox="0 0 200 110" aria-label="${pct}% Harmonie">
+        <defs>
+          <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#60a5fa"/>
+            <stop offset="50%"  stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#f87171"/>
+          </linearGradient>
+        </defs>
+        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none"
+              stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"/>
+        <g transform="translate(100,100) rotate(${angleDeg})">
+          <line x1="0" y1="0" x2="0" y2="-68" stroke="var(--text)" stroke-width="3"
+                stroke-linecap="round"/>
+          <circle cx="0" cy="0" r="5" fill="var(--text)"/>
+        </g>
+        <text x="15"  y="108" font-size="9" fill="#60a5fa" text-anchor="middle">Spannung</text>
+        <text x="100" y="22"  font-size="9" fill="var(--muted)" text-anchor="middle">Balance</text>
+        <text x="185" y="108" font-size="9" fill="#f87171" text-anchor="middle">Harmonie</text>
+      </svg>
+      <div class="harmony-gauge-pct">${pct} %</div>
+    `;
+    return wrap;
   }
 
   function renderWuXing(container, proj) {
@@ -203,6 +236,10 @@ export function SynastryPage(app) {
 
     card.append(header, desc);
     section.appendChild(card);
+    if (proj.harmonyScore != null) {
+      const gauge = renderHarmonyGauge(proj.harmonyScore, 'Elementare Energie-Balance');
+      if (gauge) section.appendChild(gauge);
+    }
     container.appendChild(section);
   }
 
@@ -297,21 +334,44 @@ export function SynastryPage(app) {
     }
 
     section.appendChild(grid);
+    if (proj.harmonyScore != null) {
+      const gauge = renderHarmonyGauge(proj.harmonyScore, 'Gesamt-Aspekt-Balance');
+      if (gauge) section.appendChild(gauge);
+    }
     container.appendChild(section);
   }
 
-  function renderExtensionPlaceholder(container) {
+  function renderExtensionPlaceholder(container, proj) {
+    if (!proj || (!proj.wuxing && !proj.aspects.length)) return;
+
     const section = document.createElement('section');
-    section.className = 'synastry-section synastry-section--placeholder';
+    section.className = 'synastry-section';
 
     const h2 = document.createElement('h2');
-    h2.textContent = 'Vertiefter Synastrie-Report';
+    h2.textContent = 'Fusions-Bewertung';
+    section.appendChild(h2);
 
-    const p = document.createElement('p');
-    p.className = 'section-intro';
-    p.textContent = 'Dieser Bereich wird verfügbar, sobald Extension G (server-seitige Synastrie-Berechnung) aktiviert ist.';
+    const intro = document.createElement('p');
+    intro.className = 'section-intro';
+    const score = proj.harmonyScore;
+    let interpretation = '';
+    if (score == null) {
+      interpretation = 'Für eine vollständige Fusions-Bewertung werden Planetenpositionen beider Personen benötigt.';
+    } else if (score >= 0.7) {
+      interpretation = 'Diese Verbindung zeigt eine hohe elementare und aspektuelle Übereinstimmung — Anziehung und Fluss dominieren. Das bedeutet nicht Konfliktfreiheit, sondern eine grundsätzliche Resonanz, die Raum für gemeinsames Wachstum schafft.';
+    } else if (score >= 0.45) {
+      interpretation = 'Diese Verbindung hält Spannung und Harmonie in einem lebendigen Gleichgewicht. Die Reibungspunkte sind echte Wachstumsorte — sie fordern heraus und ermöglichen dadurch Tiefe.';
+    } else {
+      interpretation = 'Diese Verbindung ist geprägt von schöpferischer Spannung. Die elementaren und aspektuellen Kräfte wirken oft gegeneinander — das erzeugt Intensität und kann, wenn bewusst genutzt, transformierende Tiefe schaffen.';
+    }
+    intro.textContent = interpretation;
+    section.appendChild(intro);
 
-    section.append(h2, p);
+    if (score != null) {
+      const gauge = renderHarmonyGauge(score, 'Gesamt-Fusions-Balance');
+      if (gauge) section.appendChild(gauge);
+    }
+
     container.appendChild(section);
   }
 }

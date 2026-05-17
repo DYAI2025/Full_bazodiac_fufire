@@ -661,11 +661,11 @@ const BAZI_PAIR = {
 };
 
 const ASPECT_DEFS = [
-  { angle: 0,   orb: 8, label: 'Konjunktion', description: 'Direkte Verschmelzung — Energien verstärken oder überlagern sich.' },
-  { angle: 60,  orb: 5, label: 'Sextil',      description: 'Harmonische Ergänzung — Chancen entstehen durch Begegnung.' },
-  { angle: 90,  orb: 7, label: 'Quadrat',     description: 'Kreative Spannung — Wachstum durch Auseinandersetzung.' },
-  { angle: 120, orb: 7, label: 'Trigon',      description: 'Natürlicher Fluss — Unterstützung ohne Aufwand.' },
-  { angle: 180, orb: 8, label: 'Opposition',  description: 'Polarisierende Anziehung — zwei Seiten eines Ganzen.' },
+  { angle: 0,   orb: 8, label: 'Konjunktion', harmony: 0.5, description: 'Direkte Verschmelzung — Energien verstärken oder überlagern sich.' },
+  { angle: 60,  orb: 5, label: 'Sextil',      harmony: 0.8, description: 'Harmonische Ergänzung — Chancen entstehen durch Begegnung.' },
+  { angle: 90,  orb: 7, label: 'Quadrat',     harmony: 0.2, description: 'Kreative Spannung — Wachstum durch Auseinandersetzung.' },
+  { angle: 120, orb: 7, label: 'Trigon',      harmony: 0.9, description: 'Natürlicher Fluss — Unterstützung ohne Aufwand.' },
+  { angle: 180, orb: 8, label: 'Opposition',  harmony: 0.3, description: 'Polarisierende Anziehung — zwei Seiten eines Ganzen.' },
 ];
 
 const SYNASTRY_BODIES = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'];
@@ -742,6 +742,22 @@ export function createSynastryProjection(profileA, profileB) {
   }
 
   const confidence = Math.max(0, Math.round((1 - deduction) * 100) / 100);
-  return { wuxing, bazi, aspects, missing, confidence };
+
+  // Harmonie-Score: 0 = reine Spannung, 1 = reine Harmonie
+  const WUXING_HARMONY = {
+    generating: 0.85, controlling: 0.3, identical: 0.6, neutral: 0.5,
+  };
+  const aspectScore = aspects.length > 0
+    ? aspects.reduce((sum, a) => {
+        const def = ASPECT_DEFS.find(d => d.label === a.aspect);
+        return sum + (def?.harmony ?? 0.5);
+      }, 0) / aspects.length
+    : null;
+  const wuxingScore = wuxing ? (WUXING_HARMONY[wuxing.relation] ?? 0.5) : null;
+  const harmonyScore = (aspectScore != null && wuxingScore != null)
+    ? Math.round((aspectScore * 0.6 + wuxingScore * 0.4) * 100) / 100
+    : (aspectScore ?? wuxingScore ?? null);
+
+  return { wuxing, bazi, aspects, missing, confidence, harmonyScore };
 }
 

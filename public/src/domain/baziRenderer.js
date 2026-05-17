@@ -117,20 +117,28 @@ export function renderBaziPillars(bazi, { timeCertainty = 'exact' } = {}) {
     branchChar.title = branchInfo.romanized ? `${branchInfo.romanized} — ${branchInfo.animal}` : 'Erdzweig';
     branchChar.textContent = p.branch || '—';
 
+    // ── Tierzeichen (Name, eigene Zeile) ─────────────────────────
     const animalSpan = document.createElement('span');
     animalSpan.className = 'pillar-animal';
-    animalSpan.textContent = branchInfo.animal
-      ? `${branchInfo.animal} · ${branchInfo.element} ${branchInfo.polarity}`
+    animalSpan.textContent = branchInfo.animal || '';
+
+    // ── Element + Polarität des Zweigs (zweite Zeile, klein) ─────
+    const animalElementSpan = document.createElement('span');
+    animalElementSpan.className = `pillar-animal-element ${ELEMENT_COLOR[branchInfo.element] || ''}`;
+    animalElementSpan.textContent = branchInfo.element && branchInfo.polarity
+      ? `${branchInfo.element} · ${branchInfo.polarity}`
       : '';
 
-    branchBlock.append(branchChar, animalSpan);
+    branchBlock.append(branchChar, animalSpan, animalElementSpan);
 
     // ── Verborgene Stämme (藏干) ──────────────────────────────────────────────
     const details = document.createElement('details');
     details.className = 'pillar-hidden-stems';
 
-    const hsBadge = p.hidden_stems?.length
-      ? (p.hidden_stems[0].source === 'derived_from_branch_table'
+    const stems = p.hidden_stems || [];
+
+    const hsBadge = stems.length
+      ? (stems[0].source === 'derived_from_branch_table'
           ? SourceBadge('derived_mapping')
           : SourceBadge('api'))
       : null;
@@ -138,15 +146,13 @@ export function renderBaziPillars(bazi, { timeCertainty = 'exact' } = {}) {
     const summary = document.createElement('summary');
     summary.className = 'hs-summary';
     const summaryText = document.createElement('span');
-    summaryText.textContent = '藏干 Verborgene Stämme';
+    summaryText.textContent = `藏干 · ${stems.length > 0 ? stems.map(s => s.stem).join(' ') : 'Verborgene Stämme'}`;
     summary.appendChild(summaryText);
     if (hsBadge) summary.appendChild(hsBadge);
     details.appendChild(summary);
 
     const hsList = document.createElement('div');
     hsList.className = 'hs-list';
-
-    const stems = p.hidden_stems || [];
     if (stems.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'hs-empty';
