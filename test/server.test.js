@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
-import { handleRequest } from '../server.js';
+import { handleRequest, normalizeAzodiacResult } from '../server.js';
 
 async function withServer(fn) {
   const server = createServer((req, res) => handleRequest(req, res));
@@ -503,4 +503,25 @@ test('/api/azodiac/daily: null lat (not missing, but null) returns 400 not Gulf-
     const body = await res.json();
     assert.ok(Array.isArray(body.errors), 'errors must be array');
   });
+});
+
+test('normalizeAzodiacResult passiert fusion.aspects, house_overlay, dominant_patterns durch', () => {
+  const raw = {
+    western: { bodies: {}, houses: {}, aspects: [], angles: {} },
+    bazi: { pillars: {} },
+    fusion: {
+      harmony_index: { harmony_index: 0.6, interpretation: 'ausgewogen' },
+      wu_xing_vectors: {},
+      aspects: [{ planet_a: 'Sun', planet_b: 'Moon', angle: 120, type: 'Trine' }],
+      house_overlay: { '1': 'Feuer', '7': 'Wasser' },
+      dominant_patterns: ['Holz-Dominanz'],
+      synthesis_notes: 'Starke Integration',
+    },
+    _meta: {},
+  };
+  const vm = normalizeAzodiacResult(raw);
+  assert.deepStrictEqual(vm.fusion.aspects, raw.fusion.aspects);
+  assert.deepStrictEqual(vm.fusion.house_overlay, raw.fusion.house_overlay);
+  assert.deepStrictEqual(vm.fusion.dominant_patterns, raw.fusion.dominant_patterns);
+  assert.strictEqual(vm.fusion.synthesis_notes, 'Starke Integration');
 });

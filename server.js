@@ -405,6 +405,11 @@ export function normalizeAzodiacResult(raw) {
       },
       coherence_index:       typeof coherenceIndex === 'number' ? coherenceIndex : null,
       fusion_interpretation: [harmonyInterpretation, f.fusion_interpretation ?? f.interpretation ?? ''].filter(Boolean).join('\n\n'),
+      // Passthrough: alle optionalen FuFirE-Felder — vorhanden nur wenn upstream sie liefert
+      aspects:           Array.isArray(f.aspects) ? f.aspects : [],
+      house_overlay:     (f.house_overlay && typeof f.house_overlay === 'object') ? f.house_overlay : null,
+      dominant_patterns: Array.isArray(f.dominant_patterns) ? f.dominant_patterns : [],
+      synthesis_notes:   f.synthesis_notes ?? f.notes ?? null,
     },
     _meta: {
       ...meta,
