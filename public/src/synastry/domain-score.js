@@ -67,14 +67,13 @@ export function computeDomainScores(profileA, profileB) {
   const monthTone    = pillarHarmony(pA.bazi?.pillars?.month, pB.bazi?.pillars?.month);
   const cohA         = pA.fusion?.coherence_index ?? 0.5;
   const cohB         = pB.fusion?.coherence_index ?? 0.5;
-  const cohComplement = 1 - Math.abs(cohA - cohB);
-  const careerHarmony = avg(h10Tone, h6Tone, monthTone, cohComplement);
+  const cohAlignment = Math.max(0, 1 - Math.abs(cohA - cohB));
+  const careerHarmony = avg(h10Tone, h6Tone, monthTone, cohAlignment);
 
   // GROWTH
-  const cohDivergence = 1 - Math.abs(cohA - cohB);
   const h9Tone        = houseHarmony(pA, pB, 9);
   const hourTone      = pillarHarmony(pA.bazi?.pillars?.hour, pB.bazi?.pillars?.hour);
-  const growthHarmony = avg(cohDivergence, h9Tone, hourTone);
+  const growthHarmony = avg(cohAlignment, h9Tone, hourTone);
 
   // FOUNDATION
   const h4Tone          = houseHarmony(pA, pB, 4);

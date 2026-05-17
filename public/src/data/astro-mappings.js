@@ -52,6 +52,7 @@ export const ELEMENT_COLORS = {
   Luft:   '#60A5FA',
   Wasser: '#3B82F6',
   Holz:   '#10B981',
+  Metall: '#A1A1AA',
 };
 
 // House templates

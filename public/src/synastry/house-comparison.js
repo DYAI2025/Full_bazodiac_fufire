@@ -21,7 +21,7 @@ export function buildHouseComparisons(profileA, profileB, houseList) {
     const { tone, score } = elementPairTone(elemA, elemB);
     const tmpl = HOUSE_TEMPLATES[houseIndex];
 
-    if (!tmpl) return { house: houseIndex, label:`Haus ${houseIndex}`, signA, signB, elemA, elemB, tone, text:'', score };
+    if (!tmpl) return { house: houseIndex, label:`Haus ${houseIndex}`, signA, signB, elemA, elemB, tone, text:`${signA} (${elemA}) trifft ${signB} (${elemB}).`, score };
 
     const vars = { signA, signB, elemA, elemB };
 
