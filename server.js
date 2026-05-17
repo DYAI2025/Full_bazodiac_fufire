@@ -206,6 +206,29 @@ export function validatePayload(raw) {
   return { valid: true };
 }
 
+function validateSynastryPayload(raw) {
+  const errors = [];
+  let obj;
+  try {
+    obj = typeof raw === 'string' ? (raw ? JSON.parse(raw) : {}) : (raw || {});
+  } catch {
+    return { valid: false, errors: ['Request body is not valid JSON'] };
+  }
+  if (!obj.personA || typeof obj.personA !== 'object') {
+    errors.push('personA: required — provide birth data object {date, time, lat, lon, tz}');
+  } else {
+    const va = validatePayload(obj.personA);
+    if (!va.valid) errors.push(...va.errors.map(e => `personA.${e}`));
+  }
+  if (!obj.personB || typeof obj.personB !== 'object') {
+    errors.push('personB: required — provide birth data object {date, time, lat, lon, tz}');
+  } else {
+    const vb = validatePayload(obj.personB);
+    if (!vb.valid) errors.push(...vb.errors.map(e => `personB.${e}`));
+  }
+  return errors.length ? { valid: false, errors } : { valid: true };
+}
+
 // ── Element key normalizer ────────────────────────────────────────────────
 const ELEM_DE_MAP = {
   wood:'Holz', fire:'Feuer', earth:'Erde', metal:'Metall', water:'Wasser',
@@ -565,6 +588,93 @@ async function orchestrateFusion(rawBody) {
       body: {
         fusion: vm.fusion,
         _meta:  { ...vm._meta, endpoint: '/api/azodiac/fusion' },
+      },
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Helper: dominante Elementspannung zwischen zwei Profilen
+function elementTension(profileA, profileB) {
+  const vecsA = profileA.fusion?.wu_xing_vectors?.fusion
+              || profileA.fusion?.wu_xing_vectors?.western_planets || {};
+  const vecsB = profileB.fusion?.wu_xing_vectors?.fusion
+              || profileB.fusion?.wu_xing_vectors?.western_planets || {};
+  const elements = ['Holz', 'Feuer', 'Erde', 'Metall', 'Wasser'];
+  const domA = elements.reduce((max, el) => (vecsA[el] ?? 0) > (vecsA[max] ?? 0) ? el : max, elements[0]);
+  const domB = elements.reduce((max, el) => (vecsB[el] ?? 0) > (vecsB[max] ?? 0) ? el : max, elements[0]);
+  const CONFLICT = { Holz: 'Erde', Erde: 'Wasser', Wasser: 'Feuer', Feuer: 'Metall', Metall: 'Holz' };
+  const inConflict = CONFLICT[domA] === domB || CONFLICT[domB] === domA;
+  const same = domA === domB;
+  return {
+    dominant_a: domA,
+    dominant_b: domB,
+    cycle_relation: inConflict ? 'Zerstörung' : same ? 'Gleich' : 'Neutral',
+    tension_score: inConflict ? 0.8 : same ? 0.1 : 0.4,
+  };
+}
+
+// ── Synastry orchestrator: parallel profiles for two persons ──────────────
+async function orchestrateSynastry(rawBody) {
+  const obj = typeof rawBody === 'string' ? JSON.parse(rawBody) : rawBody;
+  const payloadA = translatePayload(obj.personA);
+  const payloadB = translatePayload(obj.personB);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const [wA, bA, wB, bB] = await Promise.all([
+      callFuFire('calculate/western', payloadA, controller.signal),
+      callFuFire('calculate/bazi',    payloadA, controller.signal),
+      callFuFire('calculate/western', payloadB, controller.signal),
+      callFuFire('calculate/bazi',    payloadB, controller.signal),
+    ]);
+
+    let fA = { data: null, ok: false, status: 'n/a' };
+    let fB = { data: null, ok: false, status: 'n/a' };
+    try {
+      const [ra, rb] = await Promise.all([
+        callFuFire('calculate/fusion', payloadA, controller.signal),
+        callFuFire('calculate/fusion', payloadB, controller.signal),
+      ]);
+      if (ra.ok) fA = ra;
+      if (rb.ok) fB = rb;
+    } catch { /* absorb */ }
+
+    const mandatoryOk = wA.ok && bA.ok && wB.ok && bB.ok;
+
+    const profileA = normalizeAzodiacResult({
+      western: wA.data, bazi: bA.data, fusion: fA.data || {}, _meta: { input: payloadA },
+    });
+    const profileB = normalizeAzodiacResult({
+      western: wB.data, bazi: bB.data, fusion: fB.data || {}, _meta: { input: payloadB },
+    });
+
+    const ciA = profileA.fusion?.coherence_index ?? null;
+    const ciB = profileB.fusion?.coherence_index ?? null;
+    const combinedCoherence = (ciA !== null && ciB !== null)
+      ? Math.round(((ciA + ciB) / 2) * 100) / 100
+      : (ciA ?? ciB ?? null);
+
+    return {
+      httpStatus: mandatoryOk ? 200 : 502,
+      body: {
+        personA: profileA,
+        personB: profileB,
+        synastry: {
+          combined_coherence: combinedCoherence,
+          element_tension: elementTension(profileA, profileB),
+        },
+        _meta: {
+          upstream_status: {
+            western_a: wA.status, bazi_a: bA.status,
+            western_b: wB.status, bazi_b: bB.status,
+            fusion_a: fA.ok ? fA.status : 'n/a',
+            fusion_b: fB.ok ? fB.status : 'n/a',
+          },
+          computed_at: new Date().toISOString(),
+        },
       },
     };
   } finally {
@@ -992,6 +1102,35 @@ export async function handleRequest(req, res) {
     }
     try {
       const result = await orchestrateFusion(body || '{}');
+      return sendJson(res, result.httpStatus, result.body, requestOrigin);
+    } catch (error) {
+      const isAbort = error.name === 'AbortError';
+      return sendJson(res, 502, {
+        error: isAbort ? 'Upstream timeout' : 'Upstream unavailable',
+        detail: error.message,
+      }, requestOrigin);
+    }
+  }
+
+  // ── Synastry endpoint ──
+  if (url.pathname === '/api/azodiac/synastry') {
+    if (req.method === 'OPTIONS') return sendJson(res, 204, {}, requestOrigin);
+    if (req.method !== 'POST') {
+      return sendJson(res, 405, { error: 'Method not allowed', allowed: ['POST'] }, requestOrigin);
+    }
+    let body = '';
+    try {
+      body = await readRequestBody(req);
+      if (body) JSON.parse(body);
+    } catch (error) {
+      return sendJson(res, 400, { error: 'Invalid JSON request body', detail: error.message }, requestOrigin);
+    }
+    const validation = validateSynastryPayload(body || '{}');
+    if (!validation.valid) {
+      return sendJson(res, 400, { error: 'Invalid request payload', errors: validation.errors }, requestOrigin);
+    }
+    try {
+      const result = await orchestrateSynastry(body || '{}');
       return sendJson(res, result.httpStatus, result.body, requestOrigin);
     } catch (error) {
       const isAbort = error.name === 'AbortError';

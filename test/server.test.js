@@ -569,3 +569,62 @@ test('POST /api/azodiac/fusion existiert — kein 404', async () => {
     await once(upstream, 'close');
   }
 });
+
+test('POST /api/azodiac/synastry ohne personB → 400', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/azodiac/synastry`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        personA: { date: '1990-06-15', time: '12:00', lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' },
+      }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.errors), 'errors must be an array');
+    assert.ok(body.errors.some(e => e.includes('personB')), `errors should mention personB, got: ${JSON.stringify(body.errors)}`);
+  });
+});
+
+test('POST /api/azodiac/synastry mit beiden Personen → nicht 404', async () => {
+  const upstream = createServer((req, res) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      const responses = {
+        '/calculate/western': { bodies: {}, houses: [], aspects: [] },
+        '/calculate/bazi':    { pillars: {} },
+        '/calculate/fusion':  { wu_xing_vectors: {}, coherence_index: 0.7 },
+      };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(responses[req.url] ?? { ok: true }));
+    });
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/api/azodiac/synastry`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          personA: { date: '1990-06-15', time: '12:00', lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' },
+          personB: { date: '1985-03-20', time: '08:30', lat: 52.520, lon: 13.405, tz: 'Europe/Berlin' },
+        }),
+      });
+      assert.notEqual(res.status, 404, `Expected a non-404 response, got ${res.status}`);
+      const json = await res.json();
+      assert.ok('personA' in json, 'personA must be present in response');
+      assert.ok('personB' in json, 'personB must be present in response');
+      assert.ok('synastry' in json, 'synastry must be present in response');
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+});

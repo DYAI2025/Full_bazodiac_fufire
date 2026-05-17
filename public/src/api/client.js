@@ -61,6 +61,10 @@ export async function calculateFusion(input) {
   return request('POST', '/api/azodiac/fusion', input);
 }
 
+export async function calculateSynastry(inputA, inputB) {
+  return request('POST', '/api/azodiac/synastry', { personA: inputA, personB: inputB });
+}
+
 export function noFakeDataGuard(data, label = '') {
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'development') return;
   const DUMMY_SIGNATURES = ['Lorem', 'dummy', 'fake', 'random', 'placeholder', 'test123'];
