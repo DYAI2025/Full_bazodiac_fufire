@@ -56,6 +56,14 @@ const SIGN_IN_HOUSE = {
   Pisces:      'Fische bringen Empathie, Intuition und spirituelle Tiefe',
 };
 
+// Westliche Zeichen → Element (für Farbcodierung)
+const SIGN_ELEMENT = {
+  Aries: 'feuer', Leo: 'feuer', Sagittarius: 'feuer',
+  Cancer: 'wasser', Scorpio: 'wasser', Pisces: 'wasser',
+  Taurus: 'erde', Virgo: 'erde', Capricorn: 'erde',
+  Gemini: 'luft', Libra: 'luft', Aquarius: 'luft',
+};
+
 // ── Planeten-Namen (DE) ───────────────────────────────────────────────────────
 const PLANET_DE = {
   Sun: 'Sonne ☉', Moon: 'Mond ☽', Mercury: 'Merkur ☿', Venus: 'Venus ♀',
@@ -110,7 +118,8 @@ function renderWesternHouses(profile) {
     const planetsHere = planetsByHouse[String(i)] || [];
 
     const card = document.createElement('div');
-    card.className = `house-card${sign ? ' house-card--has-sign' : ' house-card--no-sign'}`;
+    const el = sign ? SIGN_ELEMENT[sign] : null;
+    card.className = `house-card${el ? ` house-card--${el}` : ''}`;
 
     // ── Header: Nummer + Zeichen + Planeten-Chips ─────────────────────────
     const header = document.createElement('div');
@@ -125,7 +134,7 @@ function renderWesternHouses(profile) {
     titleSpan.textContent = info?.theme || `Haus ${i}`;
 
     const signBadge = document.createElement('span');
-    signBadge.className = `house-sign-badge${sign ? '' : ' house-sign-badge--empty'}`;
+    signBadge.className = `house-sign-badge${el ? ` house-sign-badge--${el}` : ''}${sign ? '' : ' house-sign-badge--empty'}`;
     signBadge.textContent = signText || '—';
 
     header.append(numBadge, titleSpan, signBadge);
@@ -172,7 +181,7 @@ function renderWesternHouses(profile) {
       const interpLabel = document.createElement('strong');
       interpLabel.textContent = `${signText} im ${i}. Haus: `;
       const interpText = document.createTextNode(
-        `${SIGN_IN_HOUSE[sign] || signText} in den Bereich „${info?.theme || `Haus ${i}`}".`
+        `${SIGN_IN_HOUSE[sign] || signText} — dieser Impuls prägt deinen Bereich „${info?.theme || `Haus ${i}`}" auf charakteristische Weise.`
       );
       interpDiv.append(interpLabel, interpText);
       content.appendChild(interpDiv);
