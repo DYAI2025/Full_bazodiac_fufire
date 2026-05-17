@@ -628,3 +628,50 @@ test('POST /api/azodiac/synastry mit beiden Personen → nicht 404', async () =>
     await once(upstream, 'close');
   }
 });
+
+test('POST /api/azodiac/synastry?includeFusion=false skips fusion calls', async () => {
+  let requestCount = 0;
+  const upstream = createServer((req, res) => {
+    requestCount++;
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      const responses = {
+        '/calculate/western': { bodies: {}, houses: [], aspects: [] },
+        '/calculate/bazi':    { pillars: {} },
+        '/calculate/fusion':  { wu_xing_vectors: {}, coherence_index: 0.7 },
+      };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(responses[req.url] ?? { ok: true }));
+    });
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      requestCount = 0;
+      const res = await fetch(`${base}/api/azodiac/synastry?includeFusion=false`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          personA: { date: '1990-06-15', time: '12:00', lat: 48.137, lon: 11.576, tz: 'Europe/Berlin' },
+          personB: { date: '1985-03-20', time: '08:30', lat: 52.520, lon: 13.405, tz: 'Europe/Berlin' },
+        }),
+      });
+      assert.equal(res.status, 200);
+      const json = await res.json();
+      assert.ok('personA' in json, 'personA must be present in response');
+      assert.ok('personB' in json, 'personB must be present in response');
+      assert.ok('synastry' in json, 'synastry must be present in response');
+      assert.equal(requestCount, 4, 'Should make exactly 4 upstream calls (western+bazi for both persons, no fusion)');
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+});

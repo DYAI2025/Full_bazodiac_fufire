@@ -623,7 +623,7 @@ export function elementTension(profileA, profileB) {
 }
 
 // ── Synastry orchestrator: parallel profiles for two persons ──────────────
-async function orchestrateSynastry(rawBody) {
+async function orchestrateSynastry(rawBody, includeFusion = true) {
   const obj = typeof rawBody === 'string' ? JSON.parse(rawBody) : rawBody;
   const payloadA = translatePayload(obj.personA);
   const payloadB = translatePayload(obj.personB);
@@ -640,15 +640,17 @@ async function orchestrateSynastry(rawBody) {
 
     let fA = { data: null, ok: false, status: 'n/a' };
     let fB = { data: null, ok: false, status: 'n/a' };
-    try {
-      const [ra, rb] = await Promise.all([
-        callFuFire('calculate/fusion', payloadA, controller.signal),
-        callFuFire('calculate/fusion', payloadB, controller.signal),
-      ]);
-      if (ra.ok) fA = ra;
-      if (rb.ok) fB = rb;
-    } catch (e) {
-      console.warn('Fusion calculation failed, continuing without it:', e.message);
+    if (includeFusion) {
+      try {
+        const [ra, rb] = await Promise.all([
+          callFuFire('calculate/fusion', payloadA, controller.signal),
+          callFuFire('calculate/fusion', payloadB, controller.signal),
+        ]);
+        if (ra.ok) fA = ra;
+        if (rb.ok) fB = rb;
+      } catch (e) {
+        console.warn('Fusion calculation failed, continuing without it:', e.message);
+      }
     }
 
     const mandatoryOk = wA.ok && bA.ok && wB.ok && bB.ok;
@@ -1138,8 +1140,9 @@ export async function handleRequest(req, res) {
     if (!validation.valid) {
       return sendJson(res, 400, { error: 'Invalid request payload', errors: validation.errors }, requestOrigin);
     }
+    const includeFusion = url.searchParams.get('includeFusion') !== 'false';
     try {
-      const result = await orchestrateSynastry(body || '{}');
+      const result = await orchestrateSynastry(body || '{}', includeFusion);
       return sendJson(res, result.httpStatus, result.body, requestOrigin);
     } catch (error) {
       const isAbort = error.name === 'AbortError';
