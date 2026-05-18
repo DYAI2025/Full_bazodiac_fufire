@@ -1298,3 +1298,44 @@ Vor jedem `git commit -m "feat(…)…"`:
 ---
 
 > **Hinweis für Claude:** Vor Beginn jedes Sprints diesen Plan und die referenzierten Spec-Abschnitte erneut lesen (Context-Decay-Guardrail). Nach jedem Sprint Sprint-Tag setzen und Findings im selben Dokument unter `## Sprint N — Review` ergänzen.
+
+---
+
+## MVP Review 2026-05-18
+
+Self-assessment vs. goal criteria. Manual browser verification deferred to deployment; logic-level checks listed.
+
+- [x] `/overview` zeigt Kernsignatur in 30 Sekunden — `PersistentSignatureBar` + `InsightHero` (Title, dominant tension statement, evidence) + `WhyScoreCard` Kohärenz + `ThreeDoors` liegen above-the-fold im Template (`OverviewPage.js`).
+- [x] Jede Hauptseite ein klarer Top-Insight — `InsightHero` auf Overview, Daily, Love, Career, Fusion, Personality, Transit.
+- [x] Jede Hauptseite eine konkrete Handlung — `ActionExperimentCard` auf Daily/Love/Career/Synastry; CTA links auf Overview/Personality/Transit.
+- [x] Kein Score ohne Erklärung — alle prozentualen Zahlen sitzen entweder in `WhyScoreCard` (Overview Kohärenz) oder werden als "Punkte Intensität" / "Kohärenz-Index" gelabelt (Fusion). Synastry-Kohärenz behält bestehende ausführliche Erklärbox.
+- [x] Daily Wiederkehr-Grund — `InsightHero`, `buildDailyFallback` aktiv bei API-Ausfall, `ActionExperimentCard`, `DailyCheckin` (sessionStorage key `azodiac_daily_checkin_YYYY-MM-DD`), `ThreeDoors`-Footer.
+- [x] Synastry Light Summary zuerst — InsightHero + 3-Satz-Block (connect/friction/helps) + Hauptverbindung + Hauptspannung + Experiment vor `<details>` "Vollanalyse". Sprache umgestellt von "Wu-Xing-Kompatibilität" → "Wu-Xing-Resonanz" und "Urteil über Kompatibilität" → "Urteil über Beziehungsqualität".
+- [x] Debug-Dashboard nicht in Hauptnavigation — Overview-Nav-Link in Sprint 2 entfernt; Page-Title selbst umbenannt zu "Debug & API Status".
+- [x] Finanzsprache entschärft — Tab "Finanzen" → "Ressourcen", "Karriere"-Labels → "Arbeit", Disclaimer ruhig formuliert. Partner-B-Hausvergleich hinter "Teamvergleich (Beta)" `<details>` drawer.
+- [x] Fusion-Prozentwerte als Intensität gelabelt — `pct()` gibt "N Punkte Intensität" statt "N %", Wheel-Knoten zeigen ganze Zahl, Coherence pill heißt "Kohärenz-Index N".
+- [x] Transit als Wochenvorschau — `InsightHero`, "Heute aktiv", "Nächster Peak", 7-Tage-Strip mit Tagesthemen via `buildWeeklyThemes`. Planetendetails liegen im `<details>` Deep-Dive-Drawer.
+
+### Test baseline
+
+- Sprint 0 Baseline: 154 pass / 0 fail / 9 skipped.
+- After Sprint 8: 190 pass / 0 fail / 9 skipped (+36 neue Tests aus `source-pill`, `experience-copy`, `insight-hero`, `why-score-card`, `action-experiment-card`, `persistent-signature-bar`, `three-doors`, `daily-checkin` und neuen Asserts in `experience-copy.test.js`).
+
+### Sprint tags
+
+- `sprint-1-living-signature-base`
+- `sprint-2-overview-signature-center`
+- `sprint-3-daily-retention`
+- `sprint-4-love-synastry`
+- `sprint-5-arbeit-ressourcen`
+- `sprint-6-fusion-transit-debug`
+- `sprint-7-personality-deep-dive`
+- `sprint-8-input-polish`
+
+### Known gaps (out of MVP, candidates for next plan)
+
+- `NavBar.js` not extracted — each page still renders its own page-nav inline. Plan Task 24 marked optional; deferred.
+- Element-specific experiment variation currently only for `career` (deficient-element mapping). `love` and `daily` use static templates.
+- `DailyCheckin` writes locally only; no aggregate view across days yet.
+- `Synastry` light summary uses generic sentences ("Westliche und östliche Signaturen zeigen erste Überschneidungspunkte" when no specific cycle is available) — opportunity for per-pair templating later.
+- Manual browser smoke not yet executed (CI/Railway deploy is the canonical surface) — list of imports validated via `node -e import()`.
