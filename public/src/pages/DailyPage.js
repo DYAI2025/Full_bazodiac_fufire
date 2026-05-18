@@ -4,8 +4,10 @@ import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
 import { ThreeDoors }            from '../components/ThreeDoors.js';
-import { DailyCheckin, readDailyCheckin }        from '../components/DailyCheckin.js';
+import { DailyCheckin, readDailyCheckin, writeDailyCheckin } from '../components/DailyCheckin.js';
 import { CheckInResultCard }     from '../components/CheckInResultCard.js';
+import { TodayNewCard }          from '../components/TodayNewCard.js';
+import { TomorrowTeaserCard }    from '../components/TomorrowTeaserCard.js';
 import {
   buildExperienceProfile,
   buildCoreIdentity,
@@ -77,6 +79,7 @@ export function DailyPage(app, { profile = null } = {}) {
         <p class="daily-date">${today}</p>
       </header>
       <div class="insight-hero-mount"></div>
+      <div class="today-new-mount"></div>
       <div class="daily-focus-mount"></div>
       <div class="daily-loading" role="status" aria-live="polite">Tagespuls wird berechnet…</div>
       <div class="daily-content" hidden></div>
@@ -84,6 +87,7 @@ export function DailyPage(app, { profile = null } = {}) {
       <div class="daily-experiment-mount"></div>
       <div class="daily-checkin-mount"></div>
       <div class="daily-checkin-result-mount"></div>
+      <div class="tomorrow-teaser-mount"></div>
       <div class="daily-three-doors-mount"></div>
     </main>
   `;
@@ -151,15 +155,54 @@ export function DailyPage(app, { profile = null } = {}) {
     return { today: todayData, timeline };
   });
 
+  function yesterdayIso() {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function readHistory() {
+    const storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
+    if (!storage) return { yesterday: null };
+    const y = readDailyCheckin(storage, yesterdayIso());
+    if (!y) return { yesterday: null };
+    return {
+      yesterday: {
+        activeHouses:    Array.isArray(y.activeHouses) ? y.activeHouses : [],
+        dominantElement: y.dominantElement || null,
+        checkIn:         { clarity: y.clarity, energy: y.energy, contact: y.contact },
+      },
+    };
+  }
+
+  function persistTodayState(vm) {
+    const storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
+    if (!storage || !vm) return;
+    const activeHouses = (vm.western.activeHouses || []).map((h) => h.house);
+    const dominantElement = vm.fusion?.tension?.match(/\b(Holz|Feuer|Erde|Metall|Wasser)\b/)?.[1] || null;
+    writeDailyCheckin(storage, vm.date, { activeHouses, dominantElement });
+  }
+
+  function mountTodayNew(vm) {
+    app.querySelector('.today-new-mount').replaceWith(TodayNewCard(vm.todayNew));
+  }
+
+  function mountTomorrow(vm) {
+    app.querySelector('.tomorrow-teaser-mount').replaceWith(TomorrowTeaserCard(vm.tomorrow));
+  }
+
   transitsPromise.then((transits) => {
     dailyVM = buildDailyCompanionViewModel({
       profile,
       transits,
       date: todayIso(),
-      history: null,
+      history: readHistory(),
     });
     if (expProfile) mountHeroFromVM(dailyVM);
     else app.querySelector('.insight-hero-mount').remove();
+    mountTodayNew(dailyVM);
+    mountTomorrow(dailyVM);
+    persistTodayState(dailyVM);
   });
 
   function mountFallbackFocus() {

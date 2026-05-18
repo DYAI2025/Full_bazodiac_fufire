@@ -1321,3 +1321,31 @@ input:focus { border-color: var(--accent); }
 .checkin-result-card__state { color: var(--text); font-size: 1rem; font-weight: 600; }
 .checkin-result-card__interpretation, .checkin-result-card__nextstep, .checkin-result-card__tomorrow { color: var(--text); font-size: .92rem; line-height: 1.5; }
 .checkin-result-card strong { color: var(--accent2); margin-right: 4px; }
+
+/* TodayNewCard + TomorrowTeaserCard */
+.today-new-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.today-new-card__title { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-bottom: 6px; }
+.today-new-card__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.today-new-card__list li { color: var(--text); font-size: .95rem; line-height: 1.5; padding-left: 12px; position: relative; }
+.today-new-card__list li::before { content: '–'; position: absolute; left: 0; color: var(--muted); }
+
+.tomorrow-teaser-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tomorrow-teaser-card__title { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.tomorrow-teaser-card__body  { color: var(--text); font-size: .95rem; line-height: 1.5; }
+.tomorrow-teaser-card__link  { color: var(--accent); text-decoration: none; font-weight: 700; font-size: .88rem; }
+.tomorrow-teaser-card__link:hover { text-decoration: underline; }
