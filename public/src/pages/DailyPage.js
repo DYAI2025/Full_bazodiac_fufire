@@ -1,5 +1,5 @@
 // public/src/pages/DailyPage.js
-import { getDailyExperience } from '../api/client.js';
+import { getDailyExperience, getTransitNow, getTransitTimeline } from '../api/client.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
@@ -11,6 +11,7 @@ import {
   buildDailyFallback,
   buildActionExperiment,
 } from '../domain/experienceCopy.js';
+import { buildDailyCompanionViewModel } from '../domain/dailyCompanion.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -118,19 +119,46 @@ export function DailyPage(app, { profile = null } = {}) {
     return;
   }
 
-  // InsightHero placeholder while loading
-  if (expProfile) {
+  // Hero/ViewModel mount happens AFTER transit data arrives (no "gleich verfügbar" placeholder).
+  let dailyVM = null;
+  function mountHeroFromVM(vm) {
+    if (!vm) {
+      app.querySelector('.insight-hero-mount').remove();
+      return;
+    }
+    const evidence = [];
+    if (vm.signature.dayMasterLabel && vm.signature.dayMasterLabel !== '—') evidence.push(`Day Master ${vm.signature.dayMasterLabel}`);
+    if (vm.signature.coherenceScore != null) evidence.push(`Kohärenz-Index ${vm.signature.coherenceScore}`);
+    if (vm.western.activeHouses?.length) evidence.push(vm.western.theme);
     app.querySelector('.insight-hero-mount').replaceWith(
       InsightHero({
         eyebrow:   'Heute',
         title:     'Dein Tagespuls',
-        statement: 'Was heute aus deiner Signatur lebt — gleich verfügbar.',
-        evidence:  identity ? [identity.dayMaster !== '—' ? `Day Master ${identity.dayMaster}` : null].filter(Boolean) : [],
+        statement: vm.fusion.synthesis || vm.western.chance || vm.experiment.instruction,
+        evidence,
+        primaryAction:   { label: 'Zur Wochenvorschau', path: '/transits' },
+        secondaryAction: { label: 'In Beziehung sehen', path: '/love' },
       })
     );
-  } else {
-    app.querySelector('.insight-hero-mount').remove();
   }
+
+  // Kick off transit fetches in parallel so the Hero can render real data.
+  const transitsPromise = Promise.allSettled([getTransitNow(), getTransitTimeline()]).then(([nowRes, tlRes]) => {
+    const todayData = (nowRes.status === 'fulfilled' && nowRes.value?.ok) ? nowRes.value.data : null;
+    const timeline  = (tlRes.status  === 'fulfilled' && tlRes.value?.ok)  ? tlRes.value.data  : null;
+    return { today: todayData, timeline };
+  });
+
+  transitsPromise.then((transits) => {
+    dailyVM = buildDailyCompanionViewModel({
+      profile,
+      transits,
+      date: todayIso(),
+      history: null,
+    });
+    if (expProfile) mountHeroFromVM(dailyVM);
+    else app.querySelector('.insight-hero-mount').remove();
+  });
 
   function mountFallbackFocus() {
     if (!expProfile) return;
