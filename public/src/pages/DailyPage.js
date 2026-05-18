@@ -149,7 +149,7 @@ export function DailyPage(app, { profile = null } = {}) {
         title:     'Dein Tagespuls',
         statement: vm.fusion.synthesis || vm.western.chance || vm.experiment.instruction,
         evidence,
-        primaryAction:   { label: 'Zur Wochenvorschau', path: '/transits' },
+        primaryAction:   { label: 'Zur Wochenvorschau', path: '/transit-calendar' },
         secondaryAction: { label: 'In Beziehung sehen', path: '/love' },
       })
     );
