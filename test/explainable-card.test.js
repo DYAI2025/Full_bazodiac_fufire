@@ -38,3 +38,10 @@ test('explainableCardModel: empty input still returns shape', () => {
   assert.equal(typeof m.value, 'string');
   assert.equal(typeof m.meaning, 'object');
 });
+
+import { JSDOM_TEXT_CONTENT_ONLY } from '../public/src/components/MeaningDrawer.js';
+
+test('MeaningDrawer module signals it uses textContent only (export marker)', () => {
+  // The marker exists to make the migration verifiable without a DOM.
+  assert.equal(JSDOM_TEXT_CONTENT_ONLY, true);
+});

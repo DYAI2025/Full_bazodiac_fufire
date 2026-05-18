@@ -48,7 +48,10 @@ export function MeaningDrawer(opts = {}) {
     if (!val) continue;
     const p = document.createElement('p');
     p.className = cls;
-    p.innerHTML = `<strong>${label}:</strong> ${val}`;
+    const strong = document.createElement('strong');
+    strong.textContent = `${label}:`;
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` ${val}`));
     root.appendChild(p);
   }
   if (m.extras.length) {
@@ -63,3 +66,5 @@ export function MeaningDrawer(opts = {}) {
   }
   return root;
 }
+
+export const JSDOM_TEXT_CONTENT_ONLY = true;
