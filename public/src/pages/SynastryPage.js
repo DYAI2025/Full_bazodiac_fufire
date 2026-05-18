@@ -20,6 +20,7 @@ import { ResonanceScoreBand }         from '../components/ResonanceScoreBand.js'
 import { RelationshipSignalCard }     from '../components/RelationshipSignalCard.js';
 import { ContactExperimentCard }      from '../components/ContactExperimentCard.js';
 import { PrivacySafeShareCard }       from '../components/PrivacySafeShareCard.js';
+import { featureFlag }                from '../domain/featureFlags.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -229,12 +230,21 @@ export function SynastryPage(app) {
 
   // Variante C: Light Summary aus buildRelationshipResonance ableiten.
   // Bestehende Deep-Dive-Sections bleiben unverändert im Accordion erhalten.
+  // Feature flag relationshipResonanceV1 — wenn deaktiviert, kein Hero/Score/Cards.
   function renderLightSummary(profileA, profileB, proj, synastrySummary) {
     const heroMount       = resultEl.querySelector('.synastry-hero-mount');
     const scoreMount      = resultEl.querySelector('.synastry-score-band-mount');
     const connectionMount = resultEl.querySelector('.synastry-connection-mount');
     const tensionMount    = resultEl.querySelector('.synastry-tension-mount');
     const experimentMount = resultEl.querySelector('.synastry-experiment-mount');
+    const shareMount0     = resultEl.querySelector('.synastry-share-mount');
+
+    if (!featureFlag('relationshipResonanceV1')) {
+      // Flag aus: alle Variante-C-Mounts entfernen, Deep-Dive bleibt sichtbar.
+      [heroMount, scoreMount, connectionMount, tensionMount, experimentMount, shareMount0]
+        .filter(Boolean).forEach((el) => el.remove());
+      return;
+    }
 
     const analysis = buildRelationshipResonance({
       personAProfile: profileA,
@@ -302,10 +312,12 @@ export function SynastryPage(app) {
       experimentMount.remove();
     }
 
-    // Privacy-safe Share Card (Toggle-Button → Preview)
+    // Privacy-safe Share Card (Toggle-Button → Preview), eigener Feature-Flag
     const shareMount = resultEl.querySelector('.synastry-share-mount');
     if (shareMount) shareMount.innerHTML = '';
-    if (shareMount && profileB) {
+    if (shareMount && !featureFlag('relationshipShareCardV1')) {
+      shareMount.remove();
+    } else if (shareMount && profileB) {
       const wrap = document.createElement('section');
       wrap.className = 'synastry-share-toggle';
       const btn = document.createElement('button');
