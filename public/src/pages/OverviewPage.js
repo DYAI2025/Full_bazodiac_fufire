@@ -1,7 +1,16 @@
 import { generateCoreStatement } from '../domain/coreStatement.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
-import { SourceBadge }           from '../components/SourceBadge.js';
 import { UnavailableCard }       from '../components/UnavailableCard.js';
+import { SourcePill }            from '../components/SourcePill.js';
+import { InsightHero }           from '../components/InsightHero.js';
+import { WhyScoreCard }          from '../components/WhyScoreCard.js';
+import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
+import {
+  buildFusionSignatureTitle,
+  buildDominantTension,
+  explainCoherence,
+  buildCoreIdentity,
+} from '../domain/experienceCopy.js';
 
 const SIGN_DE = {
   Aries:'Widder', Taurus:'Stier', Gemini:'Zwillinge', Cancer:'Krebs',
@@ -87,8 +96,54 @@ const PLANET_DE = {
   'North Node': 'Mondknoten ☊', Chiron: 'Chiron ⚷',
 };
 
+// ── Profil-Adapter für experienceCopy ─────────────────────────────────────────
+function shapeExperienceProfile(profile) {
+  const ascRaw = profile?.western?.ascendant;
+  const ascSign = typeof ascRaw === 'string' ? ascRaw : ascRaw?.sign;
+  const v =
+    profile?.fusion?.wu_xing_vectors?.fusion ||
+    profile?.fusion?.wu_xing_vectors?.western_planets || null;
+  let dominantElement = null, deficientElement = null;
+  if (v) {
+    const entries = Object.entries(v);
+    dominantElement  = entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+    deficientElement = entries.reduce((a, b) => (b[1] < a[1] ? b : a))[0];
+  }
+  const ciRaw = profile?.fusion?.coherence_index;
+  const coherence = (ciRaw == null) ? null : Math.round(Number(ciRaw) * 100);
+  return {
+    western: {
+      sun:       { sign: profile?.western?.bodies?.Sun?.sign },
+      moon:      { sign: profile?.western?.bodies?.Moon?.sign },
+      ascendant: { sign: ascSign },
+    },
+    bazi: {
+      dayMaster: {
+        stem:    profile?.bazi?.day_master?.stem,
+        element: profile?.bazi?.day_master?.element,
+      },
+    },
+    fusion: { coherence, dominantElement, deficientElement },
+  };
+}
+
+function computeTopHouses(profile, n = 3) {
+  const bodies = profile?.western?.bodies || {};
+  const counts = {};
+  for (const body of Object.values(bodies)) {
+    const h = body?.house;
+    if (h == null) continue;
+    counts[h] = (counts[h] || 0) + 1;
+  }
+  const sorted = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([k]) => Number(k));
+  return new Set(sorted);
+}
+
 // ── Häuser-Section rendern ────────────────────────────────────────────────────
-function renderWesternHouses(profile) {
+function renderWesternHouses(profile, topHouses = new Set()) {
   const section = document.createElement('section');
   section.className = 'western-houses-section';
   section.setAttribute('aria-label', 'Häusersystem');
@@ -197,6 +252,7 @@ function renderWesternHouses(profile) {
     // ── Aufklappbare Deutung ───────────────────────────────────────────────
     const details = document.createElement('details');
     details.className = 'house-details';
+    if (topHouses.has(i)) details.open = true;
 
     const summary = document.createElement('summary');
     summary.className = 'house-summary';
@@ -277,27 +333,54 @@ function renderWesternHouses(profile) {
   return section;
 }
 
+// ── Three Doors (inline; wird in Task 10 extrahiert) ──────────────────────────
+function renderThreeDoors() {
+  const wrap = document.createElement('section');
+  wrap.className = 'three-doors';
+  wrap.setAttribute('aria-label', 'Drei Wege');
+  const doors = [
+    { path: '/daily',          eyebrow: 'Heute',     title: 'Tagespuls',         hint: 'Was heute aus deiner Signatur lebt' },
+    { path: '/love',           eyebrow: 'Kontakt',   title: 'In Beziehung',      hint: 'Wie du in Nähe reagierst' },
+    { path: '/career-finance', eyebrow: 'Arbeit',    title: 'Arbeit & Ressourcen', hint: 'Wie du Substanz verteilst' },
+  ];
+  for (const d of doors) {
+    const a = document.createElement('a');
+    a.href = `#${d.path}`;
+    a.className = 'three-doors__door';
+    const eb = document.createElement('span'); eb.className = 'three-doors__eyebrow'; eb.textContent = d.eyebrow;
+    const t  = document.createElement('h3');   t.className  = 'three-doors__title';   t.textContent  = d.title;
+    const h  = document.createElement('p');    h.className  = 'three-doors__hint';    h.textContent  = d.hint;
+    a.append(eb, t, h);
+    wrap.appendChild(a);
+  }
+  return wrap;
+}
+
 // ── OverviewPage ──────────────────────────────────────────────────────────────
 export function OverviewPage(app, { profile, onNavigate }) {
   const timeCert = profile._inputMeta?.timeCertainty || 'exact';
   const coreStatement = generateCoreStatement(profile);
+  const expProfile = shapeExperienceProfile(profile);
+  const identity = buildCoreIdentity(expProfile);
 
   const missing = [];
   if (timeCert === 'unknown') missing.push('Stundenhoroskop (Geburtszeit unbekannt)');
   if (!profile.western?.ascendant && timeCert !== 'unknown') missing.push('Aszendent');
   if (!profile.western?.bodies?.Sun?.sign) missing.push('Sonnenzeichen');
 
+  // Signatur-Karten (technische Basis, jetzt unten)
   const cards = [];
-
   const sun = profile.western?.bodies?.Sun;
   if (sun?.sign) cards.push({ title: 'Sonne', value: signDE(sun.sign), source: 'api' });
-  else cards.push(null);
 
   const moon = profile.western?.bodies?.Moon;
   if (moon?.sign) cards.push({ title: 'Mond', value: signDE(moon.sign), source: 'api' });
 
   if (profile.western?.ascendant) {
-    cards.push({ title: 'Aszendent', value: signDE(profile.western.ascendant), source: 'api' });
+    const ascSign = typeof profile.western.ascendant === 'string'
+      ? profile.western.ascendant
+      : profile.western.ascendant?.sign;
+    cards.push({ title: 'Aszendent', value: signDE(ascSign), source: 'api' });
   } else {
     cards.push({
       unavailable: true,
@@ -333,24 +416,27 @@ export function OverviewPage(app, { profile, onNavigate }) {
 
   app.innerHTML = `
     <main class="overview-page">
+      <div class="sig-bar-mount"></div>
       <nav class="page-nav">
-        <a href="#/love"           class="nav-link">Liebe</a>
-        <a href="#/career-finance" class="nav-link">Karriere</a>
-        <a href="#/personality"    class="nav-link">Persönlichkeit</a>
-        <a href="#/fusion"         class="nav-link">WuXing Fusion</a>
-        <a href="#/dashboard"      class="nav-link">Dashboard</a>
-        <a href="#/synastry"       class="nav-link">Synastrie</a>
+        <a href="#/love"             class="nav-link">Liebe</a>
+        <a href="#/career-finance"   class="nav-link">Arbeit &amp; Ressourcen</a>
+        <a href="#/personality"      class="nav-link">Persönlichkeit</a>
+        <a href="#/fusion"           class="nav-link">WuXing Fusion</a>
+        <a href="#/synastry"         class="nav-link">Synastrie</a>
         <a href="#/transit-calendar" class="nav-link">Transitkalender</a>
-        <a href="#/daily"          class="nav-link">Tagespuls</a>
+        <a href="#/daily"            class="nav-link">Tagespuls</a>
       </nav>
+      <div class="insight-hero-mount"></div>
       <section class="core-statement-section" aria-label="Kernsatz"></section>
+      <div class="why-coherence-mount"></div>
+      <div class="three-doors-mount"></div>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">
         <h2>BaZi — Vier Säulen</h2>
         <div class="bazi-pillars-wrapper"></div>
       </section>
       <div class="western-houses-placeholder"></div>
-      <section class="signature-cards-section" aria-label="Signatur-Karten">
-        <h2>Deine Signatur</h2>
+      <section class="signature-cards-section" aria-label="Technische Basis">
+        <h2>Technische Basis</h2>
         <div class="cards-grid"></div>
       </section>
       <footer class="overview-footer">
@@ -359,13 +445,61 @@ export function OverviewPage(app, { profile, onNavigate }) {
     </main>
   `;
 
-  // Core statement
+  // PersistentSignatureBar
+  app.querySelector('.sig-bar-mount').replaceWith(
+    PersistentSignatureBar({
+      dayMaster: identity.dayMaster,
+      sun:       identity.sun,
+      coherence: expProfile.fusion.coherence,
+    })
+  );
+
+  // InsightHero
+  const tension = buildDominantTension(expProfile);
+  app.querySelector('.insight-hero-mount').replaceWith(
+    InsightHero({
+      eyebrow:   'Deine Fusion-Signatur',
+      title:     buildFusionSignatureTitle(expProfile),
+      statement: tension.statement,
+      evidence:  [
+        identity.sun !== '—' ? `Sonne ${identity.sun}` : null,
+        identity.dayMaster !== '—' ? `Day Master ${identity.dayMaster}` : null,
+        expProfile.fusion.coherence != null ? `Fusion-Kohärenz ${expProfile.fusion.coherence}` : null,
+      ].filter(Boolean),
+      primaryAction:   { label: 'Tagespuls ansehen',  path: '/daily' },
+      secondaryAction: { label: 'In Beziehung sehen', path: '/love'  },
+    })
+  );
+
+  // Core statement (SignatureReveal)
   const csSection = app.querySelector('.core-statement-section');
   const csText = coreStatement || 'Zu wenige Daten für einen Kernsatz.';
   const csP = document.createElement('p');
   csP.className = coreStatement ? 'core-statement' : 'core-statement--empty';
   csP.textContent = csText;
   csSection.appendChild(csP);
+
+  // WhyScoreCard für Kohärenz
+  if (expProfile.fusion.coherence != null) {
+    const e = explainCoherence(expProfile);
+    app.querySelector('.why-coherence-mount').replaceWith(
+      WhyScoreCard({
+        label:      'Fusion-Kohärenz',
+        score:      e.score,
+        scoreLabel: e.scoreLabel,
+        meaning:    e.meaning,
+        raises:     e.raises,
+        lowers:     e.lowers,
+        action:     e.action,
+        caveat:     e.caveat,
+      })
+    );
+  } else {
+    app.querySelector('.why-coherence-mount').remove();
+  }
+
+  // Three Doors
+  app.querySelector('.three-doors-mount').replaceWith(renderThreeDoors());
 
   // Hinweis fehlende Daten
   if (missing.length) {
@@ -379,11 +513,11 @@ export function OverviewPage(app, { profile, onNavigate }) {
   app.querySelector('.bazi-pillars-wrapper')
     .appendChild(renderBaziPillars(profile.bazi, { timeCertainty: timeCert }));
 
-  // Westliche Häuser
+  // Westliche Häuser (Top 3 nach Planetenaktivierung aufgeklappt)
   const housesPlaceholder = app.querySelector('.western-houses-placeholder');
-  housesPlaceholder.replaceWith(renderWesternHouses(profile));
+  housesPlaceholder.replaceWith(renderWesternHouses(profile, computeTopHouses(profile, 3)));
 
-  // Signatur-Karten
+  // Technische Basis (Signatur-Karten)
   const grid = app.querySelector('.cards-grid');
   cards.forEach((card) => {
     if (!card) return;
@@ -399,7 +533,7 @@ export function OverviewPage(app, { profile, onNavigate }) {
     const h3 = document.createElement('h3');
     h3.className = 'card-title';
     h3.textContent = card.title;
-    header.append(h3, SourceBadge(card.source));
+    header.append(h3, SourcePill(card.source));
     el.appendChild(header);
 
     const valueEl = document.createElement('div');

@@ -1167,3 +1167,23 @@ input:focus { border-color: var(--accent); }
   body { padding-bottom: 64px; }
   .why-score-card__cols { grid-template-columns: 1fr; }
 }
+
+/* ThreeDoors (inline on Overview, will be extracted in Task 10) */
+.three-doors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.three-doors__door {
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color .15s, transform .15s;
+}
+.three-doors__door:hover { border-color: var(--accent); transform: translateY(-2px); }
+.three-doors__eyebrow { font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 700; }
+.three-doors__title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.three-doors__hint  { font-size: .82rem; color: var(--muted); line-height: 1.4; }
+@media (max-width: 640px) {
+  .three-doors { grid-template-columns: 1fr; }
+}
