@@ -34,6 +34,7 @@ function dominantElement(profile) {
   const v = profile?.fusion?.wu_xing_vectors?.fusion
          || profile?.fusion?.wu_xing_vectors?.western_planets;
   if (!v) return null;
+  if (Object.keys(v).length === 0) return null;
   return Object.entries(v).reduce((a, b) => (b[1] > a[1] ? b : a))[0];
 }
 
