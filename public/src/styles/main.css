@@ -1025,3 +1025,145 @@ input:focus { border-color: var(--accent); }
 .remediation-action--temper     .remediation-action-header { border-left-color: #f87171; }
 
 .fusion-empty { color: #94a3b8; font-style: italic; }
+
+/* === Living-Signature Components (2026-05-18) === */
+
+/* SourcePill */
+.source-pill { display: inline-flex; align-items: center; gap: 4px; }
+
+/* InsightHero */
+.insight-hero {
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 1.5);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.insight-hero--warning  { border-color: color-mix(in srgb, var(--warn) 40%, var(--border)); }
+.insight-hero--positive { border-color: color-mix(in srgb, var(--ok)   40%, var(--border)); }
+.insight-hero__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .72rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+.insight-hero__title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.insight-hero__statement { color: var(--text); font-size: 1.02rem; line-height: 1.55; }
+.insight-hero__evidence {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  list-style: none; padding: 0; margin: 4px 0 0;
+}
+.insight-hero__evidence li {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: .75rem;
+  color: var(--muted);
+}
+.insight-hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.insight-hero__cta {
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: .92rem;
+}
+.insight-hero__cta + .insight-hero__cta {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+/* WhyScoreCard */
+.why-score-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.why-score-card__header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.why-score-card__label { font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+.why-score-card__score { font-size: 2.2rem; font-weight: 800; color: var(--accent2); letter-spacing: -.03em; }
+.why-score-card__meaning { color: var(--text); font-size: .95rem; line-height: 1.55; }
+.why-score-card__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.why-score-card__col h4 { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; font-weight: 700; }
+.why-score-card__col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.why-score-card__col li { font-size: .88rem; color: var(--text); padding-left: 12px; position: relative; }
+.why-score-card__col li::before { content: '–'; position: absolute; left: 0; color: var(--muted); }
+.why-score-card__action { font-size: .92rem; color: var(--text); font-weight: 600; }
+.why-score-card__caveat { font-size: .78rem; color: var(--muted); font-style: italic; }
+
+/* ActionExperimentCard */
+.action-experiment-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.action-experiment-card__header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.action-experiment-card__title { font-size: 1.05rem; font-weight: 700; color: var(--text); flex: 1; }
+.action-experiment-card__duration { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; }
+.action-experiment-card__instruction { color: var(--text); font-size: .98rem; line-height: 1.55; }
+.action-experiment-card__reflect { color: var(--muted); font-size: .88rem; font-style: italic; }
+
+/* PersistentSignatureBar */
+.sig-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 4px;
+  margin-bottom: 16px;
+}
+.sig-bar__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: .78rem;
+}
+.sig-bar__label { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; font-size: .68rem; }
+.sig-bar__value { color: var(--text); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .sig-bar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    padding: 8px 12px;
+    margin: 0;
+    justify-content: center;
+  }
+  body { padding-bottom: 64px; }
+  .why-score-card__cols { grid-template-columns: 1fr; }
+}
