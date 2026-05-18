@@ -3,6 +3,15 @@ import { SourceBadge }                             from '../components/SourceBad
 import { ConfidenceBar }                           from '../components/ConfidenceBar.js';
 import { UnavailableCard }                         from '../components/UnavailableCard.js';
 import { WuxingBar }                               from '../components/WuxingBar.js';
+import { InsightHero }                             from '../components/InsightHero.js';
+import { ActionExperimentCard }                    from '../components/ActionExperimentCard.js';
+import { PersistentSignatureBar }                  from '../components/PersistentSignatureBar.js';
+import {
+  buildExperienceProfile,
+  buildCoreIdentity,
+  buildRelationshipSummary,
+  buildActionExperiment,
+}                                                  from '../domain/experienceCopy.js';
 import { calculateProfile, geocodePlace }          from '../api/client.js';
 import { buildHouseComparisons, DOMAIN_HOUSES }    from '../synastry/house-comparison.js';
 
@@ -123,8 +132,12 @@ function renderHouseEntry(entry) {
 }
 
 export function LovePage(app, { profile, onNavigate }) {
-  const proj   = createLoveProjection(profile);
-  const headline = generateHeadline(proj);
+  const proj      = createLoveProjection(profile);
+  const headline  = generateHeadline(proj);
+  const expProfile = buildExperienceProfile(profile);
+  const identity   = buildCoreIdentity(expProfile);
+  const summary    = buildRelationshipSummary(expProfile);
+  const experiment = buildActionExperiment('love', expProfile);
 
   const venusSign = profile?.western?.bodies?.Venus?.sign;
   const moonSign  = profile?.western?.bodies?.Moon?.sign;
@@ -147,14 +160,24 @@ export function LovePage(app, { profile, onNavigate }) {
 
   app.innerHTML = `
     <main class="love-page">
+      <div class="sig-bar-mount"></div>
       <nav class="page-nav">
-        <a href="#/overview" class="nav-link">← Übersicht</a>
-        <a href="#/career-finance" class="nav-link">Karriere</a>
-        <a href="#/personality" class="nav-link">Persönlichkeit</a>
+        <a href="#/overview"         class="nav-link">← Übersicht</a>
+        <a href="#/career-finance"   class="nav-link">Arbeit &amp; Ressourcen</a>
+        <a href="#/personality"      class="nav-link">Persönlichkeit</a>
+        <a href="#/synastry"         class="nav-link">Synastrie</a>
       </nav>
 
+      <div class="insight-hero-mount"></div>
+
+      <section class="relationship-summary" aria-label="Drei Sätze zu deiner Beziehung">
+        <h2>In drei Sätzen</h2>
+        <p class="rs-line"><strong>Was leicht fließt:</strong> <span class="rs-easy"></span></p>
+        <p class="rs-line"><strong>Wo Reibung entsteht:</strong> <span class="rs-friction"></span></p>
+        <p class="rs-line"><strong>Was hilft:</strong> <span class="rs-helps"></span></p>
+      </section>
+
       <header class="page-header">
-        <h1>Liebe &amp; Beziehung</h1>
         <div class="headline-section" aria-label="Deine Liebeslandschaft"></div>
       </header>
 
@@ -166,11 +189,13 @@ export function LovePage(app, { profile, onNavigate }) {
         <div class="factors-grid primary-factors"></div>
       </section>
 
-      <section class="factors-section needs-awareness" aria-label="Was braucht Bewusstsein">
-        <h2>Was braucht Bewusstsein</h2>
+      <section class="factors-section needs-awareness" aria-label="Wo du dich verhedderst">
+        <h2>Wo du dich verhedderst</h2>
         <p class="section-intro">Diese Dynamiken sind kein "schlechtes Zeichen" — sie laden zur bewussten Gestaltung ein.</p>
         <div class="factors-grid supporting-factors"></div>
       </section>
+
+      <div class="love-experiment-mount"></div>
 
       <section class="missing-section" aria-label="Was fehlt noch" hidden></section>
 
@@ -181,13 +206,51 @@ export function LovePage(app, { profile, onNavigate }) {
 
       <section class="fusion-layer-section" aria-label="Fusion-Layer"></section>
 
-      <section class="partner-b-section" aria-label="Partner B Vergleich"></section>
+      <section class="partner-b-cta" aria-label="Partnervergleich">
+        <h2>Partnerprofil berechnen</h2>
+        <p class="section-intro">Wenn du eine zweite Person mit eigenen Geburtsdaten vergleichen willst, geht es entweder direkt zur Synastrie oder bleib hier für den Hausvergleich.</p>
+        <a class="partner-b-cta__synastry" href="#/synastry">Zur Synastrie →</a>
+      </section>
+
+      <section class="partner-b-section" aria-label="Partner B Hausvergleich (Detail)"></section>
 
       <footer class="page-footer">
         <button class="new-calc-btn">Neue Berechnung</button>
       </footer>
     </main>
   `;
+
+  // PersistentSignatureBar
+  app.querySelector('.sig-bar-mount').replaceWith(
+    PersistentSignatureBar({
+      dayMaster: identity.dayMaster,
+      sun:       identity.sun,
+      coherence: expProfile.fusion.coherence,
+    })
+  );
+
+  // InsightHero
+  app.querySelector('.insight-hero-mount').replaceWith(
+    InsightHero({
+      eyebrow:   'Liebe & Beziehung',
+      title:     'Dein Beziehungsmodus',
+      statement: summary.easyFlow,
+      evidence:  [
+        identity.ascendant !== '—' ? `Aszendent ${identity.ascendant}` : null,
+        identity.moon !== '—' ? `Mond ${identity.moon}` : null,
+      ].filter(Boolean),
+      primaryAction:   { label: 'Tagespuls ansehen', path: '/daily' },
+      secondaryAction: { label: 'Partner vergleichen', path: '/synastry' },
+    })
+  );
+
+  // Relationship summary (3 sentences)
+  app.querySelector('.rs-easy').textContent     = summary.easyFlow;
+  app.querySelector('.rs-friction').textContent = summary.friction;
+  app.querySelector('.rs-helps').textContent    = summary.helps;
+
+  // Love experiment
+  app.querySelector('.love-experiment-mount').replaceWith(ActionExperimentCard(experiment));
 
   // Headline
   const headlineSection = app.querySelector('.headline-section');
