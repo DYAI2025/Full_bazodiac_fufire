@@ -1274,3 +1274,13 @@ input:focus { border-color: var(--accent); }
 .career-partner-b-details > summary { cursor: pointer; padding: 10px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); font-weight: 600; font-size: .9rem; }
 .career-partner-b-details[open] > summary { margin-bottom: 12px; color: var(--text); }
 .finance-disclaimer { background: var(--panel); border-left: 3px solid var(--muted); padding: 14px 16px; border-radius: var(--radius); color: var(--muted); font-size: .88rem; line-height: 1.5; }
+
+/* FusionPage — Balance summary + matrix drawer */
+.fusion-balance-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.fbs-cell { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.fbs-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+.fbs-value { font-size: 1.3rem; font-weight: 800; }
+.fbs-hint  { font-size: .78rem; color: var(--muted); }
+.fusion-matrix-details > summary { cursor: pointer; padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-weight: 700; }
+.fusion-matrix-details[open] > summary { margin-bottom: 12px; }
+@media (max-width: 640px) { .fusion-balance-summary { grid-template-columns: 1fr; } }
