@@ -7,6 +7,7 @@ export function relationshipSignalCardModel({
   evidence = [],
   sourceLayer = '',
   confidence = null,
+  practice = '',
 } = {}) {
   return {
     kind: (kind === 'friction') ? 'friction' : 'connection',
@@ -15,6 +16,7 @@ export function relationshipSignalCardModel({
     evidence: Array.isArray(evidence) ? evidence : [],
     sourceLayer,
     confidence,
+    practice,
   };
 }
 
@@ -44,6 +46,12 @@ export function RelationshipSignalCard(opts = {}) {
       ul.appendChild(li);
     }
     root.appendChild(ul);
+  }
+  if (m.practice) {
+    const p = document.createElement('p');
+    p.className = 'relationship-signal-card__practice';
+    p.innerHTML = `<strong>Praktisch:</strong> ${m.practice}`;
+    root.appendChild(p);
   }
   if (m.sourceLayer) {
     const tag = document.createElement('span');

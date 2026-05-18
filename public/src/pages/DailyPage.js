@@ -94,6 +94,11 @@ export function DailyPage(app, { profile = null } = {}) {
       <div class="daily-experiment-mount"></div>
       <div class="daily-checkin-mount"></div>
       <div class="daily-checkin-result-mount"></div>
+      <section class="daily-contact-link" aria-label="Heute in Beziehung">
+        <h3 class="daily-contact-link__title">Heute in Beziehung</h3>
+        <p class="daily-contact-link__body">Aus deinem Tagespuls in den Kontakt mit anderen — wie wirkt sich dein heutiges Element auf eine zweite Person aus?</p>
+        <a class="daily-contact-link__cta" href="#/synastry">Zur Beziehungsauswertung →</a>
+      </section>
       <div class="tomorrow-teaser-mount"></div>
       <div class="daily-three-doors-mount"></div>
     </main>
@@ -301,11 +306,20 @@ export function DailyPage(app, { profile = null } = {}) {
     }
 
     const data = res.data;
+    // Iteration 1A: VM-Cards (WesternImpulseCard/BaziImpulseCard/FusionSynthesisCard)
+    // sind bereits oben gerendert. API-Sections kommen in einen Drawer, damit
+    // die Tagespuls-Blöcke nicht doppelt erscheinen.
+    const apiDetails = document.createElement('details');
+    apiDetails.className = 'daily-api-details';
+    const apiSummary = document.createElement('summary');
+    apiSummary.textContent = 'Tagespuls-Rohdaten (API) — Westlich · BaZi · Fusion';
+    apiDetails.appendChild(apiSummary);
     [
-      renderSection('Westlicher Impuls', data.western, 'western'),
-      renderSection('BaZi — Östlicher Impuls', data.eastern, 'eastern'),
+      renderSection('Westlicher Impuls (API)',       data.western, 'western'),
+      renderSection('BaZi — Östlicher Impuls (API)', data.eastern, 'eastern'),
       renderFusion(data.fusion),
-    ].forEach(el => { if (el) content.appendChild(el); });
+    ].forEach(el => { if (el) apiDetails.appendChild(el); });
+    content.appendChild(apiDetails);
 
     if (data._meta?.bootstrap_profile) {
       const meta = data._meta.bootstrap_profile;

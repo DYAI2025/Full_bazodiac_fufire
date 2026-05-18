@@ -1501,3 +1501,33 @@ input:focus { border-color: var(--accent); }
   font-weight: 600;
 }
 .privacy-share-card__copy:hover { background: var(--accent); color: #fff; }
+
+/* RelationshipSignalCard — Praxis-Hinweis */
+.relationship-signal-card__practice { color: var(--text); font-size: .9rem; line-height: 1.5; }
+.relationship-signal-card__practice strong { color: var(--accent2); margin-right: 4px; }
+
+/* Daily — API drawer + Beziehungs-Link */
+.daily-api-details > summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: .9rem;
+}
+.daily-api-details[open] > summary { margin-bottom: 12px; color: var(--text); }
+.daily-contact-link {
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.daily-contact-link__title { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.daily-contact-link__body  { color: var(--text); font-size: .92rem; line-height: 1.5; }
+.daily-contact-link__cta   { align-self: flex-start; color: var(--accent); text-decoration: none; font-weight: 700; }
+.daily-contact-link__cta:hover { text-decoration: underline; }
