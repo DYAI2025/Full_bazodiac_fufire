@@ -1,30 +1,62 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dailyCheckinKey, readCheckin, writeCheckin } from '../public/src/components/DailyCheckin.js';
+import {
+  DAILY_CHECKINS_KEY,
+  readAllCheckins,
+  readDailyCheckin,
+  writeDailyCheckin,
+} from '../public/src/components/DailyCheckin.js';
 
-function makeMemStorage() {
-  const m = new Map();
+function makeMemStorage(initial = {}) {
+  const m = new Map(Object.entries(initial));
   return {
     getItem: (k) => (m.has(k) ? m.get(k) : null),
     setItem: (k, v) => m.set(k, v),
+    removeItem: (k) => m.delete(k),
   };
 }
 
-test('dailyCheckinKey is date-scoped', () => {
-  assert.equal(dailyCheckinKey('2026-05-18'), 'azodiac_daily_checkin_2026-05-18');
+test('DAILY_CHECKINS_KEY is the goal-pinned key', () => {
+  assert.equal(DAILY_CHECKINS_KEY, 'fufire.dailyCheckins');
 });
 
-test('write then read returns the same payload', () => {
+test('readAllCheckins returns empty object when storage is empty', () => {
+  assert.deepEqual(readAllCheckins(makeMemStorage()), {});
+});
+
+test('writeDailyCheckin persists a date-keyed entry into the shared object', () => {
   const s = makeMemStorage();
-  writeCheckin(s, '2026-05-18', { clarity: 'mittel', energy: 'ruhig', contact: 'offen' });
-  assert.deepEqual(readCheckin(s, '2026-05-18'), { clarity: 'mittel', energy: 'ruhig', contact: 'offen' });
+  writeDailyCheckin(s, '2026-05-18', { clarity: 'mittel', energy: 'ruhig', contact: 'offen' });
+  const raw = s.getItem('fufire.dailyCheckins');
+  const parsed = JSON.parse(raw);
+  assert.ok(parsed['2026-05-18']);
+  assert.equal(parsed['2026-05-18'].clarity, 'mittel');
+  assert.equal(parsed['2026-05-18'].contact, 'offen');
+  assert.ok(parsed['2026-05-18'].createdAt, 'createdAt timestamp must be set');
 });
 
-test('read on empty storage returns null', () => {
-  assert.equal(readCheckin(makeMemStorage(), '2026-05-18'), null);
+test('writeDailyCheckin merges partial updates into the existing entry for that date', () => {
+  const s = makeMemStorage();
+  writeDailyCheckin(s, '2026-05-18', { clarity: 'mittel' });
+  writeDailyCheckin(s, '2026-05-18', { energy: 'aktiv' });
+  const entry = readDailyCheckin(s, '2026-05-18');
+  assert.equal(entry.clarity, 'mittel');
+  assert.equal(entry.energy,  'aktiv');
 });
 
-test('read swallows JSON parse errors', () => {
-  const s = { getItem: () => 'not-json{{{', setItem: () => undefined };
-  assert.equal(readCheckin(s, '2026-05-18'), null);
+test('writeDailyCheckin does not clobber other dates', () => {
+  const s = makeMemStorage();
+  writeDailyCheckin(s, '2026-05-17', { clarity: 'hoch' });
+  writeDailyCheckin(s, '2026-05-18', { clarity: 'niedrig' });
+  assert.equal(readDailyCheckin(s, '2026-05-17').clarity, 'hoch');
+  assert.equal(readDailyCheckin(s, '2026-05-18').clarity, 'niedrig');
+});
+
+test('readDailyCheckin returns null for unknown dates', () => {
+  assert.equal(readDailyCheckin(makeMemStorage(), '2026-05-18'), null);
+});
+
+test('readAllCheckins is resilient to malformed JSON', () => {
+  const s = makeMemStorage({ 'fufire.dailyCheckins': '{{not-json' });
+  assert.deepEqual(readAllCheckins(s), {});
 });
