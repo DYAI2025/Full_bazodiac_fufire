@@ -86,3 +86,13 @@ test('no entry in the meaning maps contains "Keine Beschreibung verfügbar"', ()
   const blob = JSON.stringify({ STEM_MEANINGS, BRANCH_MEANINGS, WUXING_MEANINGS, WESTERN_SIGN_MEANINGS, HOUSE_MEANINGS, COHERENCE_MEANINGS });
   assert.ok(!/Keine Beschreibung verfügbar/i.test(blob));
 });
+
+test('STEM_MEANINGS.Wu and BRANCH_MEANINGS.Wu resolve to different elements (documented collision)', () => {
+  assert.equal(STEM_MEANINGS.Wu.element,   'Erde');  // 戊 — Yang Earth stem
+  assert.equal(BRANCH_MEANINGS.Wu.element, 'Feuer'); // 午 — Horse / Yang Fire branch
+});
+
+test('lookupStem("戊") and lookupBranch("午") map through CHAR_TO_PINYIN bridges', () => {
+  assert.equal(lookupStem('戊').element,   'Erde');
+  assert.equal(lookupBranch('午').element, 'Feuer');
+});

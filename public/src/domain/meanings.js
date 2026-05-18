@@ -12,6 +12,11 @@ export const PILLAR_ROLES = {
 };
 
 // Heavenly Stems (10) — Pinyin + Element/Polarität + Nutzer-Deutung
+// COLLISION NOTE: the string key "Wu" appears in BOTH this STEM_MEANINGS map
+// (戊 — Yang Earth) and in BRANCH_MEANINGS below (午 — Horse / Yang Fire).
+// The maps are intentionally separate; do not merge them. Lookups go through
+// STEM_CHAR_TO_PINYIN / BRANCH_CHAR_TO_PINYIN so Chinese-char inputs never
+// hit the wrong map.
 export const STEM_MEANINGS = {
   Jia:  { stem: '甲', element: 'Holz',   polarity: 'Yang', resource: 'Initiative, klare Richtung', shadow: 'starrsinnig, übertreibt Eigenständigkeit', practice: 'Setze heute einen Schritt, der erst später zählt.' },
   Yi:   { stem: '乙', element: 'Holz',   polarity: 'Yin',  resource: 'Beweglichkeit, Anpassung',   shadow: 'verbiegt sich aus Harmoniedrang',         practice: 'Sag heute einmal Nein, ohne dich zu rechtfertigen.' },
@@ -26,6 +31,11 @@ export const STEM_MEANINGS = {
 };
 
 // Earthly Branches (12) — Tier + Element + Deutung
+// COLLISION NOTE: the string key "Wu" appears in BOTH this STEM_MEANINGS map
+// (戊 — Yang Earth) and in BRANCH_MEANINGS below (午 — Horse / Yang Fire).
+// The maps are intentionally separate; do not merge them. Lookups go through
+// STEM_CHAR_TO_PINYIN / BRANCH_CHAR_TO_PINYIN so Chinese-char inputs never
+// hit the wrong map.
 export const BRANCH_MEANINGS = {
   Zi:   { branch: '子', animal: 'Ratte',    element: 'Wasser', resource: 'Wachheit, neue Anfänge',   shadow: 'unruhig, vorzeitig',         practice: 'Halt heute eine Bewegung kurz an, bevor du losgehst.' },
   Chou: { branch: '丑', animal: 'Büffel',   element: 'Erde',   resource: 'Geduld, Ausdauer',         shadow: 'verbissen, langsam',         practice: 'Heb heute bewusst eine Schwere ab — körperlich oder mental.' },
