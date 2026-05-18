@@ -242,3 +242,44 @@ Key: `fufire.dailyCheckins`
 ## 12. Verbindung zu Goal
 
 Dieser Plan ist Reference-Doc für das `/goal` "Pfad A — Daily Companion MVP". Goal-Body ist die kompakte Direktive; dieser Plan die Vertiefung pro Iteration.
+
+---
+
+## MVP Review
+
+Self-assessment vs. Goal-Akzeptanzkriterien (Branch `feat/daily-companion-pfad-a`, sechs Iteration-Tags `pfad-a-iter-1-vm` … `pfad-a-iter-6-qa`).
+
+### Akzeptanzkriterien
+
+- [x] `/daily` rendert aus einem einzigen ViewModel — `buildDailyCompanionViewModel(profile, transits, date, history)` in `public/src/domain/dailyCompanion.js`, gemountet in `DailyPage.js`.
+- [x] Im ersten Screen sichtbar: Hero + TodayNewCard + Tagesfokus — Reihenfolge: PersistentSignatureBar → InsightHero → Trust-Microcopy → ScoreBandCard → TodayNewCard → vm-cards-stack.
+- [x] DailyPulseHero ohne Platzhalter — Statement aus `vm.fusion.synthesis || vm.western.chance || vm.experiment.instruction`; Mount erfolgt erst nach `transitsPromise.then()`.
+- [x] TodayNewCard mit gestrigen Daten ≥1 Differenz, max 3 Bullets, sonst Ersttag-Fallback — `buildTodayNew` in `dailyCompanion.js` (Tests: `today-new-card.test.js`, `daily-companion-viewmodel.test.js`).
+- [x] Experiment-Engine ≥8 Regelpfade — 12 spezifische Regeln + 1 Default in `public/src/domain/experimentEngine.js`, jeder mit `sourceReason`; Default nur als Fallback (`experiment-engine.test.js`, 13 Tests).
+- [x] CheckInCard speichert pro Datum in `fufire.dailyCheckins`, Auswahl persistiert nach Reload — shared-object schema, storage-injectable (`daily-checkin.test.js`, 7 Tests).
+- [x] CheckInResultCard erscheint erst bei vollständiger 3er-Auswahl, referenziert ≥1 Tagesfaktor, enthält `nextStep` — `checkInResultModel` returns null unless `clarity && energy && contact` (`checkin-result-card.test.js`, 3 Tests).
+- [x] TomorrowTeaserCard zeigt echten Hinweis oder Fallback; verlinkt `/transits` — `tomorrowTeaserModel` mit non-urgent Default (`tomorrow-teaser-card.test.js`, 3 Tests).
+- [x] ScoreBandCard global auf Overview + Daily — Bands 0–39 low / 40–69 medium / 70–89 high / 90–100 very-high mit "Hoch ≠ besser"-Caveat (`score-band-card.test.js`, 4 Tests).
+- [x] Keine `API`/`Aggregiert`-Labels auf Nutzerseiten — `SourceBadge.js` re-exportiert `SourcePill`, deren Labels sind `Berechnet/Fusioniert/Abgeleitet/Gedeutet/Fallback/Erklärt/Fehlt`.
+- [x] Trust-Microcopy auf Input + Daily + Overview — jeweils ≥1 Satz: Input `app-trust`, Daily `trust-microcopy`, Overview `trust-microcopy`.
+- [x] Tests am Sprintende ≥190 pass / 0 fail — aktuell 232 pass / 0 fail / 9 skipped.
+- [x] Keine fatalistische Sprache im gerenderten DOM — `grep -rniE "du wirst|du musst|dein Schicksal|garantiert|perfekt kompatibel|finanzieller Erfolg"` gegen `public/src/**` liefert 0 Treffer.
+
+### Test-Wachstum
+
+| Sprint-Phase | Pass | Fail | Skipped |
+|---|---|---|---|
+| Baseline (post-Sprint-8) | 190 | 0 | 9 |
+| iter-1-vm | 199 | 0 | 9 |
+| iter-2-experiment | 212 | 0 | 9 |
+| iter-3-checkin | 218 | 0 | 9 |
+| iter-4-rhythm | 224 | 0 | 9 |
+| iter-5-trust | 232 | 0 | 9 |
+| iter-6-qa (final) | 232 | 0 | 9 |
+
+### Bekannte Gaps (out of MVP)
+
+- API-Pfad (`getDailyExperience`) und VM-Pfad rendern parallel. Wenn beide Daten liefern, sieht man API-Sektionen UND VM-Cards — kein Konflikt, aber doppelte Information möglich.
+- Persisted `activeHouses` für TodayNew-Differenz funktioniert erst ab dem **zweiten** Tagesbesuch (heute schreiben, morgen lesen).
+- Mobile manuell nicht verifiziert; CSS hat aber `@media (max-width: 640px)` für Sig-Bar + Three-Doors aus Sprint 1.
+- `getCoherenceBand` ist als Re-Export in `experimentEngine.js` referenziert — circular-import-freier Pfad: `experimentEngine → dailyCompanion`. OK, kein Lazy-Init nötig.
