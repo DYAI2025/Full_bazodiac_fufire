@@ -1,5 +1,9 @@
 import { generateCoreStatement } from '../domain/coreStatement.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
+import { ExplainableCard }       from '../components/ExplainableCard.js';
+import {
+  PILLAR_ROLES, lookupStem, lookupBranch,
+} from '../domain/meanings.js';
 import { UnavailableCard }       from '../components/UnavailableCard.js';
 import { SourcePill }            from '../components/SourcePill.js';
 import { InsightHero }           from '../components/InsightHero.js';
@@ -383,6 +387,8 @@ export function OverviewPage(app, { profile, onNavigate }) {
       <div class="three-doors-mount"></div>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">
         <h2>BaZi — Vier Säulen</h2>
+        <p class="section-intro">Klick auf eine Säule öffnet die Erklärung: Säulenrolle, Stamm, Zweig/Tier, Element, Ressource, Schatten, Praxisimpuls.</p>
+        <div class="bazi-explainable-grid"></div>
         <div class="bazi-pillars-wrapper"></div>
       </section>
       <div class="western-houses-placeholder"></div>
@@ -470,6 +476,41 @@ export function OverviewPage(app, { profile, onNavigate }) {
   }
 
   // BaZi Vier Säulen
+  // Education-First: klickbare BaZi-Säulen mit Erklärung (vor renderBaziPillars).
+  const baziGrid = app.querySelector('.bazi-explainable-grid');
+  if (baziGrid) {
+    const pillars = profile.bazi?.pillars || {};
+    const dmStem  = profile.bazi?.day_master?.stem;
+    for (const key of ['year', 'month', 'day', 'hour']) {
+      const p = pillars[key];
+      const role = PILLAR_ROLES[key];
+      if (!p || !p.stem) continue;
+      const stemInfo   = lookupStem(p.stem);
+      const branchInfo = lookupBranch(p.branch);
+      const isDayMaster = (key === 'day') || (dmStem && p.stem === dmStem);
+      const value = `${p.stem}${p.branch || ''}${stemInfo.element ? ' · ' + stemInfo.element : ''}`;
+      baziGrid.appendChild(ExplainableCard({
+        domain: 'bazi',
+        label:  role?.label || key,
+        value,
+        helper: role?.role,
+        highlighted: isDayMaster,
+        meaning: {
+          title:    `${role?.label || key}: ${p.stem}${p.branch || ''}`,
+          subtitle: `${stemInfo.element || '?'} ${stemInfo.polarity || ''} · Tier: ${branchInfo.animal || '?'}`,
+          meaning:  `${role?.role || ''}. Stamm-Energie: ${stemInfo.resource || ''}`,
+          resource: stemInfo.resource,
+          shadow:   stemInfo.shadow,
+          practice: stemInfo.practice || branchInfo.practice,
+          extras: [
+            branchInfo.resource ? `Zweig (${branchInfo.animal}, ${branchInfo.element}): ${branchInfo.resource}` : null,
+            branchInfo.shadow   ? `Zweig-Schatten: ${branchInfo.shadow}` : null,
+          ].filter(Boolean),
+        },
+      }));
+    }
+  }
+
   app.querySelector('.bazi-pillars-wrapper')
     .appendChild(renderBaziPillars(profile.bazi, { timeCertainty: timeCert }));
 
