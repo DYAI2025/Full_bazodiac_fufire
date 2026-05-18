@@ -254,9 +254,17 @@ export function DailyPage(app, { profile = null } = {}) {
 
   function renderCheckinResult(entry) {
     const mount = app.querySelector('.daily-checkin-result-mount');
-    if (!mount) return;
+    const existingCard = app.querySelector('.checkin-result-card');
     const card = CheckInResultCard({ entry, vm: dailyVM });
-    mount.replaceWith(card);
+
+    if (mount) {
+      mount.replaceChildren(card);
+      return;
+    }
+
+    if (existingCard) {
+      existingCard.replaceWith(card);
+    }
   }
 
   function mountCheckin() {
