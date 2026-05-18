@@ -309,6 +309,42 @@ function renderWesternHouses(profile, topHouses = new Set()) {
   return section;
 }
 
+// ── BaZi Explainable Grid (pure render helper) ───────────────────────────────
+function renderBaziExplainableGrid(profile) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bazi-explainable-grid';
+  const pillars = profile?.bazi?.pillars || {};
+  for (const key of ['year', 'month', 'day', 'hour']) {
+    const p = pillars[key];
+    if (!p || !p.stem) continue;
+    const role       = PILLAR_ROLES[key];
+    const stemInfo   = lookupStem(p.stem);
+    const branchInfo = lookupBranch(p.branch);
+    const isDayMaster = (key === 'day');
+    const value = `${p.stem}${p.branch || ''}${stemInfo.element ? ' · ' + stemInfo.element : ''}`;
+    wrap.appendChild(ExplainableCard({
+      domain: 'bazi',
+      label:  role?.label || key,
+      value,
+      helper: role?.role,
+      highlighted: isDayMaster,
+      meaning: {
+        title:    `${role?.label || key}: ${p.stem}${p.branch || ''}`,
+        subtitle: `${stemInfo.element || ''} ${stemInfo.polarity || ''} · Tier: ${branchInfo.animal || '?'}`.trim(),
+        meaning:  `${role?.role || ''}. Stamm-Energie: ${stemInfo.resource || ''}`.trim(),
+        resource: stemInfo.resource,
+        shadow:   stemInfo.shadow,
+        practice: stemInfo.practice || branchInfo.practice,
+        extras: [
+          branchInfo.resource ? `Zweig (${branchInfo.animal}, ${branchInfo.element || '—'}): ${branchInfo.resource}` : null,
+          branchInfo.shadow   ? `Zweig-Schatten: ${branchInfo.shadow}` : null,
+        ].filter(Boolean),
+      },
+    }));
+  }
+  return wrap;
+}
+
 // ── OverviewPage ──────────────────────────────────────────────────────────────
 export function OverviewPage(app, { profile, onNavigate }) {
   const timeCert = profile._inputMeta?.timeCertainty || 'exact';
@@ -477,39 +513,8 @@ export function OverviewPage(app, { profile, onNavigate }) {
 
   // BaZi Vier Säulen
   // Education-First: klickbare BaZi-Säulen mit Erklärung (vor renderBaziPillars).
-  const baziGrid = app.querySelector('.bazi-explainable-grid');
-  if (baziGrid) {
-    const pillars = profile.bazi?.pillars || {};
-    const dmStem  = profile.bazi?.day_master?.stem;
-    for (const key of ['year', 'month', 'day', 'hour']) {
-      const p = pillars[key];
-      const role = PILLAR_ROLES[key];
-      if (!p || !p.stem) continue;
-      const stemInfo   = lookupStem(p.stem);
-      const branchInfo = lookupBranch(p.branch);
-      const isDayMaster = (key === 'day') || (dmStem && p.stem === dmStem);
-      const value = `${p.stem}${p.branch || ''}${stemInfo.element ? ' · ' + stemInfo.element : ''}`;
-      baziGrid.appendChild(ExplainableCard({
-        domain: 'bazi',
-        label:  role?.label || key,
-        value,
-        helper: role?.role,
-        highlighted: isDayMaster,
-        meaning: {
-          title:    `${role?.label || key}: ${p.stem}${p.branch || ''}`,
-          subtitle: `${stemInfo.element || '?'} ${stemInfo.polarity || ''} · Tier: ${branchInfo.animal || '?'}`,
-          meaning:  `${role?.role || ''}. Stamm-Energie: ${stemInfo.resource || ''}`,
-          resource: stemInfo.resource,
-          shadow:   stemInfo.shadow,
-          practice: stemInfo.practice || branchInfo.practice,
-          extras: [
-            branchInfo.resource ? `Zweig (${branchInfo.animal}, ${branchInfo.element}): ${branchInfo.resource}` : null,
-            branchInfo.shadow   ? `Zweig-Schatten: ${branchInfo.shadow}` : null,
-          ].filter(Boolean),
-        },
-      }));
-    }
-  }
+  const baziHost = app.querySelector('.bazi-explainable-grid');
+  if (baziHost) baziHost.replaceWith(renderBaziExplainableGrid(profile));
 
   app.querySelector('.bazi-pillars-wrapper')
     .appendChild(renderBaziPillars(profile.bazi, { timeCertainty: timeCert }));
