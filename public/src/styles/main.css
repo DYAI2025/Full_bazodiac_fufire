@@ -1164,7 +1164,7 @@ input:focus { border-color: var(--accent); }
     margin: 0;
     justify-content: center;
   }
-  body { padding-bottom: 64px; }
+  body:has(.sig-bar) { padding-bottom: 64px; }
   .why-score-card__cols { grid-template-columns: 1fr; }
 }
 
