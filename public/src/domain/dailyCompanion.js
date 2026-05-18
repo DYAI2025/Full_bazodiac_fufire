@@ -139,8 +139,29 @@ function buildFusionSynthesis(exp, activeHouses) {
 // Experiment-Auswahl liegt in experimentEngine.js (≥8 Regelpfade + Default).
 // dailyCompanion delegiert hier nur den Aufruf.
 
+function getTomorrowIsoDate(dateIso) {
+  if (!dateIso) return null;
+  const base = new Date(`${dateIso}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) return null;
+  base.setUTCDate(base.getUTCDate() + 1);
+  return base.toISOString().slice(0, 10);
+}
+
+function pickTomorrowTimelineDay(transits, dateIso) {
+  const days = transits?.timeline?.days || [];
+  const tomorrowIso = getTomorrowIsoDate(dateIso);
+  if (tomorrowIso) {
+    const matchingDay = days.find((day) => {
+      const dayIso = day?.dateIso || day?.date || null;
+      return dayIso === tomorrowIso;
+    });
+    if (matchingDay) return matchingDay;
+  }
+  return days[0];
+}
+
 function buildTomorrowTeaser(transits, dateIso) {
-  const next = transits?.timeline?.days?.[0];
+  const next = pickTomorrowTimelineDay(transits, dateIso);
   if (!next) {
     return {
       teaser: 'Morgen zeigen wir dir, was sich gegenüber heute verändert hat.',
