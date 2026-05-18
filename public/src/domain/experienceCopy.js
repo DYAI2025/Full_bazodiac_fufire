@@ -150,9 +150,24 @@ const EXPERIMENT_TEMPLATES = {
   },
 };
 
+const CAREER_INSTRUCTION_BY_DEFICIENT = {
+  Holz:   'Setze heute einen Schritt, der erst in einer Woche zählt — pflanze, statt zu ernten.',
+  Feuer:  'Mach heute eine offene Sache sichtbar — versende, statt sie noch zu polieren.',
+  Erde:   'Halte heute eine Sache verbindlich fest — termine sie, statt sie schwebend zu lassen.',
+  Metall: 'Triff heute eine offene Sache schriftlich — ein Satz reicht, kein Roman.',
+  Wasser: 'Lass heute eine Entscheidung 24h reifen — schreib sie auf, schlaf darüber.',
+};
+
 export function buildActionExperiment(domain, profile) {
   const base = EXPERIMENT_TEMPLATES[domain] ?? EXPERIMENT_TEMPLATES.daily;
-  return { ...base, duration: '24 Stunden', source: 'static_interpretation' };
+  let instruction = base.instruction;
+  if (domain === 'career') {
+    const def = profile?.fusion?.deficientElement;
+    if (def && CAREER_INSTRUCTION_BY_DEFICIENT[def]) {
+      instruction = CAREER_INSTRUCTION_BY_DEFICIENT[def];
+    }
+  }
+  return { ...base, instruction, duration: '24 Stunden', source: 'static_interpretation' };
 }
 
 const FLOW_BY_ASCENDANT = {

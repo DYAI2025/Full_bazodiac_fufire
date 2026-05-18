@@ -100,6 +100,22 @@ test('buildActionExperiment(domain, profile) returns experiment for love/career/
   }
 });
 
+test('buildActionExperiment("career") varies instruction by deficient element', () => {
+  const metallProfile = { ...sampleProfile, fusion: { ...sampleProfile.fusion, deficientElement: 'Metall' } };
+  const wasserProfile = { ...sampleProfile, fusion: { ...sampleProfile.fusion, deficientElement: 'Wasser' } };
+  const metall = buildActionExperiment('career', metallProfile);
+  const wasser = buildActionExperiment('career', wasserProfile);
+  assert.notEqual(metall.instruction, wasser.instruction);
+  assert.match(metall.instruction, /schriftlich|Satz/);
+  assert.match(wasser.instruction, /24h|reifen|schlaf/i);
+});
+
+test('buildActionExperiment("career") falls back to base instruction when deficient element is unknown', () => {
+  const noFusion = { ...sampleProfile, fusion: {} };
+  const x = buildActionExperiment('career', noFusion);
+  assert.ok(x.instruction);
+});
+
 import { buildRelationshipSummary } from '../public/src/domain/experienceCopy.js';
 
 test('buildRelationshipSummary returns three sentences keyed easyFlow / friction / helps', () => {
