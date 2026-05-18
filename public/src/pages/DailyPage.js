@@ -4,7 +4,8 @@ import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
 import { ThreeDoors }            from '../components/ThreeDoors.js';
-import { DailyCheckin }          from '../components/DailyCheckin.js';
+import { DailyCheckin, readDailyCheckin }        from '../components/DailyCheckin.js';
+import { CheckInResultCard }     from '../components/CheckInResultCard.js';
 import {
   buildExperienceProfile,
   buildCoreIdentity,
@@ -82,6 +83,7 @@ export function DailyPage(app, { profile = null } = {}) {
       <div class="daily-error" role="alert" hidden></div>
       <div class="daily-experiment-mount"></div>
       <div class="daily-checkin-mount"></div>
+      <div class="daily-checkin-result-mount"></div>
       <div class="daily-three-doors-mount"></div>
     </main>
   `;
@@ -187,10 +189,26 @@ export function DailyPage(app, { profile = null } = {}) {
     app.querySelector('.daily-experiment-mount').replaceWith(ActionExperimentCard(exp));
   }
 
+  function renderCheckinResult(entry) {
+    const mount = app.querySelector('.daily-checkin-result-mount');
+    if (!mount) return;
+    const card = CheckInResultCard({ entry, vm: dailyVM });
+    mount.replaceWith(card);
+  }
+
   function mountCheckin() {
+    const date = todayIso();
+    const storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
     app.querySelector('.daily-checkin-mount').replaceWith(
-      DailyCheckin({ isoDate: todayIso() })
+      DailyCheckin({
+        isoDate: date,
+        onComplete: (entry) => renderCheckinResult(entry),
+      })
     );
+    if (storage) {
+      const existing = readDailyCheckin(storage, date);
+      if (existing && existing.clarity && existing.energy && existing.contact) renderCheckinResult(existing);
+    }
   }
 
   function mountThreeDoors() {

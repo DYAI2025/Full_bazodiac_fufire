@@ -1305,3 +1305,19 @@ input:focus { border-color: var(--accent); }
 .app-trust { color: var(--muted); font-size: .8rem; margin-top: 4px; }
 .form-helper { color: var(--muted); font-size: .78rem; line-height: 1.4; }
 .form-notice { background: var(--panel2); border-left: 3px solid var(--accent2); padding: 10px 12px; border-radius: var(--radius); font-size: .82rem; color: var(--text); margin-top: 8px; }
+
+/* CheckInResultCard */
+.checkin-result-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--ok);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.checkin-result-card__title { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.checkin-result-card__state { color: var(--text); font-size: 1rem; font-weight: 600; }
+.checkin-result-card__interpretation, .checkin-result-card__nextstep, .checkin-result-card__tomorrow { color: var(--text); font-size: .92rem; line-height: 1.5; }
+.checkin-result-card strong { color: var(--accent2); margin-right: 4px; }
