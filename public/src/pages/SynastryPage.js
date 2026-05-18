@@ -19,6 +19,7 @@ import { RelationshipSummaryHero }    from '../components/RelationshipSummaryHer
 import { ResonanceScoreBand }         from '../components/ResonanceScoreBand.js';
 import { RelationshipSignalCard }     from '../components/RelationshipSignalCard.js';
 import { ContactExperimentCard }      from '../components/ContactExperimentCard.js';
+import { PrivacySafeShareCard }       from '../components/PrivacySafeShareCard.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -83,6 +84,7 @@ export function SynastryPage(app) {
         <div class="synastry-connection-mount"></div>
         <div class="synastry-tension-mount"></div>
         <div class="synastry-experiment-mount"></div>
+        <div class="synastry-share-mount"></div>
         <details class="synastry-deepdive" open>
           <summary>Vollanalyse (Resonanz, BaZi, Aspekte, Häuser …)</summary>
           <div class="synastry-wuxing-section"></div>
@@ -298,6 +300,34 @@ export function SynastryPage(app) {
       experimentMount.replaceWith(ContactExperimentCard(analysis.contactExperiment));
     } else {
       experimentMount.remove();
+    }
+
+    // Privacy-safe Share Card (Toggle-Button → Preview)
+    const shareMount = resultEl.querySelector('.synastry-share-mount');
+    if (shareMount) shareMount.innerHTML = '';
+    if (shareMount && profileB) {
+      const wrap = document.createElement('section');
+      wrap.className = 'synastry-share-toggle';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'synastry-share-toggle__btn';
+      btn.textContent = 'Share Card erstellen';
+      const preview = document.createElement('div');
+      preview.className = 'synastry-share-preview';
+      preview.hidden = true;
+      btn.addEventListener('click', () => {
+        if (!preview.hidden) { preview.hidden = true; btn.textContent = 'Share Card erstellen'; return; }
+        preview.innerHTML = '';
+        preview.appendChild(
+          PrivacySafeShareCard({ analysis, aliasA: 'A.', aliasB: 'B.' }),
+        );
+        preview.hidden = false;
+        btn.textContent = 'Vorschau schließen';
+      });
+      wrap.append(btn, preview);
+      shareMount.replaceWith(wrap);
+    } else if (shareMount) {
+      shareMount.remove();
     }
   }
 
