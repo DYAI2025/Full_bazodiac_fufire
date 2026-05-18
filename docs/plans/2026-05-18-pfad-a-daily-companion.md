@@ -282,4 +282,4 @@ Self-assessment vs. Goal-Akzeptanzkriterien (Branch `feat/daily-companion-pfad-a
 - API-Pfad (`getDailyExperience`) und VM-Pfad rendern parallel. Wenn beide Daten liefern, sieht man API-Sektionen UND VM-Cards — kein Konflikt, aber doppelte Information möglich.
 - Persisted `activeHouses` für TodayNew-Differenz funktioniert erst ab dem **zweiten** Tagesbesuch (heute schreiben, morgen lesen).
 - Mobile manuell nicht verifiziert; CSS hat aber `@media (max-width: 640px)` für Sig-Bar + Three-Doors aus Sprint 1.
-- `getCoherenceBand` ist als Re-Export in `experimentEngine.js` referenziert — circular-import-freier Pfad: `experimentEngine → dailyCompanion`. OK, kein Lazy-Init nötig.
+- `getCoherenceBand` wird aktuell über `experimentEngine.js`/`dailyCompanion.js` in einer zyklischen Importbeziehung verwendet (`dailyCompanion.js ↔ experimentEngine.js`). Falls der Helper später in ein gemeinsames Modul verschoben wird, sollte dieser Hinweis entsprechend angepasst werden.
