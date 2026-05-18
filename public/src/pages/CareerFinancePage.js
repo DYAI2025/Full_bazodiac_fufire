@@ -1,4 +1,12 @@
 import { createCareerProjection, createFinanceProjection } from '../domain/projections.js';
+import { InsightHero }              from '../components/InsightHero.js';
+import { ActionExperimentCard }     from '../components/ActionExperimentCard.js';
+import { PersistentSignatureBar }   from '../components/PersistentSignatureBar.js';
+import {
+  buildExperienceProfile,
+  buildCoreIdentity,
+  buildActionExperiment,
+} from '../domain/experienceCopy.js';
 import { SourceBadge }   from '../components/SourceBadge.js';
 import { ConfidenceBar } from '../components/ConfidenceBar.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
@@ -128,7 +136,7 @@ function buildFusionLayer(profile) {
   wuxingHeading.className = 'factor-card-header';
   const wuxingLabel = document.createElement('span');
   wuxingLabel.className = 'factor-label';
-  wuxingLabel.textContent = 'Element-Verteilung (Karriere)';
+  wuxingLabel.textContent = 'Element-Verteilung (Arbeit)';
   wuxingHeading.appendChild(wuxingLabel);
   wuxingSection.appendChild(wuxingHeading);
 
@@ -173,7 +181,7 @@ function buildFusionLayer(profile) {
   archetypeHeader.className = 'factor-card-header';
   const archetypeLabel = document.createElement('span');
   archetypeLabel.className = 'factor-label';
-  archetypeLabel.textContent = 'Day-Master-Archetyp (Karriere)';
+  archetypeLabel.textContent = 'Day-Master-Archetyp (Arbeit)';
   archetypeHeader.appendChild(archetypeLabel);
   archetypeCard.appendChild(archetypeHeader);
 
@@ -200,18 +208,18 @@ function buildFusionLayer(profile) {
     kohHeader.className = 'factor-card-header';
     const kohLabel = document.createElement('span');
     kohLabel.className = 'factor-label';
-    kohLabel.textContent = 'Karriere-Kohärenz';
+    kohLabel.textContent = 'Arbeit-Kohärenz';
     kohHeader.appendChild(kohLabel);
     kohCard.appendChild(kohHeader);
 
     const pct = Math.round(coherence * 100);
     let kohText;
     if (coherence >= 0.75) {
-      kohText = `Karriere-Kohärenz (${pct}%): Dein westliches und BaZi-Karrieremuster arbeiten Hand in Hand.`;
+      kohText = `Arbeit-Kohärenz (${pct}%): Dein westliches und BaZi-Arbeitsmuster arbeiten Hand in Hand.`;
     } else if (coherence >= 0.50) {
-      kohText = `Karriere-Kohärenz (${pct}%): Leichte Spannung zwischen deinen astrologischen Karriere-Systemen — kreatives Potenzial.`;
+      kohText = `Arbeit-Kohärenz (${pct}%): Leichte Spannung zwischen deinen astrologischen Arbeitssystemen — kreatives Potenzial.`;
     } else {
-      kohText = `Karriere-Kohärenz (${pct}%): Schöpferische Spannung — deine Karriere-Energien zeigen in verschiedene Richtungen.`;
+      kohText = `Arbeit-Kohärenz (${pct}%): Schöpferische Spannung — deine Arbeits-Energien zeigen in verschiedene Richtungen.`;
     }
 
     const kohP = document.createElement('p');
@@ -325,7 +333,7 @@ function buildPartnerBSection(profile, wuxingVecA) {
       statusMsg.style.display = 'none';
 
       const gridHeading = document.createElement('h3');
-      gridHeading.textContent = 'Haus-Vergleich (Karriere & Finanzen)';
+      gridHeading.textContent = 'Haus-Vergleich (Arbeit & Ressourcen)';
       resultsWrap.appendChild(gridHeading);
 
       const grid = document.createElement('div');
@@ -377,23 +385,25 @@ function renderHouseEntry(entry) {
 export function CareerFinancePage(app, { profile, onNavigate }) {
   const careerProj  = createCareerProjection(profile);
   const financeProj = createFinanceProjection(profile);
+  const expProfile  = buildExperienceProfile(profile);
+  const identity    = buildCoreIdentity(expProfile);
+  const experiment  = buildActionExperiment('career', expProfile);
 
   app.innerHTML = `
     <main class="career-finance-page">
+      <div class="sig-bar-mount"></div>
       <nav class="page-nav">
-        <a href="#/overview" class="nav-link">← Übersicht</a>
-        <a href="#/love" class="nav-link">Liebe</a>
+        <a href="#/overview"    class="nav-link">← Übersicht</a>
+        <a href="#/love"        class="nav-link">Liebe</a>
         <a href="#/personality" class="nav-link">Persönlichkeit</a>
+        <a href="#/daily"       class="nav-link">Tagespuls</a>
       </nav>
 
-      <header class="page-header">
-        <h1>Karriere &amp; Finanzen</h1>
-        <p class="page-subtitle">Symbolische Einordnung — kein Karriere- oder Finanzratschlag.</p>
-      </header>
+      <div class="insight-hero-mount"></div>
 
       <div class="tab-bar" role="tablist">
-        <button class="tab-btn tab-btn--active" role="tab" aria-selected="true"  data-tab="career">Karriere</button>
-        <button class="tab-btn"                 role="tab" aria-selected="false" data-tab="finance">Finanzen</button>
+        <button class="tab-btn tab-btn--active" role="tab" aria-selected="true"  data-tab="career">Arbeitsmodus</button>
+        <button class="tab-btn"                 role="tab" aria-selected="false" data-tab="finance">Ressourcen</button>
       </div>
 
       <div class="tab-panels">
@@ -401,9 +411,10 @@ export function CareerFinancePage(app, { profile, onNavigate }) {
         <div class="tab-panel tab-panel--hidden" data-panel="finance"></div>
       </div>
 
+      <div class="career-experiment-mount"></div>
+
       <aside class="finance-disclaimer" aria-label="Hinweis">
-        <p>⚠ Diese Seite enthält keine Finanzberatung und keine Empfehlungen für Investitionen oder Zeitpunkte.
-        Alle Aussagen sind symbolischer Natur. Für finanzielle Entscheidungen wende dich an qualifizierte Fachleute.</p>
+        <p>Diese Seite ist eine symbolische Reflexion deiner Arbeitsenergie — keine Berufs- oder Finanzberatung. Für konkrete Entscheidungen frage Menschen, die deine Lage kennen.</p>
       </aside>
 
       <footer class="page-footer">
@@ -411,6 +422,30 @@ export function CareerFinancePage(app, { profile, onNavigate }) {
       </footer>
     </main>
   `;
+
+  // PersistentSignatureBar
+  app.querySelector('.sig-bar-mount').replaceWith(
+    PersistentSignatureBar({
+      dayMaster: identity.dayMaster,
+      sun:       identity.sun,
+      coherence: expProfile.fusion.coherence,
+    })
+  );
+
+  // InsightHero
+  app.querySelector('.insight-hero-mount').replaceWith(
+    InsightHero({
+      eyebrow:   'Arbeit & Ressourcen',
+      title:     'Wie du Substanz verteilst',
+      statement: 'Symbolische Reflexion deiner Arbeitsenergie und Ressourcenmuster — keine Berufs- oder Finanzberatung.',
+      evidence:  [
+        identity.dayMaster !== '—' ? `Day Master ${identity.dayMaster}` : null,
+        expProfile.fusion.dominantElement ? `Dominantes Element ${expProfile.fusion.dominantElement}` : null,
+      ].filter(Boolean),
+      primaryAction:   { label: 'Tagespuls ansehen',  path: '/daily' },
+      secondaryAction: { label: 'In Beziehung sehen', path: '/love'  },
+    })
+  );
 
   const careerPanel = app.querySelector('[data-panel="career"]');
 
@@ -420,13 +455,23 @@ export function CareerFinancePage(app, { profile, onNavigate }) {
   const fusionLayer = buildFusionLayer(profile);
   careerPanel.appendChild(fusionLayer);
 
-  // Append Partner B section below fusion layer
-  const wuxingVecA = profile.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
-  careerPanel.appendChild(buildPartnerBSection(profile, wuxingVecA));
-
+  // Append 24h-Arbeitsimpuls below fusion layer (Partner-B comparison moved to opt-in section below)
   app.querySelector('[data-panel="finance"]').appendChild(
     buildTab(financeProj, { onNavigate })
   );
+
+  // 24h Arbeitsimpuls (always visible)
+  app.querySelector('.career-experiment-mount').replaceWith(ActionExperimentCard(experiment));
+
+  // Partner B section deferred under details (team comparison beta)
+  const wuxingVecA = profile.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
+  const partnerDetails = document.createElement('details');
+  partnerDetails.className = 'career-partner-b-details';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Teamvergleich (Beta) — Partner-B Hausvergleich';
+  partnerDetails.appendChild(summary);
+  partnerDetails.appendChild(buildPartnerBSection(profile, wuxingVecA));
+  app.querySelector('.finance-disclaimer').before(partnerDetails);
 
   // Tab switching
   app.querySelectorAll('.tab-btn').forEach((btn) => {
