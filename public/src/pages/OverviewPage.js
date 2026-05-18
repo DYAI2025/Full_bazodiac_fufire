@@ -5,6 +5,7 @@ import { SourcePill }            from '../components/SourcePill.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { WhyScoreCard }          from '../components/WhyScoreCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
+import { ThreeDoors }            from '../components/ThreeDoors.js';
 import {
   buildFusionSignatureTitle,
   buildDominantTension,
@@ -333,29 +334,6 @@ function renderWesternHouses(profile, topHouses = new Set()) {
   return section;
 }
 
-// ── Three Doors (inline; wird in Task 10 extrahiert) ──────────────────────────
-function renderThreeDoors() {
-  const wrap = document.createElement('section');
-  wrap.className = 'three-doors';
-  wrap.setAttribute('aria-label', 'Drei Wege');
-  const doors = [
-    { path: '/daily',          eyebrow: 'Heute',     title: 'Tagespuls',         hint: 'Was heute aus deiner Signatur lebt' },
-    { path: '/love',           eyebrow: 'Kontakt',   title: 'In Beziehung',      hint: 'Wie du in Nähe reagierst' },
-    { path: '/career-finance', eyebrow: 'Arbeit',    title: 'Arbeit & Ressourcen', hint: 'Wie du Substanz verteilst' },
-  ];
-  for (const d of doors) {
-    const a = document.createElement('a');
-    a.href = `#${d.path}`;
-    a.className = 'three-doors__door';
-    const eb = document.createElement('span'); eb.className = 'three-doors__eyebrow'; eb.textContent = d.eyebrow;
-    const t  = document.createElement('h3');   t.className  = 'three-doors__title';   t.textContent  = d.title;
-    const h  = document.createElement('p');    h.className  = 'three-doors__hint';    h.textContent  = d.hint;
-    a.append(eb, t, h);
-    wrap.appendChild(a);
-  }
-  return wrap;
-}
-
 // ── OverviewPage ──────────────────────────────────────────────────────────────
 export function OverviewPage(app, { profile, onNavigate }) {
   const timeCert = profile._inputMeta?.timeCertainty || 'exact';
@@ -499,7 +477,7 @@ export function OverviewPage(app, { profile, onNavigate }) {
   }
 
   // Three Doors
-  app.querySelector('.three-doors-mount').replaceWith(renderThreeDoors());
+  app.querySelector('.three-doors-mount').replaceWith(ThreeDoors());
 
   // Hinweis fehlende Daten
   if (missing.length) {
