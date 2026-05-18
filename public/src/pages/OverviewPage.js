@@ -11,6 +11,7 @@ import {
   buildDominantTension,
   explainCoherence,
   buildCoreIdentity,
+  buildExperienceProfile,
 } from '../domain/experienceCopy.js';
 
 const SIGN_DE = {
@@ -96,37 +97,6 @@ const PLANET_DE = {
   Uranus: 'Uranus ♅', Neptune: 'Neptun ♆', Pluto: 'Pluto ♇',
   'North Node': 'Mondknoten ☊', Chiron: 'Chiron ⚷',
 };
-
-// ── Profil-Adapter für experienceCopy ─────────────────────────────────────────
-function shapeExperienceProfile(profile) {
-  const ascRaw = profile?.western?.ascendant;
-  const ascSign = typeof ascRaw === 'string' ? ascRaw : ascRaw?.sign;
-  const v =
-    profile?.fusion?.wu_xing_vectors?.fusion ||
-    profile?.fusion?.wu_xing_vectors?.western_planets || null;
-  let dominantElement = null, deficientElement = null;
-  if (v) {
-    const entries = Object.entries(v);
-    dominantElement  = entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
-    deficientElement = entries.reduce((a, b) => (b[1] < a[1] ? b : a))[0];
-  }
-  const ciRaw = profile?.fusion?.coherence_index;
-  const coherence = (ciRaw == null) ? null : Math.round(Number(ciRaw) * 100);
-  return {
-    western: {
-      sun:       { sign: profile?.western?.bodies?.Sun?.sign },
-      moon:      { sign: profile?.western?.bodies?.Moon?.sign },
-      ascendant: { sign: ascSign },
-    },
-    bazi: {
-      dayMaster: {
-        stem:    profile?.bazi?.day_master?.stem,
-        element: profile?.bazi?.day_master?.element,
-      },
-    },
-    fusion: { coherence, dominantElement, deficientElement },
-  };
-}
 
 function computeTopHouses(profile, n = 3) {
   const bodies = profile?.western?.bodies || {};
@@ -338,7 +308,7 @@ function renderWesternHouses(profile, topHouses = new Set()) {
 export function OverviewPage(app, { profile, onNavigate }) {
   const timeCert = profile._inputMeta?.timeCertainty || 'exact';
   const coreStatement = generateCoreStatement(profile);
-  const expProfile = shapeExperienceProfile(profile);
+  const expProfile = buildExperienceProfile(profile);
   const identity = buildCoreIdentity(expProfile);
 
   const missing = [];

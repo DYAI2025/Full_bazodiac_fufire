@@ -18,6 +18,40 @@ const SIGN_DE = {
 
 const signDE = (s) => (s ? SIGN_DE[s] || s : null);
 
+// Adapter: nimmt das rohe Server-Profil (profile.western.bodies.Sun.sign,
+// profile.bazi.day_master.{stem,element}, profile.fusion.wu_xing_vectors,
+// profile.fusion.coherence_index) und erzeugt die ExperienceProfile-Form,
+// die alle Copy-Funktionen erwarten.
+export function buildExperienceProfile(profile) {
+  const ascRaw  = profile?.western?.ascendant;
+  const ascSign = typeof ascRaw === 'string' ? ascRaw : ascRaw?.sign;
+  const v =
+    profile?.fusion?.wu_xing_vectors?.fusion ||
+    profile?.fusion?.wu_xing_vectors?.western_planets || null;
+  let dominantElement = null, deficientElement = null;
+  if (v) {
+    const entries = Object.entries(v);
+    dominantElement  = entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+    deficientElement = entries.reduce((a, b) => (b[1] < a[1] ? b : a))[0];
+  }
+  const ciRaw = profile?.fusion?.coherence_index;
+  const coherence = (ciRaw == null) ? null : Math.round(Number(ciRaw) * 100);
+  return {
+    western: {
+      sun:       { sign: profile?.western?.bodies?.Sun?.sign },
+      moon:      { sign: profile?.western?.bodies?.Moon?.sign },
+      ascendant: { sign: ascSign },
+    },
+    bazi: {
+      dayMaster: {
+        stem:    profile?.bazi?.day_master?.stem,
+        element: profile?.bazi?.day_master?.element,
+      },
+    },
+    fusion: { coherence, dominantElement, deficientElement },
+  };
+}
+
 export function buildCoreIdentity(profile) {
   return {
     sun:       signDE(profile?.western?.sun?.sign)       ?? '—',

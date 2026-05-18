@@ -7,7 +7,41 @@ import {
   buildDominantTension,
   buildDailyFallback,
   buildActionExperiment,
+  buildExperienceProfile,
 } from '../public/src/domain/experienceCopy.js';
+
+test('buildExperienceProfile adapts raw server shape to experience shape', () => {
+  const raw = {
+    western: {
+      bodies: { Sun: { sign: 'Cancer' }, Moon: { sign: 'Pisces' } },
+      ascendant: 'Libra',
+    },
+    bazi: { day_master: { stem: 'Wu', element: 'Erde' } },
+    fusion: {
+      wu_xing_vectors: { fusion: { Erde: 0.3, Wasser: 0.25, Holz: 0.2, Feuer: 0.15, Metall: 0.1 } },
+      coherence_index: 0.62,
+    },
+  };
+  const e = buildExperienceProfile(raw);
+  assert.equal(e.western.sun.sign,        'Cancer');
+  assert.equal(e.western.ascendant.sign,  'Libra');
+  assert.equal(e.bazi.dayMaster.stem,     'Wu');
+  assert.equal(e.fusion.coherence,        62);
+  assert.equal(e.fusion.dominantElement,  'Erde');
+  assert.equal(e.fusion.deficientElement, 'Metall');
+});
+
+test('buildExperienceProfile handles missing optional fields without throwing', () => {
+  const e = buildExperienceProfile({});
+  assert.equal(e.fusion.coherence,        null);
+  assert.equal(e.fusion.dominantElement,  null);
+  assert.equal(e.fusion.deficientElement, null);
+});
+
+test('buildExperienceProfile accepts ascendant as object {sign}', () => {
+  const e = buildExperienceProfile({ western: { ascendant: { sign: 'Aquarius' } } });
+  assert.equal(e.western.ascendant.sign, 'Aquarius');
+});
 
 const sampleProfile = {
   western: {
