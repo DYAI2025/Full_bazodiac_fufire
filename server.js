@@ -246,6 +246,92 @@ function normalizeVector(raw) {
   return result;
 }
 
+// ── WuXing Fusion Remediation ─────────────────────────────────────────────
+// Classical sheng (generating) cycle parents and ke (controlling) cycle parents.
+// "Generator" = element that produces (nourishes) this one.
+// "Controller" = element that restrains this one.
+const SHENG_PARENT = { Holz:'Wasser', Feuer:'Holz', Erde:'Feuer', Metall:'Erde', Wasser:'Metall' };
+const KE_PARENT    = { Holz:'Metall', Feuer:'Wasser', Erde:'Holz', Metall:'Feuer', Wasser:'Erde'  };
+const ELEMENT_KEYS = ['Holz','Feuer','Erde','Metall','Wasser'];
+
+const ELEMENT_STRENGTHEN_ACTIVITIES = {
+  Holz:   ['Vision aufschreiben','Neue Projekte beginnen','Zeit im Wald oder Park','Kreative Pläne schmieden'],
+  Feuer:  ['Soziale Begegnungen','Ausdrucksvolle Bewegung','Lachen und Freude bewusst kultivieren','Sonnenlicht'],
+  Erde:   ['Verlässliche Routinen','Nährende Mahlzeiten kochen','Gartenarbeit oder Erdkontakt','Körperliche Verankerung'],
+  Metall: ['Aufräumen und Ausmisten','Atemarbeit','Klare Entscheidungen treffen','Präzise Handwerksarbeit'],
+  Wasser: ['Tiefe Ruhe und Schlaf','Journaling','Traumarbeit','Stille Reflexion am Wasser'],
+};
+
+const ELEMENT_TEMPER_ACTIVITIES = {
+  Holz:   ['Tempo drosseln','Anfangenes zu Ende bringen','Grenzen akzeptieren'],
+  Feuer:  ['Stimulation reduzieren','Kühle und Stille suchen','Wasser-Rituale'],
+  Erde:   ['Neues riskieren','Routinen brechen','Unsicherheit aushalten'],
+  Metall: ['Emotionale Weichheit zulassen','Spontaneität üben','Perfektion loslassen'],
+  Wasser: ['In Bewegung kommen','Strukturen aufbauen','Konkrete nächste Schritte'],
+};
+
+const ELEMENT_LABEL = {
+  Holz:   'Holz',   Feuer:  'Feuer',  Erde:   'Erde',
+  Metall: 'Metall', Wasser: 'Wasser',
+};
+
+export function computeFusionRemediation(vector) {
+  if (!vector || typeof vector !== 'object') return null;
+  const entries = ELEMENT_KEYS.map(k => [k, Number(vector[k]) || 0]);
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  if (total <= 0) return null;
+
+  const distribution = {};
+  for (const [k, v] of entries) distribution[k] = v / total;
+
+  const EXPECTED  = 0.20;
+  const DOM_THR   = 0.15;   // deviation > +0.15 → dominant
+  const DEF_THR   = -0.10;  // deviation < -0.10 → deficient
+
+  let dominant = null,  domDev = -Infinity;
+  let deficient = null, defDev = Infinity;
+  for (const k of ELEMENT_KEYS) {
+    const dev = distribution[k] - EXPECTED;
+    if (dev > DOM_THR && dev > domDev) { dominant  = k; domDev = dev; }
+    if (dev < DEF_THR && dev < defDev) { deficient = k; defDev = dev; }
+  }
+
+  const actions = [];
+  if (deficient) {
+    const gen = SHENG_PARENT[deficient];
+    actions.push({
+      type: 'strengthen',
+      element: deficient,
+      via_generator: gen,
+      activities: ELEMENT_STRENGTHEN_ACTIVITIES[deficient],
+      rationale: `${ELEMENT_LABEL[deficient]} ist unterrepräsentiert (${Math.round(distribution[deficient]*100)} %). ${ELEMENT_LABEL[gen]} nährt ${ELEMENT_LABEL[deficient]} im Sheng-Zyklus — beide Elemente kultivieren.`,
+    });
+  }
+  if (dominant) {
+    const ctl = KE_PARENT[dominant];
+    actions.push({
+      type: 'temper',
+      element: dominant,
+      via_controller: ctl,
+      activities: ELEMENT_TEMPER_ACTIVITIES[dominant],
+      rationale: `${ELEMENT_LABEL[dominant]} dominiert (${Math.round(distribution[dominant]*100)} %). ${ELEMENT_LABEL[ctl]} kontrolliert ${ELEMENT_LABEL[dominant]} im Ke-Zyklus — gezielt einsetzen, um Übersteuerung auszubalancieren.`,
+    });
+  }
+
+  let summary;
+  if (dominant && deficient) {
+    summary = `Deine Signatur betont ${ELEMENT_LABEL[dominant]} (${Math.round(distribution[dominant]*100)} %) und zeigt ${ELEMENT_LABEL[deficient]}-Mangel (${Math.round(distribution[deficient]*100)} %).`;
+  } else if (dominant) {
+    summary = `${ELEMENT_LABEL[dominant]} dominiert deine Signatur (${Math.round(distribution[dominant]*100)} %) — die übrigen Elemente sind in Reichweite.`;
+  } else if (deficient) {
+    summary = `${ELEMENT_LABEL[deficient]} ist deutlich unterrepräsentiert (${Math.round(distribution[deficient]*100)} %) — gezielte Kultivierung empfohlen.`;
+  } else {
+    summary = 'Deine Element-Signatur ist ausgewogen — keine starke Über- oder Untersteuerung erkennbar.';
+  }
+
+  return { distribution, dominant, deficient, actions, summary };
+}
+
 // ── Hidden Stems Tabelle (Zàng Gān 藏干) ─────────────────────────────────
 // Quelle: klassische BaZi-Literatur (unveränderlich)
 // Format: branch → [ { stem, element, weight, polarity } ]
@@ -433,10 +519,11 @@ export function normalizeAzodiacResult(raw) {
       house_overlay:     (f.house_overlay && typeof f.house_overlay === 'object') ? f.house_overlay : null,
       dominant_patterns: Array.isArray(f.dominant_patterns) ? f.dominant_patterns : [],
       synthesis_notes:   f.synthesis_notes ?? f.notes ?? null,
+      remediation:       computeFusionRemediation(Object.keys(fusionVec).length ? fusionVec : westernVec),
     },
     _meta: {
       ...meta,
-      view_model_version: '1',
+      view_model_version: '2',
       fetched_at: new Date().toISOString(),
     },
   };

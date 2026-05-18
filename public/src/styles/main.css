@@ -914,3 +914,131 @@ input:focus { border-color: var(--accent); }
   .pillar-stem { font-size: 2rem; }
   .harmony-gauge-svg { width: 180px; }
 }
+
+/* ── FusionPage — WuXing Deep-Dive ───────────────────────────────────────── */
+.fusion-page { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+.fusion-page h1 { margin: .25rem 0; }
+.fusion-page h1 small { font-weight: 400; color: #94a3b8; font-size: .65em; }
+.fusion-page h2 { font-size: 1.05rem; margin: 0 0 .75rem; color: #e2e8f0; }
+
+.fusion-coherence-pill {
+  display: inline-block;
+  padding: .25rem .7rem;
+  border-radius: 999px;
+  background: rgba(96,165,250,.15);
+  color: #93c5fd;
+  font-weight: 600;
+  font-size: .85rem;
+  margin-top: .5rem;
+}
+
+.fusion-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+.fusion-wheel-wrap, .fusion-matrix-wrap {
+  background: rgba(30,41,59,.4);
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+@media (max-width: 760px) {
+  .fusion-grid { grid-template-columns: 1fr; }
+}
+
+.fusion-wheel { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; }
+.wheel-arrow { fill: none; stroke-width: 2; opacity: .85; }
+.wheel-arrow--sheng { stroke: #34d399; }
+.wheel-arrow--ke    { stroke: #f87171; stroke-dasharray: 4 3; }
+.wheel-node-label   { font-size: .78rem; font-weight: 700; fill: #0f172a; }
+.wheel-node-pct     { font-size: .7rem;  font-weight: 600; fill: #0f172a; }
+
+.fusion-wheel-legend {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: .5rem;
+  font-size: .8rem;
+  color: #cbd5e1;
+}
+.legend-swatch {
+  display: inline-block;
+  width: 14px; height: 4px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.legend-swatch--sheng { background: #34d399; }
+.legend-swatch--ke    { background: repeating-linear-gradient(90deg, #f87171 0 4px, transparent 4px 7px); }
+
+.fusion-matrix {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: .85rem;
+  text-align: center;
+}
+.fusion-matrix th { color: #94a3b8; font-weight: 600; padding: .35rem; }
+.fusion-matrix .matrix-row-head { text-align: right; padding-right: .5rem; }
+.fusion-matrix .matrix-cell {
+  padding: .5rem .35rem;
+  border-radius: 6px;
+  font-weight: 600;
+  background: rgba(148,163,184,.07);
+}
+.matrix-cell--identity { background: rgba(148,163,184,.18); color: #cbd5e1; }
+.matrix-cell--sheng    { background: rgba(52,211,153,.18); color: #6ee7b7; }
+.matrix-cell--ke       { background: rgba(248,113,113,.18); color: #fca5a5; }
+.matrix-cell--neutral  { background: rgba(148,163,184,.05); color: #64748b; }
+.fusion-matrix-hint { font-size: .75rem; color: #94a3b8; margin-top: .5rem; }
+
+.fusion-narrative { margin: 2rem 0; }
+.fusion-element-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.fusion-element-card {
+  background: rgba(30,41,59,.4);
+  border-left: 4px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+}
+.fusion-element-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: .5rem;
+}
+.fusion-element-header h3 { margin: 0; font-size: 1rem; }
+.fusion-element-pct { font-weight: 700; color: #e2e8f0; }
+.fusion-element-card p { margin: .35rem 0; font-size: .88rem; line-height: 1.45; color: #cbd5e1; }
+.fusion-element-card strong { color: #f1f5f9; }
+
+.fusion-remediation { margin: 2rem 0; }
+.remediation-summary {
+  font-size: 1rem;
+  color: #e2e8f0;
+  background: rgba(96,165,250,.08);
+  border-left: 3px solid #60a5fa;
+  padding: .75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+.remediation-action {
+  background: rgba(30,41,59,.4);
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+  margin-bottom: .75rem;
+}
+.remediation-action-header { border-left: 4px solid #cbd5e1; padding-left: .75rem; margin-bottom: .5rem; }
+.remediation-action-header h4 { margin: 0; font-size: .95rem; color: #f1f5f9; }
+.remediation-action-header small { font-weight: 400; color: #94a3b8; font-size: .8em; margin-left: .35rem; }
+.remediation-rationale { font-size: .88rem; color: #cbd5e1; margin: .35rem 0 .75rem; line-height: 1.5; }
+.remediation-activities { margin: 0; padding-left: 1.25rem; }
+.remediation-activities li { font-size: .85rem; color: #cbd5e1; padding: .15rem 0; }
+.remediation-action--strengthen .remediation-action-header { border-left-color: #34d399; }
+.remediation-action--temper     .remediation-action-header { border-left-color: #f87171; }
+
+.fusion-empty { color: #94a3b8; font-style: italic; }

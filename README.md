@@ -81,10 +81,17 @@ Alternative field names are also supported:
     "aspects": [],
     "house_overlay": null,
     "dominant_patterns": [],
-    "synthesis_notes": null
+    "synthesis_notes": null,
+    "remediation": {
+      "distribution": { "Holz": 0.225, "Feuer": 0.275, "Erde": 0.15, "Metall": 0.2, "Wasser": 0.15 },
+      "dominant": null,
+      "deficient": null,
+      "actions": [],
+      "summary": "Deine Element-Signatur ist ausgewogen — keine starke Über- oder Untersteuerung erkennbar."
+    }
   },
   "_meta": {
-    "view_model_version": "1",
+    "view_model_version": "2",
     "fetched_at": "2024-01-15T10:30:00.000Z",
     "endpoint": "/api/azodiac/fusion",
     "input": {
@@ -160,10 +167,11 @@ curl -X POST "http://127.0.0.1:3000/api/azodiac/synastry?includeFusion=false" \
       "aspects": [],
       "house_overlay": null,
       "dominant_patterns": [],
-      "synthesis_notes": null
+      "synthesis_notes": null,
+      "remediation": { "distribution": {...}, "dominant": null, "deficient": null, "actions": [], "summary": "..." }
     },
     "_meta": {
-      "view_model_version": "1",
+      "view_model_version": "2",
       "fetched_at": "2024-01-15T10:30:00.000Z",
       "input": { ... }
     }

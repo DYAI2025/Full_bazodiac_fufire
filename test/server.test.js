@@ -171,7 +171,7 @@ test('/api/azodiac/profile orchestrates western + bazi + fusion + wuxing against
       assert.ok('bazi' in json);
       assert.ok('fusion' in json);
       assert.ok('_meta' in json);
-      assert.equal(json._meta.view_model_version, '1');
+      assert.equal(json._meta.view_model_version, '2');
       // wuxing endpoint was called
       assert.ok(seen.some(s => s.url === '/calculate/wuxing'));
     });

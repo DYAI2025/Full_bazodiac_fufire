@@ -8,6 +8,8 @@ A Node.js (ESM, `"type": "module"`) proxy and live dashboard that sits in front 
 
 ## Commands
 
+Requires Node `>=20` (uses built-in `node --test` runner and global `fetch`/`AbortController`).
+
 ```bash
 npm start                                 # run on PORT (default 3000)
 npm test                                  # unit + integration tests (node --test)
@@ -82,6 +84,10 @@ No bundler. Browsers load modules directly. `public/reference.html` is the stati
 - `test/projections.test.js` — frontend domain projections (`public/src/domain/projections.js`)
 - `test/api_client.test.js` — frontend `src/api/client.js` against a stub server
 - `test/element-tension.test.js` — synastry element-tension scoring
+- `test/domain-score.test.js` — synastry domain-level (love/career/etc.) scoring
+- `test/dynasty-resonance.test.js` — dynasty/pillar resonance scoring
+- `test/house-comparison.test.js` — synastry 12-house comparison logic
+- `test/astro-mappings.test.js` — western/bazi/element mapping tables
 - `test/synastry-logging.test.js` — observability of synastry orchestration
 - `test/documentation.test.js` — README ↔ implementation sync check (endpoint catalog, examples)
 - `test/contract.test.js` — **opt-in only** (`FUFIRE_CONTRACT_TEST=true`); fires real requests at `FUFIRE_BASE_URL` to detect upstream path drift

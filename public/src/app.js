@@ -8,6 +8,7 @@ import { PersonalityPage }    from './pages/PersonalityPage.js';
 import { SynastryPage }       from './pages/SynastryPage.js';
 import { TransitCalendarPage } from './pages/TransitCalendarPage.js';
 import { DailyPage }           from './pages/DailyPage.js';
+import { FusionPage }          from './pages/FusionPage.js';
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
 // Das berechnete Profil wird in sessionStorage gesichert, damit es bei
@@ -80,5 +81,12 @@ router
   })
   .register('/daily', (app) => {
     DailyPage(app);
+  })
+  .register('/fusion', (app) => {
+    if (!currentProfile) { router.navigate('/'); return; }
+    FusionPage(app, {
+      profile: currentProfile,
+      onNavigate: (path) => router.navigate(path),
+    });
   })
   .start();

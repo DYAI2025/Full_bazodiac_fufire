@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeAzodiacResult } from '../server.js';
+import { normalizeAzodiacResult, computeFusionRemediation } from '../server.js';
 
 const RAW_MINIMAL = {
   western: {
@@ -47,7 +47,7 @@ test('normalizeAzodiacResult produces stable ViewModel shape', () => {
   assert.ok('Holz' in wv && 'Feuer' in wv && 'Erde' in wv && 'Metall' in wv && 'Wasser' in wv);
 
   // Meta version stamp
-  assert.equal(vm._meta.view_model_version, '1');
+  assert.equal(vm._meta.view_model_version, '2');
 
   // fetched_at — ISO timestamp
   assert.ok(typeof vm._meta.fetched_at === 'string', 'fetched_at must be a string');
@@ -157,4 +157,81 @@ test('normalizePillar keeps API-supplied hidden_stems unchanged', () => {
   const hs = vm.bazi.pillars.day.hidden_stems;
   assert.equal(hs.length, 1);
   assert.equal(hs[0].source, undefined); // API-Daten bleiben unverändert
+});
+
+// ── computeFusionRemediation ──────────────────────────────────────────────
+
+test('computeFusionRemediation returns null for empty/invalid vector', () => {
+  assert.equal(computeFusionRemediation(null), null);
+  assert.equal(computeFusionRemediation({}), null);
+  assert.equal(computeFusionRemediation({ Holz: 0, Feuer: 0, Erde: 0, Metall: 0, Wasser: 0 }), null);
+});
+
+test('computeFusionRemediation flags no dominant/deficient on balanced vector', () => {
+  const r = computeFusionRemediation({ Holz: 0.2, Feuer: 0.2, Erde: 0.2, Metall: 0.2, Wasser: 0.2 });
+  assert.equal(r.dominant, null);
+  assert.equal(r.deficient, null);
+  assert.deepEqual(r.actions, []);
+  assert.match(r.summary, /ausgewogen/);
+  // distribution sums to 1
+  const sum = Object.values(r.distribution).reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(sum - 1) < 1e-9);
+});
+
+test('computeFusionRemediation detects dominant + deficient correctly', () => {
+  // Feuer way over (0.5, dev +0.30), Wasser way under (0.05, dev -0.15)
+  const r = computeFusionRemediation({ Holz: 0.15, Feuer: 0.5, Erde: 0.15, Metall: 0.15, Wasser: 0.05 });
+  assert.equal(r.dominant, 'Feuer');
+  assert.equal(r.deficient, 'Wasser');
+  assert.equal(r.actions.length, 2);
+
+  const strengthen = r.actions.find(a => a.type === 'strengthen');
+  assert.equal(strengthen.element, 'Wasser');
+  assert.equal(strengthen.via_generator, 'Metall'); // sheng parent of Wasser
+  assert.ok(strengthen.activities.length > 0);
+
+  const temper = r.actions.find(a => a.type === 'temper');
+  assert.equal(temper.element, 'Feuer');
+  assert.equal(temper.via_controller, 'Wasser'); // ke parent of Feuer
+  assert.ok(temper.activities.length > 0);
+});
+
+test('computeFusionRemediation: dominant only (no element below deficient threshold)', () => {
+  // Holz 0.40 (dev +0.20), rest ~0.15 (dev -0.05 — not deficient)
+  const r = computeFusionRemediation({ Holz: 0.40, Feuer: 0.15, Erde: 0.15, Metall: 0.15, Wasser: 0.15 });
+  assert.equal(r.dominant, 'Holz');
+  assert.equal(r.deficient, null);
+  assert.equal(r.actions.length, 1);
+  assert.equal(r.actions[0].type, 'temper');
+});
+
+test('computeFusionRemediation: deficient only (no dominant)', () => {
+  // Wasser 0.05 (dev -0.15), rest ~0.2375 — max dev +0.0375, not dominant
+  const r = computeFusionRemediation({ Holz: 0.2375, Feuer: 0.2375, Erde: 0.2375, Metall: 0.2375, Wasser: 0.05 });
+  assert.equal(r.dominant, null);
+  assert.equal(r.deficient, 'Wasser');
+  assert.equal(r.actions.length, 1);
+  assert.equal(r.actions[0].type, 'strengthen');
+});
+
+test('computeFusionRemediation normalizes unnormalized vectors', () => {
+  // Scaled values — must still produce same percentages (within float tolerance)
+  const a = computeFusionRemediation({ Holz: 0.1, Feuer: 0.4, Erde: 0.2, Metall: 0.2, Wasser: 0.1 });
+  const b = computeFusionRemediation({ Holz: 1, Feuer: 4, Erde: 2, Metall: 2, Wasser: 1 });
+  for (const k of ['Holz','Feuer','Erde','Metall','Wasser']) {
+    assert.ok(Math.abs(a.distribution[k] - b.distribution[k]) < 1e-9, `${k} distribution mismatch`);
+  }
+  assert.equal(a.dominant, b.dominant);
+  assert.equal(a.deficient, b.deficient);
+});
+
+test('normalizeAzodiacResult attaches remediation field to fusion', () => {
+  const vm = normalizeAzodiacResult({
+    western: { bodies: {} },
+    bazi: { pillars: {} },
+    fusion: { wu_xing_vectors: { fusion: { holz: 0.1, feuer: 0.5, erde: 0.15, metall: 0.15, wasser: 0.1 } } },
+    _meta: {},
+  });
+  assert.ok(vm.fusion.remediation);
+  assert.equal(vm.fusion.remediation.dominant, 'Feuer');
 });

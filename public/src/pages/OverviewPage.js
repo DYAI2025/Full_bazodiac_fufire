@@ -338,6 +338,7 @@ export function OverviewPage(app, { profile, onNavigate }) {
         <a href="#/love"           class="nav-link">Liebe</a>
         <a href="#/career-finance" class="nav-link">Karriere</a>
         <a href="#/personality"    class="nav-link">Persönlichkeit</a>
+        <a href="#/fusion"         class="nav-link">WuXing Fusion</a>
         <a href="#/dashboard"      class="nav-link">Dashboard</a>
         <a href="#/synastry"       class="nav-link">Synastrie</a>
         <a href="#/transit-calendar" class="nav-link">Transitkalender</a>
