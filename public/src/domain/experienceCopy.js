@@ -154,3 +154,31 @@ export function buildActionExperiment(domain, profile) {
   const base = EXPERIMENT_TEMPLATES[domain] ?? EXPERIMENT_TEMPLATES.daily;
   return { ...base, duration: '24 Stunden', source: 'static_interpretation' };
 }
+
+const FLOW_BY_ASCENDANT = {
+  Widder:       'Du gehst zügig in den Kontakt — Direktheit fließt leicht.',
+  Stier:        'Du baust Kontakt langsam, dafür verlässlich.',
+  Zwillinge:    'Du wechselst Themen leicht und hältst Kontakt geistig wach.',
+  Krebs:        'Du bringst emotionale Tiefe und Fürsorge in den Kontakt.',
+  Löwe:         'Du strahlst nach außen und holst andere in dein Licht.',
+  Jungfrau:     'Du sortierst sorgfältig, was im Kontakt wirklich gehalten werden will.',
+  Waage:        'Du gleichst aus, hörst zu — Waage-Kontaktstil hält Spannungen offen.',
+  Skorpion:     'Du suchst Tiefe oder gar nichts — Halbe Begegnungen ermüden dich.',
+  Schütze:      'Du öffnest den Horizont — Kontakt braucht Weite, nicht Enge.',
+  Steinbock:    'Du baust Verlässlichkeit — Kontakt hält länger, je weniger Show.',
+  Wassermann:   'Du brichst Konventionen — Kontakt lebt durch Eigenständigkeit.',
+  Fische:       'Du verschwimmst leicht in den anderen — Empathie ist deine Stärke und Falle.',
+};
+
+export function buildRelationshipSummary(profile) {
+  const id  = buildCoreIdentity(profile);
+  const dom = profile?.fusion?.dominantElement;
+  const def = profile?.fusion?.deficientElement;
+  const easyFlow = FLOW_BY_ASCENDANT[id.ascendant]
+    ?? `Dein ${id.ascendant}-Kontaktstil prägt, was im Kontakt leicht fließt.`;
+  const friction = (dom && def)
+    ? `Reibung entsteht, wenn dein System einseitig in ${dom} zieht und ${def}-Qualitäten zu kurz kommen.`
+    : 'Reibung entsteht, wenn ein einzelner Modus dauerhaft die Oberhand gewinnt.';
+  const helps = 'Es hilft, ein Bedürfnis frühzeitig auszusprechen, statt zu prüfen, ob die andere Person es errät.';
+  return { easyFlow, friction, helps };
+}

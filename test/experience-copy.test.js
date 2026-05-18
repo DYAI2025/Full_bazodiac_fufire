@@ -99,3 +99,22 @@ test('buildActionExperiment(domain, profile) returns experiment for love/career/
     assert.ok(x.reflectPrompt);
   }
 });
+
+import { buildRelationshipSummary } from '../public/src/domain/experienceCopy.js';
+
+test('buildRelationshipSummary returns three sentences keyed easyFlow / friction / helps', () => {
+  const r = buildRelationshipSummary(sampleProfile);
+  assert.ok(typeof r.easyFlow === 'string' && r.easyFlow.length > 10);
+  assert.ok(typeof r.friction === 'string' && r.friction.length > 10);
+  assert.ok(typeof r.helps    === 'string' && r.helps.length    > 10);
+});
+
+test('buildRelationshipSummary uses ascendant for contact tone', () => {
+  const r = buildRelationshipSummary(sampleProfile);
+  assert.ok(r.easyFlow.includes('Waage') || r.easyFlow.toLowerCase().includes('kontakt'));
+});
+
+test('buildRelationshipSummary names dominant element in friction sentence', () => {
+  const r = buildRelationshipSummary(sampleProfile);
+  assert.ok(r.friction.includes('Erde') || r.friction.toLowerCase().includes('einseit'));
+});
