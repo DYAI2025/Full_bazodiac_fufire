@@ -134,3 +134,45 @@ test('buildRelationshipSummary names dominant element in friction sentence', () 
   const r = buildRelationshipSummary(sampleProfile);
   assert.ok(r.friction.includes('Erde') || r.friction.toLowerCase().includes('einseit'));
 });
+
+import { buildWeeklyThemes } from '../public/src/domain/experienceCopy.js';
+
+test('buildWeeklyThemes maps a week of dates to themes and impulse text', () => {
+  const days = [
+    { date: '2026-05-18' }, // Mon
+    { date: '2026-05-19' }, // Tue
+    { date: '2026-05-20' }, // Wed
+    { date: '2026-05-21' }, // Thu
+    { date: '2026-05-22' }, // Fri
+    { date: '2026-05-23' }, // Sat
+    { date: '2026-05-24' }, // Sun
+  ];
+  const themes = buildWeeklyThemes(days);
+  assert.equal(themes.length, 7);
+  themes.forEach((t) => {
+    assert.ok(t.date);
+    assert.ok(typeof t.theme === 'string'   && t.theme.length > 0);
+    assert.ok(typeof t.impulse === 'string' && t.impulse.length > 0);
+  });
+});
+
+test('buildWeeklyThemes assigns each weekday a stable theme', () => {
+  const expected = {
+    1: /Anstoßen|Ausdruck/i,     // Mon
+    2: /Aufbau|Handeln/i,         // Tue
+    3: /Austausch|Kontakt/i,      // Wed
+    4: /Weite|Wachstum/i,         // Thu
+    5: /Verbindung|Resonanz/i,    // Fri
+    6: /Struktur|Halten/i,        // Sat
+    0: /Rückzug|Reflexion/i,      // Sun
+  };
+  for (const [wd, regex] of Object.entries(expected)) {
+    const date = (wd === '0') ? '2026-05-24' : `2026-05-${17 + Number(wd)}`;
+    const [day] = buildWeeklyThemes([{ date }]);
+    assert.match(day.theme, regex, `Wochentag ${wd} (${date}) → ${day.theme}`);
+  }
+});
+
+test('buildWeeklyThemes returns empty array for empty input', () => {
+  assert.deepEqual(buildWeeklyThemes([]), []);
+});

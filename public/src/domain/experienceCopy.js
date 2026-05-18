@@ -185,6 +185,25 @@ const FLOW_BY_ASCENDANT = {
   Fische:       'Du verschwimmst leicht in den anderen — Empathie ist deine Stärke und Falle.',
 };
 
+const WEEKDAY_THEMES = {
+  0: { theme: 'Rückzug & Reflexion', impulse: 'Heute eine Sache loslassen, ohne sie zu erklären.' },
+  1: { theme: 'Anstoßen & Ausdruck',  impulse: 'Setze einen Impuls, der diese Woche trägt.' },
+  2: { theme: 'Aufbau & Handeln',     impulse: 'Eine offene Sache verbindlich machen.' },
+  3: { theme: 'Austausch & Kontakt',  impulse: 'Schicke heute eine Nachricht, die wartet.' },
+  4: { theme: 'Weite & Wachstum',     impulse: 'Einen Horizont öffnen, statt zu optimieren.' },
+  5: { theme: 'Verbindung & Resonanz',impulse: 'Mit jemandem teilen, ohne Lösung anzubieten.' },
+  6: { theme: 'Struktur & Halten',    impulse: 'Eine Routine festigen oder pausieren.' },
+};
+
+export function buildWeeklyThemes(days = []) {
+  return days.map((d) => {
+    const date = d?.date;
+    const wd = date ? new Date(date + 'T12:00:00Z').getUTCDay() : 0;
+    const map = WEEKDAY_THEMES[wd] || WEEKDAY_THEMES[0];
+    return { date, theme: map.theme, impulse: map.impulse };
+  });
+}
+
 export function buildRelationshipSummary(profile) {
   const id  = buildCoreIdentity(profile);
   const dom = profile?.fusion?.dominantElement;

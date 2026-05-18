@@ -1284,3 +1284,13 @@ input:focus { border-color: var(--accent); }
 .fusion-matrix-details > summary { cursor: pointer; padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-weight: 700; }
 .fusion-matrix-details[open] > summary { margin-bottom: 12px; }
 @media (max-width: 640px) { .fusion-balance-summary { grid-template-columns: 1fr; } }
+
+/* Transit — Today + Peak + theme */
+.transit-today-card, .transit-peak-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.transit-today-card { border-left: 3px solid var(--accent2); }
+.transit-peak-card  { border-left: 3px solid var(--warn); }
+.transit-today-card h3, .transit-peak-card h3 { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-bottom: 4px; }
+.transit-day-theme { font-size: .72rem; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; padding: 2px 0; margin: 4px 0; font-weight: 700; }
+.transit-planet-details > summary { cursor: pointer; padding: 10px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-weight: 700; }
+.transit-planet-details[open] > summary { margin-bottom: 12px; }
+.transit-legend { background: var(--panel2); border-left: 3px solid var(--muted); padding: 12px 14px; border-radius: var(--radius); color: var(--muted); font-size: .82rem; line-height: 1.5; }

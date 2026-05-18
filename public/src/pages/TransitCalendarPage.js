@@ -1,5 +1,12 @@
 // public/src/pages/TransitCalendarPage.js
 import { getTransitNow, getTransitTimeline } from '../api/client.js';
+import { InsightHero }              from '../components/InsightHero.js';
+import { PersistentSignatureBar }   from '../components/PersistentSignatureBar.js';
+import {
+  buildExperienceProfile,
+  buildCoreIdentity,
+  buildWeeklyThemes,
+} from '../domain/experienceCopy.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -119,12 +126,13 @@ function renderTimeline(days, profile) {
   const el = document.createElement('section');
   el.className = 'transit-timeline-section';
   el.setAttribute('aria-label', '7-Tage Transitkalender');
-  el.innerHTML = `<h2 class="transit-section-title">7-Tage Überblick</h2><div class="transit-week-strip"></div>`;
+  el.innerHTML = `<h2 class="transit-section-title">7-Tage-Strip mit Tagesthemen</h2><div class="transit-week-strip"></div>`;
 
   const strip = el.querySelector('.transit-week-strip');
   const today = new Date().toISOString().split('T')[0];
+  const themes = buildWeeklyThemes(days || []);
 
-  days.forEach((day) => {
+  days.forEach((day, idx) => {
     const col = document.createElement('div');
     col.className = 'transit-day-col';
     if (day.date === today) col.classList.add('transit-day-col--today');
@@ -145,8 +153,10 @@ function renderTimeline(days, profile) {
       .sort((a, b) => b.speed - a.speed)
       .slice(0, 3);
 
+    const theme = themes[idx];
     col.innerHTML = `
       <div class="transit-day-date">${formatDate(day.date)}</div>
+      ${theme ? `<div class="transit-day-theme">${esc(theme.theme)}</div>` : ''}
       <div class="transit-day-planets">
         ${activePlanets.map(p => `
           <div class="transit-day-planet" title="${esc(p.tooltip)}">
@@ -170,23 +180,97 @@ function renderTimeline(days, profile) {
   return el;
 }
 
+function findNextPeak(days) {
+  let best = null;
+  for (const d of days || []) {
+    const max = (d.sector_intensity || []).reduce((a, b) => Math.max(a, b), 0);
+    const houseIdx = (d.sector_intensity || []).indexOf(max);
+    if (!best || max > best.intensity) best = { date: d.date, intensity: max, house: houseIdx + 1 };
+  }
+  return best;
+}
+
+function renderTodayActive(planets, sectorIntensity) {
+  const top = (sectorIntensity || [])
+    .map((v, i) => ({ house: i + 1, intensity: v }))
+    .filter(s => s.intensity > 0.2)
+    .sort((a, b) => b.intensity - a.intensity)
+    .slice(0, 2);
+  const el = document.createElement('section');
+  el.className = 'transit-today-card';
+  const h = document.createElement('h3'); h.textContent = 'Heute aktiv';
+  el.appendChild(h);
+  const p = document.createElement('p');
+  p.textContent = top.length
+    ? `Aktivste Häuser: ${top.map(s => `${s.house}. Haus (${Math.round(s.intensity * 100)})`).join(', ')}.`
+    : 'Heute kein dominantes Haus — ruhiger Tagespuls.';
+  el.appendChild(p);
+  return el;
+}
+
+function renderNextPeakCard(days) {
+  const peak = findNextPeak(days);
+  if (!peak || peak.intensity < 0.25) return null;
+  const el = document.createElement('section');
+  el.className = 'transit-peak-card';
+  const h = document.createElement('h3'); h.textContent = 'Nächster Peak';
+  el.appendChild(h);
+  const p = document.createElement('p');
+  p.textContent = `Am ${formatDate(peak.date)} liegt der Wochen-Höhepunkt auf dem ${peak.house}. Haus.`;
+  el.appendChild(p);
+  return el;
+}
+
 export function TransitCalendarPage(app, { profile } = {}) {
+  const expProfile = profile ? buildExperienceProfile(profile) : null;
+  const identity   = expProfile ? buildCoreIdentity(expProfile) : null;
+
   app.innerHTML = `
     <main class="transit-calendar-page">
+      <div class="sig-bar-mount"></div>
       <header class="transit-header">
         <a href="#/" class="transit-back-link">← Zurück</a>
-        <h1 class="transit-title">Transitkalender</h1>
-        <p class="transit-subtitle">Aktuelle Planetenbewegungen · 7-Tage-Überblick</p>
       </header>
+      <div class="insight-hero-mount"></div>
+      <div class="transit-today-mount"></div>
+      <div class="transit-peak-mount"></div>
       <div class="transit-loading" role="status" aria-live="polite">Transits werden geladen…</div>
       <div class="transit-content" hidden></div>
+      <details class="transit-planet-details">
+        <summary>Planetendetails — alle aktuellen Positionen</summary>
+        <div class="transit-planet-details-content"></div>
+      </details>
+      <aside class="transit-legend">
+        <p><strong>Legende:</strong> Themen folgen einer wochentag-stabilen Heuristik. Sektor-Intensität misst, wie stark die 12 Häuser im aktuellen Transit-Bild aktiviert sind.</p>
+      </aside>
       <div class="transit-error" role="alert" hidden></div>
     </main>
   `;
 
+  if (expProfile) {
+    app.querySelector('.sig-bar-mount').replaceWith(
+      PersistentSignatureBar({
+        dayMaster: identity.dayMaster,
+        sun:       identity.sun,
+        coherence: expProfile.fusion.coherence,
+      })
+    );
+  } else {
+    app.querySelector('.sig-bar-mount').remove();
+  }
+
+  app.querySelector('.insight-hero-mount').replaceWith(
+    InsightHero({
+      eyebrow:   'Transit',
+      title:     'Diese Woche in deiner Signatur',
+      statement: 'Welche Felder gerade aktiviert sind und wo der nächste Peak liegt.',
+    })
+  );
+
   const loading = app.querySelector('.transit-loading');
   const content = app.querySelector('.transit-content');
   const errorEl = app.querySelector('.transit-error');
+  const planetDetailsContent = app.querySelector('.transit-planet-details-content');
 
   Promise.all([getTransitNow(), getTransitTimeline()]).then(([nowRes, timelineRes]) => {
     loading.hidden = true;
@@ -197,9 +281,25 @@ export function TransitCalendarPage(app, { profile } = {}) {
       return;
     }
 
-    content.appendChild(renderNow(nowRes.data.planets, nowRes.data.sector_intensity || [], profile));
-    content.appendChild(renderTimeline(timelineRes.data.days || [], profile));
+    const days = timelineRes.data.days || [];
+
+    // Today active + next peak (top of page)
+    app.querySelector('.transit-today-mount').replaceWith(
+      renderTodayActive(nowRes.data.planets, nowRes.data.sector_intensity || [])
+    );
+    const peakEl = renderNextPeakCard(days);
+    if (peakEl) {
+      app.querySelector('.transit-peak-mount').replaceWith(peakEl);
+    } else {
+      app.querySelector('.transit-peak-mount').remove();
+    }
+
+    // 7-day strip with daily themes
+    content.appendChild(renderTimeline(days, profile));
     content.hidden = false;
+
+    // Planet details deep-dive
+    planetDetailsContent.appendChild(renderNow(nowRes.data.planets, nowRes.data.sector_intensity || [], profile));
   }).catch((err) => {
     loading.hidden = true;
     errorEl.textContent = `Fehler: ${err.message}`;
