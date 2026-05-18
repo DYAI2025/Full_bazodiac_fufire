@@ -76,7 +76,10 @@ export function CheckInResultCard({ entry, vm } = {}) {
 
   const step = document.createElement('p');
   step.className = 'checkin-result-card__nextstep';
-  step.innerHTML = `<strong>Nächster Schritt:</strong> ${model.nextStep}`;
+  const stepLabel = document.createElement('strong');
+  stepLabel.textContent = 'Nächster Schritt:';
+  step.appendChild(stepLabel);
+  step.appendChild(document.createTextNode(` ${model.nextStep}`));
   root.appendChild(step);
 
   const tomorrow = document.createElement('p');
