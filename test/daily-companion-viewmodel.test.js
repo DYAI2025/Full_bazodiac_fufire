@@ -105,12 +105,12 @@ test('buildDailyCompanionViewModel: experiment has title, instruction, reflectio
   assert.ok(vm.experiment.sourceReason, 'experiment must carry a sourceReason');
 });
 
-test('buildDailyCompanionViewModel: tomorrow.href links to /transits', () => {
+test('buildDailyCompanionViewModel: tomorrow.href links to /transit-calendar', () => {
   const vm = buildDailyCompanionViewModel({
     profile: sampleProfile, transits: sampleTransits,
     date: '2026-05-18', history: { yesterday: null },
   });
-  assert.equal(vm.tomorrow.href, '/transits');
+  assert.equal(vm.tomorrow.href, '/transit-calendar');
   assert.ok(vm.tomorrow.teaser);
 });
 
