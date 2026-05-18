@@ -8,6 +8,10 @@ import { DailyCheckin, readDailyCheckin, writeDailyCheckin } from '../components
 import { CheckInResultCard }     from '../components/CheckInResultCard.js';
 import { TodayNewCard }          from '../components/TodayNewCard.js';
 import { TomorrowTeaserCard }    from '../components/TomorrowTeaserCard.js';
+import { ScoreBandCard }         from '../components/ScoreBandCard.js';
+import { WesternImpulseCard }    from '../components/WesternImpulseCard.js';
+import { BaziImpulseCard }       from '../components/BaziImpulseCard.js';
+import { FusionSynthesisCard }   from '../components/FusionSynthesisCard.js';
 import {
   buildExperienceProfile,
   buildCoreIdentity,
@@ -79,7 +83,10 @@ export function DailyPage(app, { profile = null } = {}) {
         <p class="daily-date">${today}</p>
       </header>
       <div class="insight-hero-mount"></div>
+      <p class="trust-microcopy" role="note">Der Tagespuls ist kein Urteil. Er ist ein Beobachtungsrahmen für 24 Stunden.</p>
+      <div class="score-band-mount"></div>
       <div class="today-new-mount"></div>
+      <div class="vm-cards-mount"></div>
       <div class="daily-focus-mount"></div>
       <div class="daily-loading" role="status" aria-live="polite">Tagespuls wird berechnet…</div>
       <div class="daily-content" hidden></div>
@@ -200,7 +207,20 @@ export function DailyPage(app, { profile = null } = {}) {
     });
     if (expProfile) mountHeroFromVM(dailyVM);
     else app.querySelector('.insight-hero-mount').remove();
+    const scoreMount = app.querySelector('.score-band-mount');
+    if (dailyVM.signature.coherenceScore != null) {
+      scoreMount.replaceWith(ScoreBandCard({ score: dailyVM.signature.coherenceScore, label: 'Kohärenz-Index' }));
+    } else {
+      scoreMount.remove();
+    }
     mountTodayNew(dailyVM);
+    const vmMount = app.querySelector('.vm-cards-mount');
+    const vmWrap = document.createElement('div');
+    vmWrap.className = 'vm-cards-stack';
+    vmWrap.appendChild(WesternImpulseCard(dailyVM.western));
+    vmWrap.appendChild(BaziImpulseCard(dailyVM.bazi));
+    vmWrap.appendChild(FusionSynthesisCard(dailyVM.fusion));
+    vmMount.replaceWith(vmWrap);
     mountTomorrow(dailyVM);
     persistTodayState(dailyVM);
   });

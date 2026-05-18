@@ -4,6 +4,7 @@ import { UnavailableCard }       from '../components/UnavailableCard.js';
 import { SourcePill }            from '../components/SourcePill.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { WhyScoreCard }          from '../components/WhyScoreCard.js';
+import { ScoreBandCard }         from '../components/ScoreBandCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
 import { ThreeDoors }            from '../components/ThreeDoors.js';
 import {
@@ -375,8 +376,10 @@ export function OverviewPage(app, { profile, onNavigate }) {
         <a href="#/daily"            class="nav-link">Tagespuls</a>
       </nav>
       <div class="insight-hero-mount"></div>
+      <p class="trust-microcopy" role="note">Deine Signatur ist ein Modell, kein Urteil. Kohärenz ist ein Index, keine Persönlichkeitsnote.</p>
       <section class="core-statement-section" aria-label="Kernsatz"></section>
       <div class="why-coherence-mount"></div>
+      <div class="score-band-mount"></div>
       <div class="three-doors-mount"></div>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">
         <h2>BaZi — Vier Säulen</h2>
@@ -444,6 +447,15 @@ export function OverviewPage(app, { profile, onNavigate }) {
     );
   } else {
     app.querySelector('.why-coherence-mount').remove();
+  }
+
+  // ScoreBandCard global — neben WhyScoreCard, etwas kürzer für Skim-Leser
+  if (expProfile.fusion.coherence != null) {
+    app.querySelector('.score-band-mount').replaceWith(
+      ScoreBandCard({ score: expProfile.fusion.coherence, label: 'Kohärenz-Index' }),
+    );
+  } else {
+    app.querySelector('.score-band-mount').remove();
   }
 
   // Three Doors
