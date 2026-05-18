@@ -166,7 +166,7 @@ function buildTomorrowTeaser(transits, dateIso) {
     return {
       teaser: 'Morgen zeigen wir dir, was sich gegenüber heute verändert hat.',
       linkLabel: 'Zur Wochenvorschau',
-      href: '/transits',
+      href: '/transit-calendar',
     };
   }
   const sectors = next.sector_intensity || [];
@@ -177,7 +177,7 @@ function buildTomorrowTeaser(transits, dateIso) {
       ? `Morgen aktiviert sich besonders das ${peakHouse}-Feld. Prüfe, ob eine Entscheidung leichter fällt als heute.`
       : 'Morgen schaltet sich der Tagespuls weiter — sieh selbst in der Wochenvorschau.',
     linkLabel: 'Zur Wochenvorschau',
-    href: '/transits',
+    href: '/transit-calendar',
   };
 }
 
