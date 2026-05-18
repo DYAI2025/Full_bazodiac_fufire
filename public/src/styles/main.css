@@ -1294,3 +1294,9 @@ input:focus { border-color: var(--accent); }
 .transit-planet-details > summary { cursor: pointer; padding: 10px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-weight: 700; }
 .transit-planet-details[open] > summary { margin-bottom: 12px; }
 .transit-legend { background: var(--panel2); border-left: 3px solid var(--muted); padding: 12px 14px; border-radius: var(--radius); color: var(--muted); font-size: .82rem; line-height: 1.5; }
+
+/* PersonalityPage — Integration hint */
+.integration-hint { background: var(--panel2); border: 1px dashed var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.integration-hint h3 { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.integration-hint__link { align-self: flex-start; color: var(--accent); text-decoration: none; font-weight: 700; }
+.integration-hint__link:hover { text-decoration: underline; }

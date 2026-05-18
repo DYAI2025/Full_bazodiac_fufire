@@ -2,6 +2,9 @@ import { createPersonalityProjection, COHERENCE_FACTOR_LABEL } from '../domain/p
 import { SourceBadge }   from '../components/SourceBadge.js';
 import { ConfidenceBar } from '../components/ConfidenceBar.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
+import { InsightHero }            from '../components/InsightHero.js';
+import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
+import { buildExperienceProfile, buildCoreIdentity } from '../domain/experienceCopy.js';
 
 const COHERENCE_HEADLINE = {
   high:   'Östliches und westliches Selbstbild ergänzen sich in hoher Deckungsgleichheit.',
@@ -60,18 +63,20 @@ export function PersonalityPage(app, { profile, onNavigate }) {
   const hasLowCoh    = ci !== null && ci !== undefined && ci <= 0.35;
   const coherenceFactor = proj.supportingFactors.find((f) => f.label === COHERENCE_FACTOR_LABEL);
 
+  const expProfile = buildExperienceProfile(profile);
+  const identity   = buildCoreIdentity(expProfile);
+
   app.innerHTML = `
     <main class="personality-page">
+      <div class="sig-bar-mount"></div>
       <nav class="page-nav">
-        <a href="#/overview" class="nav-link">← Übersicht</a>
-        <a href="#/love" class="nav-link">Liebe</a>
-        <a href="#/career-finance" class="nav-link">Karriere</a>
+        <a href="#/overview"       class="nav-link">← Signatur-Übersicht</a>
+        <a href="#/love"           class="nav-link">Liebe</a>
+        <a href="#/career-finance" class="nav-link">Arbeit &amp; Ressourcen</a>
+        <a href="#/fusion"         class="nav-link">WuXing Fusion</a>
       </nav>
 
-      <header class="page-header">
-        <h1>Persönlichkeit</h1>
-        <p class="personality-headline"></p>
-      </header>
+      <div class="insight-hero-mount"></div>
 
       <div class="confidence-section"></div>
 
@@ -81,15 +86,21 @@ export function PersonalityPage(app, { profile, onNavigate }) {
         <div class="factors-grid primary-factors"></div>
       </section>
 
-      <section class="coherence-layer" aria-label="Ost-West Resonanz" hidden>
-        <h2>Ost–West Resonanz</h2>
+      <section class="coherence-layer" aria-label="Resonanzbrücke" hidden>
+        <h2>Resonanzbrücke (Ost ↔ West)</h2>
         <div class="coherence-content"></div>
       </section>
 
-      <section class="supporting-layer" aria-label="Weitere Schichten">
-        <h2>Weitere Schichten</h2>
-        <p class="section-intro">Planeten und Wu-Xing ergänzen das Bild.</p>
+      <section class="supporting-layer" aria-label="Ausdrucksschichten">
+        <h2>Ausdrucksschichten</h2>
+        <p class="section-intro">Planeten und Wu-Xing ergänzen das Bild. Diese Seite ist eine vertiefende Sicht — die alltagstauglichen Hebel liegen auf der Signatur-Übersicht.</p>
         <div class="factors-grid supporting-factors"></div>
+      </section>
+
+      <section class="integration-hint" aria-label="Integrationshinweis">
+        <h3>Integrationshinweis</h3>
+        <p>Persönlichkeit ist mehrschichtig — kein einzelner Wert hier erklärt dich. Nutze die Signatur-Übersicht für Handlung, diese Seite für Verstehen.</p>
+        <a class="integration-hint__link" href="#/overview">Zur Signatur-Übersicht →</a>
       </section>
 
       <section class="missing-layer" aria-label="Lücken im Profil" hidden>
@@ -104,7 +115,27 @@ export function PersonalityPage(app, { profile, onNavigate }) {
     </main>
   `;
 
-  app.querySelector('.personality-headline').textContent = headline;
+  app.querySelector('.sig-bar-mount').replaceWith(
+    PersistentSignatureBar({
+      dayMaster: identity.dayMaster,
+      sun:       identity.sun,
+      coherence: expProfile.fusion.coherence,
+    })
+  );
+
+  app.querySelector('.insight-hero-mount').replaceWith(
+    InsightHero({
+      eyebrow:   'Tiefe Analyse',
+      title:     'Deine Schichten',
+      statement: headline,
+      evidence:  [
+        identity.sun !== '—' ? `Sonne ${identity.sun}` : null,
+        identity.moon !== '—' ? `Mond ${identity.moon}` : null,
+        identity.dayMaster !== '—' ? `Day Master ${identity.dayMaster}` : null,
+      ].filter(Boolean),
+      primaryAction:   { label: 'Zur Signatur-Übersicht', path: '/overview' },
+    })
+  );
 
   app.querySelector('.confidence-section').appendChild(
     ConfidenceBar(proj.confidence, { label: 'Profiltiefe' })
