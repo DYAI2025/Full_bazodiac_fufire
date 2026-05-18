@@ -27,7 +27,12 @@ export function FusionSynthesisCard(vmFusion) {
   ]) {
     const p = document.createElement('p');
     p.className = 'impulse-card__row';
-    p.innerHTML = `<strong>${labelKey}:</strong> ${val}`;
+
+    const strong = document.createElement('strong');
+    strong.textContent = `${labelKey}:`;
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` ${val}`));
+
     root.appendChild(p);
   }
   return root;
