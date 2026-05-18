@@ -2,7 +2,6 @@ import { generateCoreStatement } from '../domain/coreStatement.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
 import { SourceBadge }           from '../components/SourceBadge.js';
 import { UnavailableCard }       from '../components/UnavailableCard.js';
-import { ConfidenceBar }         from '../components/ConfidenceBar.js';
 
 const SIGN_DE = {
   Aries:'Widder', Taurus:'Stier', Gemini:'Zwillinge', Cancer:'Krebs',
