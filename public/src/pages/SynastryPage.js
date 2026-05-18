@@ -14,6 +14,11 @@ import {
   buildExperienceProfile,
   buildActionExperiment,
 } from '../domain/experienceCopy.js';
+import { buildRelationshipResonance } from '../domain/relationshipResonance.js';
+import { RelationshipSummaryHero }    from '../components/RelationshipSummaryHero.js';
+import { ResonanceScoreBand }         from '../components/ResonanceScoreBand.js';
+import { RelationshipSignalCard }     from '../components/RelationshipSignalCard.js';
+import { ContactExperimentCard }      from '../components/ContactExperimentCard.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -74,12 +79,7 @@ export function SynastryPage(app) {
 
       <div class="synastry-result" hidden>
         <div class="synastry-hero-mount"></div>
-        <section class="synastry-light-summary" aria-label="Beziehung in drei Sätzen">
-          <h2>In drei Sätzen</h2>
-          <p class="rs-line"><strong>Was verbindet:</strong> <span class="rs-connect"></span></p>
-          <p class="rs-line"><strong>Wo Reibung entsteht:</strong> <span class="rs-friction"></span></p>
-          <p class="rs-line"><strong>Was hilft:</strong> <span class="rs-helps"></span></p>
-        </section>
+        <div class="synastry-score-band-mount"></div>
         <div class="synastry-connection-mount"></div>
         <div class="synastry-tension-mount"></div>
         <div class="synastry-experiment-mount"></div>
@@ -197,6 +197,8 @@ export function SynastryPage(app) {
   function renderResult(profileA, profileB, synastrySummary = null) {
     resultEl.hidden = false;
     resultEl.querySelector('.synastry-hero-mount').innerHTML = '';
+    const sbMount = resultEl.querySelector('.synastry-score-band-mount');
+    if (sbMount) sbMount.innerHTML = '';
     resultEl.querySelector('.synastry-connection-mount').innerHTML = '';
     resultEl.querySelector('.synastry-tension-mount').innerHTML = '';
     resultEl.querySelector('.synastry-experiment-mount').innerHTML = '';
@@ -223,86 +225,77 @@ export function SynastryPage(app) {
     renderHouses(resultEl.querySelector('.synastry-houses-section'), profileA, profileB);
   }
 
+  // Variante C: Light Summary aus buildRelationshipResonance ableiten.
+  // Bestehende Deep-Dive-Sections bleiben unverändert im Accordion erhalten.
   function renderLightSummary(profileA, profileB, proj, synastrySummary) {
-    const expA = buildExperienceProfile(profileA);
     const heroMount       = resultEl.querySelector('.synastry-hero-mount');
+    const scoreMount      = resultEl.querySelector('.synastry-score-band-mount');
     const connectionMount = resultEl.querySelector('.synastry-connection-mount');
     const tensionMount    = resultEl.querySelector('.synastry-tension-mount');
     const experimentMount = resultEl.querySelector('.synastry-experiment-mount');
 
-    const coherence = typeof synastrySummary?.combined_coherence === 'number'
-      ? Math.round(synastrySummary.combined_coherence * 100)
-      : (proj?.harmonyScore != null ? Math.round(proj.harmonyScore * 100) : null);
+    const analysis = buildRelationshipResonance({
+      personAProfile: profileA,
+      personBProfile: profileB,
+      synastryRaw:    synastrySummary,
+    });
 
-    // Hero
+    // Hero: 3 Sätze direkt aus analysis.summaryStatements
     heroMount.replaceWith(
-      InsightHero({
-        eyebrow:   'Synastrie',
-        title:     profileB
-          ? 'Eure Resonanzlandschaft'
-          : 'Deine Resonanzlandschaft (Person A allein)',
-        statement: profileB
-          ? 'Zwei Signaturen im Gespräch — wo Energie fließt, wo sie reibt, was sie lernen lässt.'
-          : 'Lege eine zweite Person an, um die Resonanz zu sehen.',
-        evidence: coherence != null ? [`Kohärenzindex ${coherence}`] : [],
-      })
+      RelationshipSummaryHero({
+        eyebrow: 'Eure Kontakt-Signatur',
+        title:   profileB
+          ? 'Resonanz mit klarer Reibungsachse'
+          : 'Lege Person B an, um die Resonanz zu sehen',
+        statements: analysis.summaryStatements,
+        caveat:     analysis.safetyCaveat,
+      }),
     );
 
-    // Three sentences
-    const wuxingRelation = proj?.wuxing?.cycle || null;
-    const tension = synastrySummary?.element_tension || null;
-    const dominantA = tension?.dominant_a;
-    const dominantB = tension?.dominant_b;
+    // Score Band — nur wenn Index berechnet wurde
+    if (scoreMount) {
+      if (analysis.resonanceIndex != null) {
+        scoreMount.replaceWith(
+          ResonanceScoreBand({ score: analysis.resonanceIndex, label: 'Resonanz-Index' }),
+        );
+      } else {
+        scoreMount.remove();
+      }
+    }
 
-    const connect = profileB
-      ? (wuxingRelation
-        ? `${wuxingRelation} — eure Grundenergien finden hier einen geteilten Kanal.`
-        : 'Westliche und östliche Signaturen zeigen erste Überschneidungspunkte.')
-      : 'Noch keine zweite Person — diese Sicht braucht beide Profile.';
-
-    const friction = (dominantA && dominantB)
-      ? `Reibung entsteht zwischen ${dominantA} (A) und ${dominantB} (B) — beide Pole brauchen Raum, sonst kippt es einseitig.`
-      : 'Reibungspunkte werden sichtbar, sobald eine zweite Person berechnet wurde.';
-
-    const helps = 'Es hilft, ein Bedürfnis früh auszusprechen und die unterschiedlichen Tempi der beiden Systeme zu respektieren — Resonanz ist kein Gleichschritt.';
-
-    resultEl.querySelector('.rs-connect').textContent  = connect;
-    resultEl.querySelector('.rs-friction').textContent = friction;
-    resultEl.querySelector('.rs-helps').textContent    = helps;
-
-    // Hauptverbindung / Hauptspannung as small cards
-    if (profileB && wuxingRelation) {
-      const card = document.createElement('section');
-      card.className = 'synastry-light-card synastry-light-card--connection';
-      const h = document.createElement('h3'); h.textContent = 'Hauptverbindung';
-      const p = document.createElement('p');  p.textContent = wuxingRelation;
-      card.append(h, p);
-      connectionMount.replaceWith(card);
+    // Hauptverbindung
+    if (profileB && analysis.mainConnection?.title) {
+      connectionMount.replaceWith(
+        RelationshipSignalCard({
+          kind: 'connection',
+          title:       analysis.mainConnection.title,
+          summary:     analysis.mainConnection.summary,
+          evidence:    analysis.mainConnection.evidence,
+          sourceLayer: analysis.mainConnection.sourceLayer,
+        }),
+      );
     } else {
       connectionMount.remove();
     }
 
-    if (profileB && tension && dominantA && dominantB) {
-      const card = document.createElement('section');
-      card.className = 'synastry-light-card synastry-light-card--tension';
-      const h = document.createElement('h3'); h.textContent = 'Hauptspannung';
-      const p = document.createElement('p');
-      const intensity = tension.tension_score != null ? ` · Intensität ${Math.round(tension.tension_score * 100)}` : '';
-      p.textContent = `${dominantA} ⟷ ${dominantB}${intensity}`;
-      card.append(h, p);
-      tensionMount.replaceWith(card);
+    // Hauptspannung
+    if (profileB && analysis.mainFriction?.title) {
+      tensionMount.replaceWith(
+        RelationshipSignalCard({
+          kind: 'friction',
+          title:       analysis.mainFriction.title,
+          summary:     analysis.mainFriction.summary,
+          evidence:    analysis.mainFriction.evidence,
+          sourceLayer: analysis.mainFriction.sourceLayer,
+        }),
+      );
     } else {
       tensionMount.remove();
     }
 
-    // Gemeinsames Experiment
+    // 24h Kontakt-Experiment
     if (profileB) {
-      experimentMount.replaceWith(
-        ActionExperimentCard({
-          ...buildActionExperiment('love', expA),
-          title: 'Gemeinsames Experiment',
-        })
-      );
+      experimentMount.replaceWith(ContactExperimentCard(analysis.contactExperiment));
     } else {
       experimentMount.remove();
     }
