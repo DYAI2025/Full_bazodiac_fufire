@@ -29,14 +29,19 @@ const MINIMAL_PAYLOAD = {
   lon: 11.576,
 };
 
+// Returns true when the test body must abort. Callers MUST early-return,
+// otherwise the body (network fetch with possibly empty BASE_URL) keeps
+// running even after `t.skip()` and triggers spurious failures.
 function skipIfDisabled(t) {
   if (!ENABLED || !BASE_URL) {
     t.skip('Set FUFIRE_CONTRACT_TEST=true and FUFIRE_BASE_URL to run contract tests');
+    return true;
   }
+  return false;
 }
 
 test('contract: calculate/western responds 200 with bodies field', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const res = await fetch(`${BASE_URL}/calculate/western`, {
     method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
     signal: AbortSignal.timeout(15_000),
@@ -47,7 +52,7 @@ test('contract: calculate/western responds 200 with bodies field', async (t) => 
 });
 
 test('contract: calculate/bazi responds 200 with pillars field', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const res = await fetch(`${BASE_URL}/calculate/bazi`, {
     method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
     signal: AbortSignal.timeout(15_000),
@@ -58,7 +63,7 @@ test('contract: calculate/bazi responds 200 with pillars field', async (t) => {
 });
 
 test('contract: calculate/fusion responds 200 with wu_xing_vectors', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const res = await fetch(`${BASE_URL}/calculate/fusion`, {
     method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
     signal: AbortSignal.timeout(15_000),
@@ -69,7 +74,7 @@ test('contract: calculate/fusion responds 200 with wu_xing_vectors', async (t) =
 });
 
 test('contract: info/wuxing-mapping responds 200 — path drift detection', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   // Upstream renamed /info/wuxing → /info/wuxing-mapping. server.js upstreamPath already updated.
   const res = await fetch(`${BASE_URL}/info/wuxing-mapping`, {
     method: 'GET', headers: getHeaders,
@@ -95,7 +100,7 @@ test('contract: info/wuxing-mapping responds 200 — path drift detection', asyn
 });
 
 test('contract: response shape stability — Sun longitude is a number', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const res = await fetch(`${BASE_URL}/calculate/western`, {
     method: 'POST', headers, body: JSON.stringify(MINIMAL_PAYLOAD),
     signal: AbortSignal.timeout(15_000),
@@ -109,7 +114,7 @@ test('contract: response shape stability — Sun longitude is a number', async (
 });
 
 test('contract: transit/now responds 200 with planets and sector_intensity', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const res = await fetch(`${BASE_URL}/transit/now`, {
     method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(15_000),
@@ -127,7 +132,7 @@ test('contract: transit/now responds 200 with planets and sector_intensity', asy
 });
 
 test('contract: transit/timeline responds 200 with 7-day days array', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const res = await fetch(`${BASE_URL}/transit/timeline`, {
     method: 'GET', headers: getHeaders,
     signal: AbortSignal.timeout(15_000),
@@ -158,7 +163,7 @@ const BIRTH_PAYLOAD = {
 };
 
 test('contract: experience/bootstrap responds 200 with soulprint_sectors', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const res = await fetch(`${BASE_URL}/experience/bootstrap`, {
     method: 'POST',
     headers,
@@ -173,7 +178,7 @@ test('contract: experience/bootstrap responds 200 with soulprint_sectors', async
 });
 
 test('contract: experience/daily responds 200 with western + eastern + fusion', async (t) => {
-  skipIfDisabled(t);
+  if (skipIfDisabled(t)) return;
   const bootstrapRes = await fetch(`${BASE_URL}/experience/bootstrap`, {
     method: 'POST',
     headers,
