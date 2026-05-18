@@ -1,7 +1,7 @@
 import { GeoInput }              from '../components/GeoInput.js';
 import { CalculationProgress }   from '../components/CalculationProgress.js';
 import { SourceBadge }           from '../components/SourceBadge.js';
-import { calculateProfile, calculateSynastry, geocodePlace } from '../api/client.js';
+import { calculateProfile, calculateSynastry } from '../api/client.js';
 import { createSynastryProjection } from '../domain/projections.js';
 import { computeDomainScores }    from '../synastry/domain-score.js';
 import { HeatmapOverview }        from '../synastry/HeatmapOverview.js';
@@ -45,8 +45,7 @@ export function SynastryPage(app) {
 
         <section class="person-input person-b">
           <h2>Person B <span class="optional-hint">(optional)</span></h2>
-          <button class="partner-b-toggle-btn" type="button">Partner B anzeigen</button>
-          <form class="birth-form birth-form--b" novalidate hidden>
+          <form class="birth-form birth-form--b" novalidate>
             <div class="form-group">
               <label for="date-b">Datum</label>
               <input type="date" id="date-b" />
@@ -55,9 +54,8 @@ export function SynastryPage(app) {
               <label for="time-b">Uhrzeit</label>
               <input type="time" id="time-b" />
             </div>
-            <div class="form-group">
-              <label for="place-b">Ort</label>
-              <input type="text" id="place-b" placeholder="Geburtsort" />
+            <div class="form-group" id="geo-group-b">
+              <label>Ort</label>
             </div>
           </form>
         </section>
@@ -84,65 +82,40 @@ export function SynastryPage(app) {
   const timeA   = app.querySelector('#time-a');
   const dateB   = app.querySelector('#date-b');
   const timeB   = app.querySelector('#time-b');
-  const placeBInput = app.querySelector('#place-b');
   const calcBtn = app.querySelector('.synastry-calc-btn');
   const errorEl = app.querySelector('.synastry-error');
   const resultEl = app.querySelector('.synastry-result');
-  const partnerBToggleBtn = app.querySelector('.partner-b-toggle-btn');
-  const partnerBForm = app.querySelector('.birth-form--b');
 
   let placeA = null;
   let placeB = null;
 
-  const geoA = GeoInput({ onSelect: (p) => { 
-    console.log('GeoInput Person A selected:', p);
-    placeA = p; 
-    validate(); 
-  } });
-  
-  const geoGroupA = app.querySelector('#geo-group-a');
-  
-  if (!geoGroupA) {
-    console.error('geo-group-a not found in DOM');
-  } else {
-    geoGroupA.appendChild(geoA);
-    console.log('GeoInput Person A appended successfully');
-  }
+  const geoA = GeoInput({ onSelect: (p) => { placeA = p; validate(); } });
+  const geoB = GeoInput({ onSelect: (p) => { placeB = p; validate(); } });
+  app.querySelector('#geo-group-a').appendChild(geoA);
+  app.querySelector('#geo-group-b').appendChild(geoB);
 
   function bFormStarted() {
-    return !!(dateB.value || placeBInput.value);
+    return !!(dateB.value || placeB);
   }
 
   function validate() {
     const aReady = !!(dateA.value && placeA);
-    const bReady = !bFormStarted() || !!(dateB.value && placeBInput.value);
+    const bReady = !bFormStarted() || !!(dateB.value && placeB);
     calcBtn.disabled = !(aReady && bReady);
   }
 
   dateA.addEventListener('input', validate);
   dateB.addEventListener('input', validate);
-  placeBInput.addEventListener('input', validate);
-
-  partnerBToggleBtn.addEventListener('click', () => {
-    const isHidden = partnerBForm.hidden;
-    partnerBForm.hidden = !isHidden;
-    partnerBToggleBtn.textContent = isHidden ? 'Partner B ausblenden' : 'Partner B anzeigen';
-  });
 
   calcBtn.addEventListener('click', async () => {
-    console.log('Berechnen button clicked');
-    console.log('placeA:', placeA);
-    console.log('placeB:', placeB);
-    console.log('dateB.value:', dateB.value);
-    
     errorEl.hidden = true;
     calcBtn.disabled = true;
 
     const inputA = {
       date: dateA.value,
       time: timeA.value || '12:00',
-      lat: placeA.lat,
-      lon: placeA.lon,
+      lat:  placeA.lat,
+      lon:  placeA.lon,
       tz:   placeA.tz,
     };
 
@@ -155,26 +128,7 @@ export function SynastryPage(app) {
     try {
       let profileA, profileB, synastrySummary;
 
-      if (dateB.value && placeBInput.value) {
-        console.log('Starting synastry calculation with Person B');
-        
-        // Geocode the placeB input value first
-        console.log('Geocoding placeB:', placeBInput.value);
-        const geoRes = await geocodePlace(placeBInput.value);
-        console.log('Geocode response:', geoRes);
-        
-        if (!geoRes.ok || !Array.isArray(geoRes.data) || geoRes.data.length === 0) {
-          errorEl.textContent = 'Ort für Person B konnte nicht gefunden werden';
-          errorEl.hidden = false;
-          calcBtn.disabled = false;
-          pg.stop();
-          progress.remove();
-          return;
-        }
-        
-        placeB = geoRes.data[0];
-        console.log('Geocoded placeB:', placeB);
-        
+      if (dateB.value && placeB) {
         // Use combined synastry endpoint — one call, server does parallel fetch
         const inputB = {
           date: dateB.value,
@@ -183,9 +137,7 @@ export function SynastryPage(app) {
           lon:  placeB.lon,
           tz:   placeB.tz,
         };
-        console.log('inputB:', inputB);
         const res = await calculateSynastry(inputA, inputB);
-        console.log('Synastry API response:', res);
         pg.stop();
         progress.remove();
         calcBtn.disabled = false;
@@ -199,33 +151,29 @@ export function SynastryPage(app) {
         synastrySummary = res.data.synastry || null;
       } else {
         // Solo profile — no Person B
-        console.log('Starting solo profile calculation');
         const res = await calculateProfile(inputA);
-        console.log('Profile API response:', res);
         pg.stop();
         progress.remove();
         calcBtn.disabled = false;
         if (!res.ok) {
-          errorEl.textContent = res.error || `HTTP ${res.status}`;
+          errorEl.textContent = `Person A: ${res.error || `HTTP ${res.status}`}`;
           errorEl.hidden = false;
           return;
         }
-        profileA = res.data;
+        profileA       = res.data;
+        profileB       = null;
+        synastrySummary = null;
       }
 
-      renderResults(profileA, profileB, synastrySummary);
+      renderResult(profileA, profileB, synastrySummary);
     } catch (err) {
-      console.error('Calculation error:', err);
       pg.stop();
       progress.remove();
       calcBtn.disabled = false;
-      errorEl.textContent = err.message || 'Ein Fehler ist bei der Berechnung aufgetreten';
+      errorEl.textContent = `Netzwerkfehler: ${err.message}`;
       errorEl.hidden = false;
     }
-
-    renderResults(profileA, profileB, synastrySummary);
   });
-}
 
   function renderResult(profileA, profileB, synastrySummary = null) {
     resultEl.hidden = false;
@@ -757,3 +705,5 @@ export function SynastryPage(app) {
     section.appendChild(grid);
     container.appendChild(section);
   }
+
+}
