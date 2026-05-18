@@ -16,7 +16,7 @@ export function readAllCheckins(storage = getDefaultStorage()) {
     const raw = storage.getItem(DAILY_CHECKINS_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return (parsed && typeof parsed === 'object') ? parsed : {};
+    return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
   } catch {
     return {};
   }
