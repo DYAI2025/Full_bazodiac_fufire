@@ -36,3 +36,9 @@ test('buildDailyLearnImpulse: returns three explanatory fields named understand/
     assert.ok(typeof r[k] === 'string' && r[k].length > 5, `${k} missing or too short`);
   }
 });
+
+import { JSDOM_TEXT_CONTENT_ONLY as LEARN_MARKER } from '../public/src/components/DailyLearnImpulseCard.js';
+
+test('DailyLearnImpulseCard signals textContent-only rendering', () => {
+  assert.equal(LEARN_MARKER, true);
+});

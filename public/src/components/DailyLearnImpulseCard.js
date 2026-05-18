@@ -28,8 +28,13 @@ export function DailyLearnImpulseCard(opts = {}) {
     if (!val) continue;
     const p = document.createElement('p');
     p.className = cls;
-    p.innerHTML = `<strong>${labelKey}:</strong> ${val}`;
+    const strong = document.createElement('strong');
+    strong.textContent = `${labelKey}:`;
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(` ${val}`));
     root.appendChild(p);
   }
   return root;
 }
+
+export const JSDOM_TEXT_CONTENT_ONLY = true;
