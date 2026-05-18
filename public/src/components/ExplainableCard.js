@@ -15,6 +15,7 @@ export function explainableCardModel({
   return {
     domain: ['bazi','west','fusion','house'].includes(domain) ? domain : 'bazi',
     label, value, helper, meaning, highlighted,
+    a11yLabel: (`${label || 'Karte'} ${value || ''}`).trim() + ' — Erklärung öffnen',
   };
 }
 
@@ -52,6 +53,7 @@ export function ExplainableCard(opts = {}) {
 
   // Drawer als <details> — klickbar
   const details = document.createElement('details');
+  details.setAttribute('aria-label', m.a11yLabel);
   details.className = 'explainable-card__details';
   const summary = document.createElement('summary');
   summary.textContent = 'Erklärung öffnen';

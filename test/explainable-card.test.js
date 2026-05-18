@@ -45,3 +45,9 @@ test('MeaningDrawer module signals it uses textContent only (export marker)', ()
   // The marker exists to make the migration verifiable without a DOM.
   assert.equal(JSDOM_TEXT_CONTENT_ONLY, true);
 });
+
+test('explainableCardModel: exposes a11y-label that includes label + value + "Erklärung"', () => {
+  const m = explainableCardModel({ label: 'Tagessäule', value: 'Wu Erde' });
+  assert.ok(m.a11yLabel);
+  assert.match(m.a11yLabel, /Tagessäule.*Wu Erde.*Erklärung/);
+});
