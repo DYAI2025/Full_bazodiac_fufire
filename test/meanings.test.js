@@ -96,3 +96,14 @@ test('lookupStem("戊") and lookupBranch("午") map through CHAR_TO_PINYIN bridg
   assert.equal(lookupStem('戊').element,   'Erde');
   assert.equal(lookupBranch('午').element, 'Feuer');
 });
+
+test('lookupStem fallback: dedicated copy mentions Stamm-Zuordnung, not "unbekannt"', () => {
+  const fb = lookupStem('NotARealStem');
+  assert.match(fb.resource, /Stamm-Zuordnung fehlt/);
+  assert.equal(fb.element, undefined);
+});
+
+test('lookupBranch fallback: dedicated copy mentions Zweig-Zuordnung, not "unbekannt"', () => {
+  const fb = lookupBranch('UnknownBranch');
+  assert.match(fb.resource, /Zweig-Zuordnung fehlt/);
+});

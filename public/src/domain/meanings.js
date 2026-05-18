@@ -182,13 +182,13 @@ const BRANCH_CHAR_TO_PINYIN = {
 export function lookupStem(name) {
   if (!name) return null;
   const key = STEM_CHAR_TO_PINYIN[name] || name;
-  return STEM_MEANINGS[key] || { stem: '?', element: 'unbekannt', polarity: '?', resource: 'Basisdeutung folgt — bitte zurück zur Übersicht.', shadow: '', practice: '' };
+  return STEM_MEANINGS[key] || { stem: '?', polarity: '?', resource: 'Stamm-Zuordnung fehlt — bitte Geburtsdaten prüfen.', shadow: '', practice: '' };
 }
 
 export function lookupBranch(name) {
   if (!name) return null;
   const key = BRANCH_CHAR_TO_PINYIN[name] || name;
-  return BRANCH_MEANINGS[key] || { branch: '?', animal: 'unbekannt', element: 'unbekannt', resource: 'Basisdeutung folgt — bitte zurück zur Übersicht.', shadow: '', practice: '' };
+  return BRANCH_MEANINGS[key] || { branch: '?', animal: '?', resource: 'Zweig-Zuordnung fehlt — bitte Geburtsdaten prüfen.', shadow: '', practice: '' };
 }
 
 export function lookupElement(name) {
