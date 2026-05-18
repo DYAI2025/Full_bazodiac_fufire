@@ -2,7 +2,14 @@
 // Priorisierung: aktiviertes Haus > schwaches Element > Kohärenz-Band > Default.
 // Default-Regel feuert nur, wenn keine spezifische Regel matcht.
 
-import { getCoherenceBand } from './dailyCompanion.js';
+function getCoherenceBand(coherence) {
+  if (coherence == null || Number.isNaN(Number(coherence))) return 'unknown';
+
+  const value = Number(coherence);
+  if (value < 34) return 'low';
+  if (value < 67) return 'medium';
+  return 'high';
+}
 
 function mk(title, instruction, reflectionQuestion, tags, sourceReason) {
   return { title, instruction, reflectionQuestion, tags: [...tags, '24 Stunden'], sourceReason };
