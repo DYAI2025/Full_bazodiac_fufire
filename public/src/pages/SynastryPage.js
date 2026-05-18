@@ -698,8 +698,8 @@ export function SynastryPage(app) {
       const cycleMap = {
         generates: 'Erzeugungszyklus — A nährt B: fließende, unterstützende Energie.',
         controls:  'Kontrollzyklus — A begrenzt B: strukturierende, aber herausfordernde Kraft.',
-        generated_by: 'Erzeugungszyklus — B nährt A: du wirst gestärkt und genährt.',
-        controlled_by: 'Kontrollzyklus — B begrenzt A: du wirst herausgefordert und geformt.',
+        generated_by: 'Erzeugungszyklus — B nährt A: kann sich als gestärkt und genährt zeigen.',
+        controlled_by: 'Kontrollzyklus — B begrenzt A: kann sich als herausgefordert und geformt zeigen.',
         same:      'Gleiches Element — Resonanz und Verstärkung eurer gemeinsamen Grundkraft.',
       };
 
