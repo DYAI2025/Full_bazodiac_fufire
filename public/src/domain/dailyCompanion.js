@@ -2,6 +2,7 @@
 // Consumed by DailyPage and its sub-components.
 
 import { buildExperienceProfile, buildCoreIdentity } from './experienceCopy.js';
+import { pickDailyExperiment } from './experimentEngine.js';
 
 const HOUSE_LABELS = {
   1:  'Identität',           2:  'Ressourcen',
@@ -135,37 +136,8 @@ function buildFusionSynthesis(exp, activeHouses) {
   };
 }
 
-function pickExperiment(activeHouses, exp) {
-  const houseId = activeHouses[0]?.house;
-  const dom = exp?.fusion?.dominantElement;
-  const def = exp?.fusion?.deficientElement;
-  const band = getCoherenceBand(exp?.fusion?.coherence);
-
-  // Priorisierung: aktiviertes Haus > schwaches Element > Kohärenzband > Default
-  if (houseId === 3) return mkExp('Kommunikation', 'Schreibe eine Aussage auf, bevor du sie sendest.', 'Was wurde klarer, als du es sichtbar gemacht hast?', '3. Haus aktiv');
-  if (houseId === 4) return mkExp('Familie & Innenraum', 'Räume heute eine Ecke deines Zuhauses, die du sonst übersiehst.', 'Was hat sich an Stimmung verändert?', '4. Haus aktiv');
-  if (houseId === 10) return mkExp('Sichtbarkeit & Arbeit', 'Mache heute eine offene Arbeit sichtbar — sende, statt sie zu polieren.', 'Welcher Druck hat sich gelöst?', '10. Haus aktiv');
-  if (houseId === 7) return mkExp('Partnerschaft', 'Sag in einem Kontakt heute eine Sache direkt aus.', 'Was wurde leichter im Gegenüber?', '7. Haus aktiv');
-  if (def === 'Metall') return mkExp('Entscheidung', 'Triff heute eine offene Sache schriftlich — ein Satz reicht.', 'Was hat sich an Energie freigesetzt?', 'Metall-Hebel schwach');
-  if (def === 'Wasser') return mkExp('Reflexion', 'Lass heute eine Entscheidung 24h reifen, schreib sie auf.', 'Was hat sich an Klarheit gezeigt?', 'Wasser-Hebel schwach');
-  if (def === 'Holz')   return mkExp('Wachstum', 'Setze heute einen Schritt, der erst in einer Woche zählt.', 'Was hat sich an Richtung gezeigt?', 'Holz-Hebel schwach');
-  if (def === 'Feuer')  return mkExp('Ausdruck', 'Zeige heute eine Sache, bevor sie fertig ist.', 'Was hat sich an Resonanz gezeigt?', 'Feuer-Hebel schwach');
-  if (def === 'Erde')   return mkExp('Halten', 'Halte heute eine Sache aus, statt sie zu beschleunigen.', 'Was wurde stabiler?', 'Erde-Hebel schwach');
-  if (band === 'high' || band === 'very-high') return mkExp('Blindspot prüfen', 'Frage heute eine Person nach einem Eindruck, den du sonst überhörst.', 'Was war an dieser Sicht ungewohnt?', 'Kohärenz hoch — Echoraum-Risiko');
-  if (band === 'low')  return mkExp('Spannung benennen', 'Benenne heute eine innere Spannung in einem Satz.', 'Was wurde leichter, als sie ausgesprochen war?', 'Kohärenz niedrig — Spannung produktiv machen');
-  if (band === 'medium') return mkExp('Brücke bauen', 'Verbinde heute zwei Themen, die du sonst getrennt hältst.', 'Wo hat die Brücke gehalten?', 'Kohärenz mittel — Brücke nutzen');
-  return mkExp('Klarer Schritt', 'Sprich heute eine Sache direkter aus als sonst.', 'Was wurde leichter, als du klarer wurdest?', 'Default — keine Spezialregel');
-}
-
-function mkExp(tag, instruction, reflectionQuestion, sourceReason) {
-  return {
-    title: '24h Experiment',
-    instruction,
-    reflectionQuestion,
-    tags: [tag, '24 Stunden'],
-    sourceReason,
-  };
-}
+// Experiment-Auswahl liegt in experimentEngine.js (≥8 Regelpfade + Default).
+// dailyCompanion delegiert hier nur den Aufruf.
 
 function buildTomorrowTeaser(transits, dateIso) {
   const next = transits?.timeline?.days?.[0];
@@ -197,7 +169,7 @@ export function buildDailyCompanionViewModel({ profile = null, transits = null, 
   const western    = buildWesternTheme(activeHouses);
   const bazi       = buildBaziImpulse(profile);
   const fusion     = buildFusionSynthesis(exp, activeHouses);
-  const experiment = pickExperiment(activeHouses, exp);
+  const experiment = pickDailyExperiment({ activeHouses, exp });
   const tomorrow   = buildTomorrowTeaser(transits, date);
 
   return {
