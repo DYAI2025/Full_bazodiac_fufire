@@ -1,16 +1,24 @@
 // public/src/pages/DailyPage.js
-import { getDailyExperience } from '../api/client.js';
+import { getDailyExperience, getTransitNow, getTransitTimeline } from '../api/client.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
 import { ThreeDoors }            from '../components/ThreeDoors.js';
-import { DailyCheckin }          from '../components/DailyCheckin.js';
+import { DailyCheckin, readDailyCheckin, writeDailyCheckin } from '../components/DailyCheckin.js';
+import { CheckInResultCard }     from '../components/CheckInResultCard.js';
+import { TodayNewCard }          from '../components/TodayNewCard.js';
+import { TomorrowTeaserCard }    from '../components/TomorrowTeaserCard.js';
+import { ScoreBandCard }         from '../components/ScoreBandCard.js';
+import { WesternImpulseCard }    from '../components/WesternImpulseCard.js';
+import { BaziImpulseCard }       from '../components/BaziImpulseCard.js';
+import { FusionSynthesisCard }   from '../components/FusionSynthesisCard.js';
 import {
   buildExperienceProfile,
   buildCoreIdentity,
   buildDailyFallback,
   buildActionExperiment,
 } from '../domain/experienceCopy.js';
+import { buildDailyCompanionViewModel } from '../domain/dailyCompanion.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -75,12 +83,18 @@ export function DailyPage(app, { profile = null } = {}) {
         <p class="daily-date">${today}</p>
       </header>
       <div class="insight-hero-mount"></div>
+      <p class="trust-microcopy" role="note">Der Tagespuls ist kein Urteil. Er ist ein Beobachtungsrahmen für 24 Stunden.</p>
+      <div class="score-band-mount"></div>
+      <div class="today-new-mount"></div>
+      <div class="vm-cards-mount"></div>
       <div class="daily-focus-mount"></div>
       <div class="daily-loading" role="status" aria-live="polite">Tagespuls wird berechnet…</div>
       <div class="daily-content" hidden></div>
       <div class="daily-error" role="alert" hidden></div>
       <div class="daily-experiment-mount"></div>
       <div class="daily-checkin-mount"></div>
+      <div class="daily-checkin-result-mount"></div>
+      <div class="tomorrow-teaser-mount"></div>
       <div class="daily-three-doors-mount"></div>
     </main>
   `;
@@ -118,19 +132,98 @@ export function DailyPage(app, { profile = null } = {}) {
     return;
   }
 
-  // InsightHero placeholder while loading
-  if (expProfile) {
+  // Hero/ViewModel mount happens AFTER transit data arrives (no "gleich verfügbar" placeholder).
+  let dailyVM = null;
+  function mountHeroFromVM(vm) {
+    if (!vm) {
+      app.querySelector('.insight-hero-mount').remove();
+      return;
+    }
+    const evidence = [];
+    if (vm.signature.dayMasterLabel && vm.signature.dayMasterLabel !== '—') evidence.push(`Day Master ${vm.signature.dayMasterLabel}`);
+    if (vm.signature.coherenceScore != null) evidence.push(`Kohärenz-Index ${vm.signature.coherenceScore}`);
+    if (vm.western.activeHouses?.length) evidence.push(vm.western.theme);
     app.querySelector('.insight-hero-mount').replaceWith(
       InsightHero({
         eyebrow:   'Heute',
         title:     'Dein Tagespuls',
-        statement: 'Was heute aus deiner Signatur lebt — gleich verfügbar.',
-        evidence:  identity ? [identity.dayMaster !== '—' ? `Day Master ${identity.dayMaster}` : null].filter(Boolean) : [],
+        statement: vm.fusion.synthesis || vm.western.chance || vm.experiment.instruction,
+        evidence,
+        primaryAction:   { label: 'Zur Wochenvorschau', path: '/transit-calendar' },
+        secondaryAction: { label: 'In Beziehung sehen', path: '/love' },
       })
     );
-  } else {
-    app.querySelector('.insight-hero-mount').remove();
   }
+
+  // Kick off transit fetches in parallel so the Hero can render real data.
+  const transitsPromise = Promise.allSettled([getTransitNow(), getTransitTimeline()]).then(([nowRes, tlRes]) => {
+    const todayData = (nowRes.status === 'fulfilled' && nowRes.value?.ok) ? nowRes.value.data : null;
+    const timeline  = (tlRes.status  === 'fulfilled' && tlRes.value?.ok)  ? tlRes.value.data  : null;
+    return { today: todayData, timeline };
+  });
+
+  function yesterdayIso() {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function readHistory() {
+    const storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
+    if (!storage) return { yesterday: null };
+    const y = readDailyCheckin(storage, yesterdayIso());
+    if (!y) return { yesterday: null };
+    return {
+      yesterday: {
+        activeHouses:    Array.isArray(y.activeHouses) ? y.activeHouses : [],
+        dominantElement: y.dominantElement || null,
+        checkIn:         { clarity: y.clarity, energy: y.energy, contact: y.contact },
+      },
+    };
+  }
+
+  function persistTodayState(vm) {
+    const storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
+    if (!storage || !vm) return;
+    const activeHouses = (vm.western.activeHouses || []).map((h) => h.house);
+    const dominantElement = vm.fusion?.tension?.match(/\b(Holz|Feuer|Erde|Metall|Wasser)\b/)?.[1] || null;
+    writeDailyCheckin(storage, vm.date, { activeHouses, dominantElement });
+  }
+
+  function mountTodayNew(vm) {
+    app.querySelector('.today-new-mount').replaceWith(TodayNewCard(vm.todayNew));
+  }
+
+  function mountTomorrow(vm) {
+    app.querySelector('.tomorrow-teaser-mount').replaceWith(TomorrowTeaserCard(vm.tomorrow));
+  }
+
+  transitsPromise.then((transits) => {
+    dailyVM = buildDailyCompanionViewModel({
+      profile,
+      transits,
+      date: todayIso(),
+      history: readHistory(),
+    });
+    if (expProfile) mountHeroFromVM(dailyVM);
+    else app.querySelector('.insight-hero-mount').remove();
+    const scoreMount = app.querySelector('.score-band-mount');
+    if (dailyVM.signature.coherenceScore != null) {
+      scoreMount.replaceWith(ScoreBandCard({ score: dailyVM.signature.coherenceScore, label: 'Kohärenz-Index' }));
+    } else {
+      scoreMount.remove();
+    }
+    mountTodayNew(dailyVM);
+    const vmMount = app.querySelector('.vm-cards-mount');
+    const vmWrap = document.createElement('div');
+    vmWrap.className = 'vm-cards-stack';
+    vmWrap.appendChild(WesternImpulseCard(dailyVM.western));
+    vmWrap.appendChild(BaziImpulseCard(dailyVM.bazi));
+    vmWrap.appendChild(FusionSynthesisCard(dailyVM.fusion));
+    vmMount.replaceWith(vmWrap);
+    mountTomorrow(dailyVM);
+    persistTodayState(dailyVM);
+  });
 
   function mountFallbackFocus() {
     if (!expProfile) return;
@@ -159,10 +252,26 @@ export function DailyPage(app, { profile = null } = {}) {
     app.querySelector('.daily-experiment-mount').replaceWith(ActionExperimentCard(exp));
   }
 
+  function renderCheckinResult(entry) {
+    const mount = app.querySelector('.daily-checkin-result-mount');
+    if (!mount) return;
+    const card = CheckInResultCard({ entry, vm: dailyVM });
+    mount.replaceWith(card);
+  }
+
   function mountCheckin() {
+    const date = todayIso();
+    const storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
     app.querySelector('.daily-checkin-mount').replaceWith(
-      DailyCheckin({ isoDate: todayIso() })
+      DailyCheckin({
+        isoDate: date,
+        onComplete: (entry) => renderCheckinResult(entry),
+      })
     );
+    if (storage) {
+      const existing = readDailyCheckin(storage, date);
+      if (existing && existing.clarity && existing.energy && existing.contact) renderCheckinResult(existing);
+    }
   }
 
   function mountThreeDoors() {
