@@ -1,6 +1,8 @@
 import { GeoInput }              from '../components/GeoInput.js';
 import { CalculationProgress }   from '../components/CalculationProgress.js';
 import { SourceBadge }           from '../components/SourceBadge.js';
+import { InsightHero }           from '../components/InsightHero.js';
+import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { calculateProfile, calculateSynastry } from '../api/client.js';
 import { createSynastryProjection } from '../domain/projections.js';
 import { computeDomainScores }    from '../synastry/domain-score.js';
@@ -8,6 +10,10 @@ import { HeatmapOverview }        from '../synastry/HeatmapOverview.js';
 import { buildDynastyResonance }  from '../synastry/dynasty-resonance.js';
 import { buildHouseComparisons, DOMAIN_HOUSES } from '../synastry/house-comparison.js';
 import { ELEMENT_COLORS }         from '../data/astro-mappings.js';
+import {
+  buildExperienceProfile,
+  buildActionExperiment,
+} from '../domain/experienceCopy.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -67,13 +73,26 @@ export function SynastryPage(app) {
       </div>
 
       <div class="synastry-result" hidden>
-        <div class="synastry-wuxing-section"></div>
-        <div class="synastry-bazi-section"></div>
-        <div class="synastry-aspects-section"></div>
-        <div class="synastry-extension-placeholder"></div>
-        <div class="synastry-heatmap-section"></div>
-        <div class="synastry-dynasty-section"></div>
-        <div class="synastry-houses-section"></div>
+        <div class="synastry-hero-mount"></div>
+        <section class="synastry-light-summary" aria-label="Beziehung in drei Sätzen">
+          <h2>In drei Sätzen</h2>
+          <p class="rs-line"><strong>Was verbindet:</strong> <span class="rs-connect"></span></p>
+          <p class="rs-line"><strong>Wo Reibung entsteht:</strong> <span class="rs-friction"></span></p>
+          <p class="rs-line"><strong>Was hilft:</strong> <span class="rs-helps"></span></p>
+        </section>
+        <div class="synastry-connection-mount"></div>
+        <div class="synastry-tension-mount"></div>
+        <div class="synastry-experiment-mount"></div>
+        <details class="synastry-deepdive" open>
+          <summary>Vollanalyse (Resonanz, BaZi, Aspekte, Häuser …)</summary>
+          <div class="synastry-wuxing-section"></div>
+          <div class="synastry-bazi-section"></div>
+          <div class="synastry-aspects-section"></div>
+          <div class="synastry-extension-placeholder"></div>
+          <div class="synastry-heatmap-section"></div>
+          <div class="synastry-dynasty-section"></div>
+          <div class="synastry-houses-section"></div>
+        </details>
       </div>
     </main>
   `;
@@ -177,6 +196,10 @@ export function SynastryPage(app) {
 
   function renderResult(profileA, profileB, synastrySummary = null) {
     resultEl.hidden = false;
+    resultEl.querySelector('.synastry-hero-mount').innerHTML = '';
+    resultEl.querySelector('.synastry-connection-mount').innerHTML = '';
+    resultEl.querySelector('.synastry-tension-mount').innerHTML = '';
+    resultEl.querySelector('.synastry-experiment-mount').innerHTML = '';
     resultEl.querySelector('.synastry-wuxing-section').innerHTML = '';
     resultEl.querySelector('.synastry-bazi-section').innerHTML = '';
     resultEl.querySelector('.synastry-aspects-section').innerHTML = '';
@@ -187,6 +210,10 @@ export function SynastryPage(app) {
 
     const proj = createSynastryProjection(profileA, profileB);
 
+    // ── Light summary first ────────────────────────────────────────────────
+    renderLightSummary(profileA, profileB, proj, synastrySummary);
+
+    // ── Deep dive below ────────────────────────────────────────────────────
     renderWuXing(resultEl.querySelector('.synastry-wuxing-section'), proj);
     renderBazi(resultEl.querySelector('.synastry-bazi-section'), proj);
     renderAspects(resultEl.querySelector('.synastry-aspects-section'), proj);
@@ -194,6 +221,91 @@ export function SynastryPage(app) {
     renderHeatmap(resultEl.querySelector('.synastry-heatmap-section'), profileA, profileB);
     renderDynasty(resultEl.querySelector('.synastry-dynasty-section'), profileA, profileB);
     renderHouses(resultEl.querySelector('.synastry-houses-section'), profileA, profileB);
+  }
+
+  function renderLightSummary(profileA, profileB, proj, synastrySummary) {
+    const expA = buildExperienceProfile(profileA);
+    const heroMount       = resultEl.querySelector('.synastry-hero-mount');
+    const connectionMount = resultEl.querySelector('.synastry-connection-mount');
+    const tensionMount    = resultEl.querySelector('.synastry-tension-mount');
+    const experimentMount = resultEl.querySelector('.synastry-experiment-mount');
+
+    const coherence = typeof synastrySummary?.combined_coherence === 'number'
+      ? Math.round(synastrySummary.combined_coherence * 100)
+      : (proj?.harmonyScore != null ? Math.round(proj.harmonyScore * 100) : null);
+
+    // Hero
+    heroMount.replaceWith(
+      InsightHero({
+        eyebrow:   'Synastrie',
+        title:     profileB
+          ? 'Eure Resonanzlandschaft'
+          : 'Deine Resonanzlandschaft (Person A allein)',
+        statement: profileB
+          ? 'Zwei Signaturen im Gespräch — wo Energie fließt, wo sie reibt, was sie lernen lässt.'
+          : 'Lege eine zweite Person an, um die Resonanz zu sehen.',
+        evidence: coherence != null ? [`Kohärenzindex ${coherence}`] : [],
+      })
+    );
+
+    // Three sentences
+    const wuxingRelation = proj?.wuxing?.cycle || null;
+    const tension = synastrySummary?.element_tension || null;
+    const dominantA = tension?.dominant_a;
+    const dominantB = tension?.dominant_b;
+
+    const connect = profileB
+      ? (wuxingRelation
+        ? `${wuxingRelation} — eure Grundenergien finden hier einen geteilten Kanal.`
+        : 'Westliche und östliche Signaturen zeigen erste Überschneidungspunkte.')
+      : 'Noch keine zweite Person — diese Sicht braucht beide Profile.';
+
+    const friction = (dominantA && dominantB)
+      ? `Reibung entsteht zwischen ${dominantA} (A) und ${dominantB} (B) — beide Pole brauchen Raum, sonst kippt es einseitig.`
+      : 'Reibungspunkte werden sichtbar, sobald eine zweite Person berechnet wurde.';
+
+    const helps = 'Es hilft, ein Bedürfnis früh auszusprechen und die unterschiedlichen Tempi der beiden Systeme zu respektieren — Resonanz ist kein Gleichschritt.';
+
+    resultEl.querySelector('.rs-connect').textContent  = connect;
+    resultEl.querySelector('.rs-friction').textContent = friction;
+    resultEl.querySelector('.rs-helps').textContent    = helps;
+
+    // Hauptverbindung / Hauptspannung as small cards
+    if (profileB && wuxingRelation) {
+      const card = document.createElement('section');
+      card.className = 'synastry-light-card synastry-light-card--connection';
+      const h = document.createElement('h3'); h.textContent = 'Hauptverbindung';
+      const p = document.createElement('p');  p.textContent = wuxingRelation;
+      card.append(h, p);
+      connectionMount.replaceWith(card);
+    } else {
+      connectionMount.remove();
+    }
+
+    if (profileB && tension && dominantA && dominantB) {
+      const card = document.createElement('section');
+      card.className = 'synastry-light-card synastry-light-card--tension';
+      const h = document.createElement('h3'); h.textContent = 'Hauptspannung';
+      const p = document.createElement('p');
+      const intensity = tension.tension_score != null ? ` · Intensität ${Math.round(tension.tension_score * 100)}` : '';
+      p.textContent = `${dominantA} ⟷ ${dominantB}${intensity}`;
+      card.append(h, p);
+      tensionMount.replaceWith(card);
+    } else {
+      tensionMount.remove();
+    }
+
+    // Gemeinsames Experiment
+    if (profileB) {
+      experimentMount.replaceWith(
+        ActionExperimentCard({
+          ...buildActionExperiment('love', expA),
+          title: 'Gemeinsames Experiment',
+        })
+      );
+    } else {
+      experimentMount.remove();
+    }
   }
 
   function renderHarmonyGauge(score, label) {
@@ -337,7 +449,7 @@ export function SynastryPage(app) {
     section.className = 'synastry-section';
 
     const h2 = document.createElement('h2');
-    h2.textContent = 'Wu-Xing-Kompatibilität';
+    h2.textContent = 'Wu-Xing-Resonanz';
     section.appendChild(h2);
 
     if (!proj.wuxing) {
@@ -508,7 +620,7 @@ export function SynastryPage(app) {
       </p>
       <p class="synastry-expl-text">
         Die Fusionsbewertung zeigt, wo diese beiden Ebenen sich verstärken, ergänzen
-        — oder in produktive Spannung geraten. Sie ist kein Urteil über Kompatibilität,
+        — oder in produktive Spannung geraten. Sie ist kein Urteil über Beziehungsqualität,
         sondern eine <em>Bewusstseins-Map</em>: Wo fließt Energie leicht? Wo braucht
         sie aktive Navigation?
       </p>

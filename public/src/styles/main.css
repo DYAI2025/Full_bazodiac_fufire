@@ -1257,3 +1257,15 @@ input:focus { border-color: var(--accent); }
   font-weight: 700;
   margin-top: 4px;
 }
+
+/* Synastry — Light summary */
+.synastry-light-summary { background: var(--panel2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.synastry-light-summary h2 { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.synastry-light-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.synastry-light-card--connection { border-left: 3px solid var(--ok); }
+.synastry-light-card--tension { border-left: 3px solid var(--warn); }
+.synastry-light-card h3 { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-bottom: 4px; }
+.synastry-light-card p { color: var(--text); font-size: 1rem; }
+.synastry-deepdive { margin-top: 16px; }
+.synastry-deepdive > summary { cursor: pointer; padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent); font-weight: 700; }
+.synastry-deepdive[open] > summary { margin-bottom: 16px; }
