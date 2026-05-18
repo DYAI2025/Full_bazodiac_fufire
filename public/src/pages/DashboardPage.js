@@ -5,7 +5,8 @@ export function DashboardPage(app, { profile, onNavigate }) {
         <a href="#/" class="nav-link">← Eingabe</a>
         <a href="#/overview" class="nav-link">Übersicht</a>
       </nav>
-      <h1 class="dash-title">Nerd-Dashboard</h1>
+      <h1 class="dash-title">Debug &amp; API Status</h1>
+      <p class="dash-subtitle">Diese Seite ist ein internes Werkzeug — sie ist absichtlich nicht in der Hauptnavigation.</p>
 
       <section class="dash-section" aria-label="Endpoint-Status">
         <h2>Endpoint-Matrix</h2>

@@ -1,5 +1,16 @@
 // public/src/pages/DailyPage.js
 import { getDailyExperience } from '../api/client.js';
+import { InsightHero }           from '../components/InsightHero.js';
+import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
+import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
+import { ThreeDoors }            from '../components/ThreeDoors.js';
+import { DailyCheckin }          from '../components/DailyCheckin.js';
+import {
+  buildExperienceProfile,
+  buildCoreIdentity,
+  buildDailyFallback,
+  buildActionExperiment,
+} from '../domain/experienceCopy.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -46,21 +57,45 @@ function renderFusion(fusion) {
   return el;
 }
 
-export function DailyPage(app) {
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function DailyPage(app, { profile = null } = {}) {
   const today = new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const expProfile = profile ? buildExperienceProfile(profile) : null;
+  const identity   = expProfile ? buildCoreIdentity(expProfile) : null;
 
   app.innerHTML = `
     <main class="daily-page">
+      <div class="sig-bar-mount"></div>
       <header class="daily-header">
         <a href="#/" class="daily-back-link">← Zurück</a>
         <h1 class="daily-title">Tagespuls</h1>
         <p class="daily-date">${today}</p>
       </header>
+      <div class="insight-hero-mount"></div>
+      <div class="daily-focus-mount"></div>
       <div class="daily-loading" role="status" aria-live="polite">Tagespuls wird berechnet…</div>
       <div class="daily-content" hidden></div>
       <div class="daily-error" role="alert" hidden></div>
+      <div class="daily-experiment-mount"></div>
+      <div class="daily-checkin-mount"></div>
+      <div class="daily-three-doors-mount"></div>
     </main>
   `;
+
+  if (expProfile) {
+    app.querySelector('.sig-bar-mount').replaceWith(
+      PersistentSignatureBar({
+        dayMaster: identity.dayMaster,
+        sun:       identity.sun,
+        coherence: expProfile.fusion.coherence,
+      })
+    );
+  } else {
+    app.querySelector('.sig-bar-mount').remove();
+  }
 
   const loading = app.querySelector('.daily-loading');
   const content = app.querySelector('.daily-content');
@@ -83,11 +118,67 @@ export function DailyPage(app) {
     return;
   }
 
+  // InsightHero placeholder while loading
+  if (expProfile) {
+    app.querySelector('.insight-hero-mount').replaceWith(
+      InsightHero({
+        eyebrow:   'Heute',
+        title:     'Dein Tagespuls',
+        statement: 'Was heute aus deiner Signatur lebt — gleich verfügbar.',
+        evidence:  identity ? [identity.dayMaster !== '—' ? `Day Master ${identity.dayMaster}` : null].filter(Boolean) : [],
+      })
+    );
+  } else {
+    app.querySelector('.insight-hero-mount').remove();
+  }
+
+  function mountFallbackFocus() {
+    if (!expProfile) return;
+    const fb = buildDailyFallback(expProfile);
+    const focusEl = document.createElement('section');
+    focusEl.className = 'daily-section daily-section--focus';
+    const h = document.createElement('h2');
+    h.className = 'daily-section-title';
+    h.textContent = 'Tagesfokus';
+    const summary = document.createElement('p');
+    summary.className = 'daily-summary';
+    summary.textContent = fb.focus;
+    const impulse = document.createElement('p');
+    impulse.className = 'daily-impulse';
+    impulse.textContent = fb.impulse;
+    focusEl.append(h, summary, impulse);
+    app.querySelector('.daily-focus-mount').replaceWith(focusEl);
+  }
+
+  function mountExperiment() {
+    if (!expProfile) {
+      app.querySelector('.daily-experiment-mount').remove();
+      return;
+    }
+    const exp = buildActionExperiment('daily', expProfile);
+    app.querySelector('.daily-experiment-mount').replaceWith(ActionExperimentCard(exp));
+  }
+
+  function mountCheckin() {
+    app.querySelector('.daily-checkin-mount').replaceWith(
+      DailyCheckin({ isoDate: todayIso() })
+    );
+  }
+
+  function mountThreeDoors() {
+    app.querySelector('.daily-three-doors-mount').replaceWith(ThreeDoors());
+  }
+
   getDailyExperience(birthInput).then((res) => {
     loading.hidden = true;
 
     if (!res.ok) {
-      errorEl.textContent = res.error || 'Tagespuls konnte nicht geladen werden.';
+      // Fallback path: synthetic focus + experiment + checkin still shown
+      mountFallbackFocus();
+      mountExperiment();
+      mountCheckin();
+      mountThreeDoors();
+      errorEl.textContent = res.error || 'Tagespuls konnte nicht geladen werden — Fallback aktiv.';
       errorEl.hidden = false;
       return;
     }
@@ -108,9 +199,17 @@ export function DailyPage(app) {
     }
 
     content.hidden = false;
+    mountExperiment();
+    mountCheckin();
+    mountThreeDoors();
+    app.querySelector('.daily-focus-mount').remove();
   }).catch((err) => {
     loading.hidden = true;
-    errorEl.textContent = `Fehler: ${err.message}`;
+    mountFallbackFocus();
+    mountExperiment();
+    mountCheckin();
+    mountThreeDoors();
+    errorEl.textContent = `Fehler: ${err.message} — Fallback aktiv.`;
     errorEl.hidden = false;
   });
 }

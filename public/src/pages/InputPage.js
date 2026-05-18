@@ -6,28 +6,33 @@ export function InputPage(app, { onResult }) {
   app.innerHTML = `
     <main class="input-page">
       <header class="input-header">
-        <h1 class="app-title">Azodiac</h1>
-        <p class="app-subtitle">Westliche Astrologie · BaZi · Wu-Xing-Fusion</p>
+        <h1 class="app-title">Berechne deine Fusion-Signatur</h1>
+        <p class="app-subtitle">Westliche Astrologie · BaZi · WuXing-Fusion in einem Profil.</p>
+        <p class="app-trust">Daten bleiben lokal in deinem Browser — wir speichern nichts dauerhaft.</p>
       </header>
       <form class="birth-form" novalidate>
         <div class="form-group">
           <label for="birth-date">Geburtsdatum</label>
           <input type="date" id="birth-date" required aria-required="true" />
+          <p class="form-helper">Tag, Monat und Jahr deiner Geburt.</p>
         </div>
         <div class="form-group">
           <label for="birth-time">Geburtszeit</label>
           <input type="time" id="birth-time" />
+          <p class="form-helper">Wenn unsicher, wähle unten "Ungefähr" oder "Unbekannt" — die Berechnung läuft trotzdem.</p>
           <div class="time-certainty" role="group" aria-label="Geburtszeit-Genauigkeit">
-            <label><input type="radio" name="time-cert" value="exact" checked /> Genau bekannt</label>
-            <label><input type="radio" name="time-cert" value="approx" /> Ungefähr</label>
+            <label><input type="radio" name="time-cert" value="exact" checked /> Auf die Minute</label>
+            <label><input type="radio" name="time-cert" value="approx" /> Auf 1–2 Stunden</label>
             <label><input type="radio" name="time-cert" value="unknown" /> Unbekannt</label>
           </div>
+          <p class="form-notice form-notice--unknown" hidden>Ohne Geburtszeit fehlen Aszendent und Häuser. Tagesthemen, BaZi und WuXing-Fusion bleiben verfügbar.</p>
         </div>
         <div class="form-group" id="geo-group">
           <label>Geburtsort</label>
+          <p class="form-helper">Tippe die Stadt — wir lösen Zeitzone und Koordinaten automatisch.</p>
         </div>
         <div class="form-error" role="alert" aria-live="assertive" hidden></div>
-        <button type="submit" class="cta-btn" disabled>Berechnen</button>
+        <button type="submit" class="cta-btn" disabled>Fusion-Signatur berechnen</button>
       </form>
     </main>
   `;
@@ -56,6 +61,14 @@ export function InputPage(app, { onResult }) {
   }
 
   dateInput.addEventListener('input', validate);
+
+  const unknownNotice = form.querySelector('.form-notice--unknown');
+  form.querySelectorAll('input[name=time-cert]').forEach((el) => {
+    el.addEventListener('change', () => {
+      const cert = form.querySelector('input[name=time-cert]:checked').value;
+      unknownNotice.hidden = (cert !== 'unknown');
+    });
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

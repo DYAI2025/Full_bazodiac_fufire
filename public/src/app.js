@@ -80,7 +80,10 @@ router
     TransitCalendarPage(app, { profile: currentProfile });
   })
   .register('/daily', (app) => {
-    DailyPage(app);
+    DailyPage(app, {
+      profile: currentProfile,
+      onNavigate: (path) => router.navigate(path),
+    });
   })
   .register('/fusion', (app) => {
     if (!currentProfile) { router.navigate('/'); return; }

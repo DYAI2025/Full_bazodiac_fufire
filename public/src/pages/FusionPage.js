@@ -67,7 +67,8 @@ function esc(s) {
   return d.innerHTML;
 }
 
-function pct(v) { return Math.round((v ?? 0) * 100) + ' %'; }
+// MVP §4.3: nie als Persönlichkeitsanteil framen — Intensität im Signaturraum.
+function pct(v) { return Math.round((v ?? 0) * 100) + ' Punkte Intensität'; }
 
 // ── ElementWheel ──────────────────────────────────────────────────────────
 // 5 nodes on a circle. Radius of each node ∝ vector value.
@@ -127,7 +128,7 @@ function ElementWheel(distribution) {
         <text x="${x.toFixed(1)}" y="${(y - 2).toFixed(1)}" text-anchor="middle"
               class="wheel-node-label">${el}</text>
         <text x="${x.toFixed(1)}" y="${(y + 12).toFixed(1)}" text-anchor="middle"
-              class="wheel-node-pct">${Math.round(value * 100)}%</text>
+              class="wheel-node-pct">${Math.round(value * 100)}</text>
       </g>`;
   }).join('');
 
@@ -257,36 +258,70 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
 
   const ci = fusion.coherence_index;
   const coherencePill = (typeof ci === 'number')
-    ? `<span class="fusion-coherence-pill">Kohärenz ${Math.round(ci * 100)} %</span>`
+    ? `<span class="fusion-coherence-pill">Kohärenz-Index ${Math.round(ci * 100)}</span>`
     : '';
+
+  // Balance summary: dominant / deficient / aktueller Hebel
+  let dominantEl = null, deficientEl = null;
+  if (distribution) {
+    const entries = Object.entries(distribution);
+    dominantEl  = entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+    deficientEl = entries.reduce((a, b) => (b[1] < a[1] ? b : a))[0];
+  }
+  const leverEl = remediation?.actions?.[0]?.element || deficientEl;
 
   app.innerHTML = `
     <main class="fusion-page">
       <nav class="page-nav">
-        <a href="#/overview" class="nav-link">← Übersicht</a>
-        <a href="#/personality" class="nav-link">Persönlichkeit</a>
-        <a href="#/career-finance" class="nav-link">Karriere</a>
+        <a href="#/overview"       class="nav-link">← Übersicht</a>
+        <a href="#/personality"    class="nav-link">Persönlichkeit</a>
+        <a href="#/career-finance" class="nav-link">Arbeit &amp; Ressourcen</a>
       </nav>
 
+      <section class="insight-hero insight-hero--neutral">
+        <p class="insight-hero__eyebrow">WuXing</p>
+        <h1 class="insight-hero__title">Deine Element-Ökonomie</h1>
+        <p class="insight-hero__statement">Wie deine Energie zwischen den fünf Elementen verteilt ist — kein Persönlichkeitsanteil, sondern Intensität im Signaturraum.</p>
+      </section>
+
+      ${distribution ? `
+      <section class="fusion-balance-summary">
+        <div class="fbs-cell fbs-cell--dominant">
+          <span class="fbs-label">Dominant</span>
+          <span class="fbs-value" style="color:${ELEMENT_COLORS[dominantEl] || 'inherit'}">${esc(dominantEl)}</span>
+          <span class="fbs-hint">trägt am meisten Gewicht</span>
+        </div>
+        <div class="fbs-cell fbs-cell--deficient">
+          <span class="fbs-label">Unterrepräsentiert</span>
+          <span class="fbs-value" style="color:${ELEMENT_COLORS[deficientEl] || 'inherit'}">${esc(deficientEl)}</span>
+          <span class="fbs-hint">braucht aktive Pflege</span>
+        </div>
+        <div class="fbs-cell fbs-cell--lever">
+          <span class="fbs-label">Aktueller Hebel</span>
+          <span class="fbs-value" style="color:${ELEMENT_COLORS[leverEl] || 'inherit'}">${esc(leverEl)}</span>
+          <span class="fbs-hint">drei Stufen siehe unten</span>
+        </div>
+      </section>
+      ` : ''}
+
       <header class="page-header">
-        <h1>WuXing Fusion <small>— Element-Signatur</small></h1>
         <p class="section-intro">
-          Deine 5-Elemente-Verteilung aus dem fusionierten Chart (BaZi + westlich).
-          Wheel zeigt Gewichtung, Matrix zeigt Sheng/Ke-Beziehungen, Empfehlungen unten.
+          Wheel zeigt Verteilung im Signaturraum, Sheng/Ke-Beziehungen liegen im Drawer, Empfehlungen folgen einem 3-Stufen-Plan.
         </p>
         ${coherencePill}
       </header>
 
-      <section class="fusion-grid">
-        <div class="fusion-wheel-wrap">
-          <h2>Element-Rad</h2>
-          ${distribution ? ElementWheel(distribution) : '<p class="fusion-empty">Keine Vektor-Daten.</p>'}
-        </div>
+      <section class="fusion-wheel-wrap">
+        <h2>Element-Rad</h2>
+        ${distribution ? ElementWheel(distribution) : '<p class="fusion-empty">Keine Vektor-Daten.</p>'}
+      </section>
+
+      <details class="fusion-matrix-details">
+        <summary>Sheng &amp; Ke — Interaktionsmatrix öffnen</summary>
         <div class="fusion-matrix-wrap">
-          <h2>Interaktionsmatrix</h2>
           ${InteractionMatrix()}
         </div>
-      </section>
+      </details>
 
       <section class="fusion-narrative">
         <h2>Element für Element</h2>
@@ -294,7 +329,7 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
       </section>
 
       <section class="fusion-remediation">
-        <h2>Empfehlungen</h2>
+        <h2>3-Stufen-Plan — was du heute, diese Woche, in 30 Tagen tun kannst</h2>
         ${RemediationPanel(remediation)}
       </section>
     </main>

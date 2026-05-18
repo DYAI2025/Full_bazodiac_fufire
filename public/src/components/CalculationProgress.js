@@ -1,10 +1,13 @@
-// Progressiver Lade-Flow: kein Spinner, sondern Schritte mit Text
+// Progressiver Lade-Flow: kein Spinner, sondern Schritte mit Text.
+// Sechs Stufen, 750 ms pro Schritt, damit der Wechsel sich lebendig anfühlt.
 export function CalculationProgress() {
   const steps = [
-    { id: 'western', label: 'Westliches Chart wird berechnet…' },
-    { id: 'bazi',    label: 'BaZi-Säulen werden ermittelt…' },
-    { id: 'fusion',  label: 'Wu-Xing-Fusion wird berechnet…' },
-    { id: 'done',    label: 'Dein Profil ist fertig.' },
+    { id: 'validate', label: 'Geburtsdaten werden geprüft…' },
+    { id: 'geo',      label: 'Ort und Zeitzone werden aufgelöst…' },
+    { id: 'western',  label: 'Westliches Chart wird berechnet…' },
+    { id: 'bazi',     label: 'BaZi-Säulen werden ermittelt…' },
+    { id: 'fusion',   label: 'WuXing-Fusion wird gebildet…' },
+    { id: 'done',     label: 'Signatur wird vorbereitet.' },
   ];
 
   const el = document.createElement('div');
@@ -19,7 +22,7 @@ export function CalculationProgress() {
     current++;
     if (current >= steps.length - 1) { clearInterval(interval); }
     el.querySelector('.calc-step').textContent = steps[Math.min(current, steps.length - 1)].label;
-  }, 900);
+  }, 750);
 
   el.stop = () => clearInterval(interval);
 
