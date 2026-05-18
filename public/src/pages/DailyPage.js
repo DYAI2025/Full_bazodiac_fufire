@@ -186,7 +186,7 @@ export function DailyPage(app, { profile = null } = {}) {
     const storage = (typeof window !== 'undefined' && window.localStorage) ? window.localStorage : null;
     if (!storage || !vm) return;
     const activeHouses = (vm.western.activeHouses || []).map((h) => h.house);
-    const dominantElement = vm.fusion?.tension?.match(/\b(Holz|Feuer|Erde|Metall|Wasser)\b/)?.[1] || null;
+    const dominantElement = vm.fusion?.dominantElement || null;
     writeDailyCheckin(storage, vm.date, { activeHouses, dominantElement });
   }
 
