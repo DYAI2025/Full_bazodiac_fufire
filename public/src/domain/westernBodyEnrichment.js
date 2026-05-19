@@ -26,7 +26,8 @@ import { WESTERN_SIGN_MEANINGS } from './meanings.js';
 export function formatDegMinutes(decimalDeg) {
   if (decimalDeg === null || decimalDeg === undefined) return null;
   const n = Number(decimalDeg);
-  if (Number.isNaN(n)) return null;
+  // Number.isFinite excludes NaN AND ±Infinity — single guard for both.
+  if (!Number.isFinite(n)) return null;
   const deg = Math.floor(n);
   const minDec = (n - deg) * 60;
   const min = Math.floor(minDec);
@@ -97,7 +98,10 @@ export function enrichBody(bodyKey, rawBody, houseCusps) {
     degDecimal,
     degDisplay,
     house,
-    retrograde: rawBody.retrograde ?? false,
+    // Orchestrator (/api/azodiac/profile) returns `retrograde`;
+    // standalone (/api/fufire/calculate/western) returns `is_retrograde`.
+    // Accept both — orchestrator field wins when both present.
+    retrograde: rawBody.retrograde ?? rawBody.is_retrograde ?? false,
     // Narrative slots — null if sign unknown so consumers can hide the section
     // rather than render a misleading default.
     mode:       meaning?.mode      || null,
