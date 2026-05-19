@@ -205,8 +205,23 @@ export function lookupHouse(num) {
   return HOUSE_MEANINGS[num] || null;
 }
 
+function normalizeCoherenceBand(band) {
+  if (!band) return band;
+
+  const normalized = String(band).trim();
+  const aliasMap = {
+    medium: 'mixed',
+    'very-high': 'veryHigh',
+    'very high': 'veryHigh',
+    veryhigh: 'veryHigh',
+  };
+
+  return aliasMap[normalized] || normalized;
+}
+
 export function lookupCoherenceBand(band) {
-  return COHERENCE_MEANINGS[band] || COHERENCE_MEANINGS.unknown;
+  const key = normalizeCoherenceBand(band);
+  return COHERENCE_MEANINGS[key] || COHERENCE_MEANINGS.unknown;
 }
 
 // Daily Learn-Impulse: aus aktivem Element/Haus/Pillar ein dreiteiliges Mini-Lehrstück bauen.
