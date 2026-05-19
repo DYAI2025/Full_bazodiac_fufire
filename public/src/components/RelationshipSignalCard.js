@@ -52,8 +52,10 @@ export function RelationshipSignalCard(opts = {}) {
     p.className = 'relationship-signal-card__practice';
     const strong = document.createElement('strong');
     strong.textContent = 'Praktisch:';
+    const practiceText = document.createElement('span');
+    practiceText.textContent = ` ${m.practice}`;
     p.appendChild(strong);
-    p.appendChild(document.createTextNode(` ${m.practice}`));
+    p.appendChild(practiceText);
     root.appendChild(p);
   }
   if (m.sourceLayer) {
