@@ -32,13 +32,27 @@ export const PLANET_DE = {
   TrueNorthNode: 'Mondknoten (wahr) ☊',
 };
 
-// Aspect EN → DE label
+// Aspect EN → DE label. Covers the 7 aspect types FuFire returns in
+// /api/azodiac/profile responses (5 majors + 2 minors).
 export const ASPECT_DE = {
-  conjunction: 'Konjunktion',
-  sextile:     'Sextil',
-  square:      'Quadrat',
-  trine:       'Trigon',
-  opposition:  'Opposition',
+  conjunction:    'Konjunktion',
+  sextile:        'Sextil',
+  square:         'Quadrat',
+  trine:          'Trigon',
+  opposition:     'Opposition',
+  'semi-sextile': 'Halbsextil',
+  quincunx:       'Quincunx',
+};
+
+// Planet/body name → clean DE label (no glyph). Use this where the glyph
+// is rendered separately (e.g. aspect lines: "Mond Trigon Neptun" reads
+// cleaner than "Mond ☽ Trigon Neptun ♆").
+export const PLANET_DE_CLEAN = {
+  Sun: 'Sonne', Moon: 'Mond', Mercury: 'Merkur', Venus: 'Venus',
+  Mars: 'Mars', Jupiter: 'Jupiter', Saturn: 'Saturn',
+  Uranus: 'Uranus', Neptune: 'Neptun', Pluto: 'Pluto',
+  Chiron: 'Chiron', Lilith: 'Lilith',
+  NorthNode: 'Mondknoten', TrueNorthNode: 'Mondknoten (wahr)',
 };
 
 // DE + EN sign names → Element
