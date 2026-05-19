@@ -1,0 +1,72 @@
+{
+  "date": "2026-05-19",
+  "western": {
+    "summary": "Fuer dich als Pisces stehen heute Identitaet, Ressourcen im Fokus. Die Planetenkonstellation aktiviert deine Sektoren 1 und 2.",
+    "themes": [
+      "Identitaet",
+      "Ressourcen"
+    ],
+    "caution": "Achte in Sektor 2 auf Ueberanstrengung -- hier liegt heute Spannung.",
+    "opportunity": "Sektor 1 bietet dir heute besonderes Potenzial. Nutze die Energie aktiv.",
+    "evidence": {
+      "transit_sectors": [
+        0,
+        1
+      ],
+      "natal_focus": [
+        "sun",
+        "ascendant"
+      ],
+      "day_master": null,
+      "daily_pillar": null,
+      "relation_to_day_master": null,
+      "jieqi": null,
+      "weekday": "Dienstag"
+    },
+    "jieqi_note": null,
+    "weekday_note": "Dienstag (Mars): Tatendrang und Entschlossenheit praegen den Tag."
+  },
+  "eastern": {
+    "summary": "Heute begegnest du deinem eigenen Element. Dein Day Master Ren findet Resonanz in der Wasser-Schwingung. Solarterm: Lixia.",
+    "themes": [
+      "Gleichklang",
+      "Staerkung",
+      "Vertrauen"
+    ],
+    "caution": "Gleichklang klingt harmonisch, kann aber zu Selbstueberschaetzung fuehren.",
+    "opportunity": "Dein Element ist verstaerkt -- idealer Tag fuer Projekte, die deiner Natur entsprechen.",
+    "evidence": {
+      "transit_sectors": null,
+      "natal_focus": null,
+      "day_master": "Ren",
+      "daily_pillar": {
+        "stem": "Gui",
+        "branch": "Si"
+      },
+      "relation_to_day_master": "companion",
+      "jieqi": "Lixia",
+      "weekday": "Dienstag"
+    },
+    "jieqi_note": "Feuer-Energie steigt: Sichtbarkeit und Aktivitaet nehmen zu.",
+    "weekday_note": "Dienstag (Mars): Tatendrang und Entschlossenheit praegen den Tag."
+  },
+  "fusion": {
+    "summary": "Dein Fusionstag verbindet Identitaet aus beiden Systemen. Westlich staerkt dein Transitfeld, oestlich arbeitet dein Day Master Ren in companion-Dynamik.",
+    "synthesis": "Beide Systeme zeigen heute einen gemeinsamen Impuls: Identitaet. Gleichzeitig entsteht Spannung im Bereich Staerkung, Vertrauen. Die Synthese liegt darin, beides bewusst zu halten — den Identitaet-Impuls aktiv zu nutzen und den Spannungsbereich nicht zu verdraengen.",
+    "action": "Nutze heute gezielt den Bereich Identitaet. Plane eine bewusste Handlung, die beide Energien verbindet.",
+    "pushworthy": false,
+    "push_text": null,
+    "jieqi_note": "Solarterm Lixia faerbt beide Systeme.",
+    "weekday_note": "Dienstag-Energie verbindet die Impulse."
+  },
+  "_meta": {
+    "bootstrap_profile": {
+      "sun_sign": "Fische",
+      "moon_sign": "Jungfrau",
+      "ascendant_sign": "Widder",
+      "day_master": "Ren",
+      "harmony_index": 0.8571
+    },
+    "computed_at": "2026-05-19T20:01:12.232Z"
+  }
+}
