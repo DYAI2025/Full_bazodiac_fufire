@@ -65,9 +65,18 @@ export async function calculateSynastry(inputA, inputB) {
   return request('POST', '/api/azodiac/synastry', { personA: inputA, personB: inputB });
 }
 
+// Runs in production by default. Opt-out via window.__FUFIRE_FLAGS?.disableNoFakeDataGuard
+// or env NOFAKE_GUARD_DISABLE=1 (for legacy fixtures that legitimately ship sample text).
+const DUMMY_SIGNATURES = [
+  'Lorem', 'dummy', 'fake', 'random', 'placeholder', 'test123',
+  'TODO', 'FIXME', 'XXX', 'TBD',
+  'Beispieltext', 'Beispielwert', 'Mustermann',
+  'Keine Beschreibung verfügbar',
+];
+
 export function noFakeDataGuard(data, label = '') {
-  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'development') return;
-  const DUMMY_SIGNATURES = ['Lorem', 'dummy', 'fake', 'random', 'placeholder', 'test123'];
+  if (typeof window !== 'undefined' && window.__FUFIRE_FLAGS?.disableNoFakeDataGuard) return;
+  if (typeof process !== 'undefined' && process.env?.NOFAKE_GUARD_DISABLE === '1') return;
   const str = JSON.stringify(data || '');
   for (const sig of DUMMY_SIGNATURES) {
     if (str.includes(sig)) {

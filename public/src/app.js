@@ -9,10 +9,11 @@ import { SynastryPage }       from './pages/SynastryPage.js';
 import { TransitCalendarPage } from './pages/TransitCalendarPage.js';
 import { DailyPage }           from './pages/DailyPage.js';
 import { FusionPage }          from './pages/FusionPage.js';
+import { ProfileMissingBanner } from './components/ProfileMissingBanner.js';
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
-// Das berechnete Profil wird in sessionStorage gesichert, damit es bei
-// Back-Navigation und Seiten-Reload erhalten bleibt.
+// Berechnetes Profil bleibt in sessionStorage erhalten (Back-Navigation, Reload).
+// Person-A-Eingabemeta + Person-B liegen in localStorage (über Sessions hinweg).
 const SESSION_KEY = 'azodiac_profile';
 
 function saveProfile(profile) {
@@ -28,6 +29,20 @@ function restoreProfile() {
 
 let currentProfile = restoreProfile();
 
+function mountWithProfile(pageFn, app, pageLabel) {
+  if (!currentProfile) {
+    app.appendChild(ProfileMissingBanner({
+      pageLabel,
+      onOpenInput: () => router.navigate('/'),
+    }));
+    return;
+  }
+  pageFn(app, {
+    profile: currentProfile,
+    onNavigate: (path) => router.navigate(path),
+  });
+}
+
 router
   .register('/', (app) => {
     InputPage(app, {
@@ -38,58 +53,24 @@ router
       },
     });
   })
-  .register('/overview', (app) => {
-    if (!currentProfile) { router.navigate('/'); return; }
-    OverviewPage(app, {
-      profile: currentProfile,
-      onNavigate: (path) => router.navigate(path),
-    });
-  })
-  .register('/love', (app) => {
-    if (!currentProfile) { router.navigate('/'); return; }
-    LovePage(app, {
-      profile: currentProfile,
-      onNavigate: (path) => router.navigate(path),
-    });
-  })
-  .register('/career-finance', (app) => {
-    if (!currentProfile) { router.navigate('/'); return; }
-    CareerFinancePage(app, {
-      profile: currentProfile,
-      onNavigate: (path) => router.navigate(path),
-    });
-  })
-  .register('/personality', (app) => {
-    if (!currentProfile) { router.navigate('/'); return; }
-    PersonalityPage(app, {
-      profile: currentProfile,
-      onNavigate: (path) => router.navigate(path),
-    });
-  })
-  .register('/dashboard', (app) => {
-    if (!currentProfile) { router.navigate('/'); return; }
-    DashboardPage(app, {
-      profile: currentProfile,
-      onNavigate: (path) => router.navigate(path),
-    });
-  })
-  .register('/synastry', (app) => {
-    SynastryPage(app);
-  })
-  .register('/transit-calendar', (app) => {
-    TransitCalendarPage(app, { profile: currentProfile });
-  })
+  .register('/overview', (app) => mountWithProfile(OverviewPage, app, 'deine Signatur'))
+  .register('/love', (app) => mountWithProfile(LovePage, app, 'die Beziehungs-Ansicht'))
+  .register('/career-finance', (app) => mountWithProfile(CareerFinancePage, app, 'Arbeit & Ressourcen'))
+  .register('/personality', (app) => mountWithProfile(PersonalityPage, app, 'die Persönlichkeits-Schichten'))
+  .register('/dashboard', (app) => mountWithProfile(DashboardPage, app, 'das Dashboard'))
+  .register('/fusion', (app) => mountWithProfile(FusionPage, app, 'die Fusion-Synthese'))
   .register('/daily', (app) => {
+    // Daily zeigt eigenes Onboarding bei fehlendem Profil — kein zusätzlicher Banner.
     DailyPage(app, {
       profile: currentProfile,
       onNavigate: (path) => router.navigate(path),
     });
   })
-  .register('/fusion', (app) => {
-    if (!currentProfile) { router.navigate('/'); return; }
-    FusionPage(app, {
-      profile: currentProfile,
-      onNavigate: (path) => router.navigate(path),
-    });
+  .register('/synastry', (app) => {
+    // Synastry hat eigene Person-A-/Person-B-Eingabe (Override-Pfad).
+    SynastryPage(app);
+  })
+  .register('/transit-calendar', (app) => {
+    TransitCalendarPage(app, { profile: currentProfile });
   })
   .start();

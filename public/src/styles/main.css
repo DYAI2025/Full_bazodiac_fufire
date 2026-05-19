@@ -1815,3 +1815,26 @@ input:focus { border-color: var(--accent); }
   .daily-step { padding: 1rem; }
   .daily-step__title { font-size: 1.05rem; }
 }
+
+/* ── ProfileMissingBanner ─────────────────────────────────────────────────── */
+.profile-missing-banner {
+  margin: 1.5rem auto;
+  padding: 1.25rem 1.5rem;
+  max-width: 640px;
+  background: var(--card, rgba(255,255,255,.04));
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  border-radius: 12px;
+  text-align: left;
+}
+.profile-missing-title { margin: 0 0 .5rem; font-size: 1.1rem; }
+.profile-missing-text  { margin: 0 0 1rem; color: var(--muted, #b6bcc4); font-size: .95rem; line-height: 1.5; }
+.profile-missing-cta {
+  padding: .6rem 1.2rem;
+  background: var(--accent, #d4b483);
+  color: var(--bg, #0f1115);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.profile-missing-cta:hover { filter: brightness(1.05); }
