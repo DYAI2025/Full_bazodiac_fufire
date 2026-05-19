@@ -26,7 +26,8 @@ import { WESTERN_SIGN_MEANINGS } from './meanings.js';
 export function formatDegMinutes(decimalDeg) {
   if (decimalDeg === null || decimalDeg === undefined) return null;
   const n = Number(decimalDeg);
-  if (Number.isNaN(n)) return null;
+  // Number.isFinite excludes NaN AND ±Infinity — single guard for both.
+  if (!Number.isFinite(n)) return null;
   const deg = Math.floor(n);
   const minDec = (n - deg) * 60;
   const min = Math.floor(minDec);

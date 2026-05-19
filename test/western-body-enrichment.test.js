@@ -55,6 +55,14 @@ test('formatDegMinutes: null/undefined/NaN returns null (no fake-data)', () => {
   assert.equal(formatDegMinutes(NaN), null);
 });
 
+test('formatDegMinutes: Infinity / -Infinity returns null (no garbage string)', () => {
+  // Defensive — upstream `degree_in_sign` is 0..30 by API contract, but if
+  // upstream ever returns Infinity (e.g. division-by-zero bug) the result
+  // must NOT be the string "Infinity°NaN'" which would leak into rendered DOM.
+  assert.equal(formatDegMinutes(Infinity), null);
+  assert.equal(formatDegMinutes(-Infinity), null);
+});
+
 // ── computeBodyHouse ────────────────────────────────────────────────────────
 
 test('computeBodyHouse: Lina Sun longitude 353.15 falls in house 12 (cusp12=328.93, cusp1=27.71)', () => {
