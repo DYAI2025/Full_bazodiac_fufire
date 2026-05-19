@@ -14,6 +14,7 @@ import { lookupStem as lookupStemFromMeanings } from '../domain/meanings.js';
 import { WuxingBar } from '../components/WuxingBar.js';
 import { buildHouseComparisons, DOMAIN_HOUSES } from '../synastry/house-comparison.js';
 import { calculateProfile, geocodePlace } from '../api/client.js';
+import { readPersonB, savePersonB }       from '../domain/personState.js';
 
 // ── Fusion-Layer constants ────────────────────────────────────────────────────
 
@@ -292,6 +293,16 @@ function buildPartnerBSection(profile, wuxingVecA) {
   formWrap.append(dateInput, timeInput, placeInput, calcBtn, statusMsg, resultsWrap);
   section.appendChild(formWrap);
 
+  // Prefill from persisted Person-B if available.
+  const persistedB = readPersonB();
+  if (persistedB) {
+    dateInput.value = persistedB.date || '';
+    timeInput.value = persistedB.time || '';
+    placeInput.value = persistedB.place?.display || '';
+    formWrap.style.display = 'flex';
+    toggleBtn.textContent = 'Partner B ausblenden';
+  }
+
   // Toggle visibility
   toggleBtn.addEventListener('click', () => {
     const isVisible = formWrap.style.display === 'flex';
@@ -338,6 +349,15 @@ function buildPartnerBSection(profile, wuxingVecA) {
       }
 
       const profileB = profRes.data;
+
+      // 3. Persist valid Person B for reuse across pages.
+      savePersonB({
+        alias: '',
+        date,
+        time: time || '12:00',
+        certainty: 'exact',
+        place: { display: place, lat, lon, tz },
+      });
 
       // 3. House comparisons
       const comparisons = buildHouseComparisons(profile, profileB, DOMAIN_HOUSES['career-finance']);

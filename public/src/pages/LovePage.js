@@ -13,6 +13,7 @@ import {
   buildActionExperiment,
 }                                                  from '../domain/experienceCopy.js';
 import { calculateProfile, geocodePlace }          from '../api/client.js';
+import { readPersonB, savePersonB }                 from '../domain/personState.js';
 import { buildHouseComparisons, DOMAIN_HOUSES }    from '../synastry/house-comparison.js';
 
 // Western sign → element group
@@ -475,6 +476,16 @@ export function LovePage(app, { profile, onNavigate }) {
   partnerBForm.append(dateInput, timeInput, placeInput, calcBtn, partnerBError, partnerBLoading);
   partnerBSection.appendChild(partnerBForm);
 
+  // Prefill from persisted Person-B if available.
+  const persistedB = readPersonB();
+  if (persistedB) {
+    dateInput.value = persistedB.date || '';
+    timeInput.value = persistedB.time || '';
+    placeInput.value = persistedB.place?.display || '';
+    partnerBForm.hidden = false;
+    toggleBtn.textContent = 'Partner B ausblenden';
+  }
+
   const houseResultSection = document.createElement('section');
   houseResultSection.className = 'house-comparison-section';
   houseResultSection.hidden = true;
@@ -515,6 +526,15 @@ export function LovePage(app, { profile, onNavigate }) {
         throw new Error(profileResult.error || 'Profilberechnung fehlgeschlagen.');
       }
       const profileB = profileResult.data;
+
+      // 3. Persist valid Person B for reuse on next visit / in Synastry.
+      savePersonB({
+        alias: '',
+        date,
+        time: time || '12:00',
+        certainty: 'exact',
+        place: { display: place, lat, lon, tz },
+      });
 
       // 3. Update WuxingBar with partner B overlay
       const vecB = profileB?.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
