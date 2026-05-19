@@ -1,6 +1,7 @@
 import { generateCoreStatement } from '../domain/coreStatement.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
 import { ExplainableCard }       from '../components/ExplainableCard.js';
+import { WuXingEducationGrid }   from '../components/WuXingEducationGrid.js';
 import {
   PILLAR_ROLES, lookupStem, lookupBranch, lookupSign,
 } from '../domain/meanings.js';
@@ -428,6 +429,14 @@ export function OverviewPage(app, { profile, onNavigate }) {
         <div class="bazi-pillars-wrapper"></div>
       </section>
       <div class="western-houses-placeholder"></div>
+      <section class="wuxing-education-section" aria-label="WuXing Elemente">
+        <header class="layer-header layer-header--fusion">
+          <span class="layer-header__glyph">☯</span>
+          <span class="layer-header__title">WuXing — Fünf Elemente</span>
+          <span class="layer-header__sub">Bedeutung · Stärke · Schwäche · Übersteuerung · Ausgleich (heute / Woche / Gewohnheit)</span>
+        </header>
+        <div class="wuxing-education-grid-mount"></div>
+      </section>
       <section class="western-education-section" aria-label="Westliche Signatur">
         <header class="layer-header layer-header--west">
           <span class="layer-header__glyph">✦</span>
@@ -534,6 +543,15 @@ export function OverviewPage(app, { profile, onNavigate }) {
 
   app.querySelector('.bazi-pillars-wrapper')
     .appendChild(renderBaziPillars(profile.bazi, { timeCertainty: timeCert }));
+
+  // WuXing-Education-Grid mit Dominant/Deficient-Highlight aus expProfile.
+  const wuxingMount = app.querySelector('.wuxing-education-grid-mount');
+  if (wuxingMount) {
+    wuxingMount.replaceWith(WuXingEducationGrid({
+      dominant:  expProfile.fusion.dominantElement,
+      deficient: expProfile.fusion.deficientElement,
+    }));
+  }
 
   // Westliche Signatur — Sonne/Mond/Asz klickbar mit lookupSign-Meaning
   const westernGrid = app.querySelector('.western-education-grid');

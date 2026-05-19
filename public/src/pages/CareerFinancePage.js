@@ -188,22 +188,27 @@ function buildFusionLayer(profile) {
 
   const archetypeValue = document.createElement('p');
   archetypeValue.className = 'factor-value';
+  // Profilnaher Render — keine leeren Karten, keine Platzhaltertexte.
+  // Wenn weder spezifischer Archetyp noch Registry-Resource verfügbar sind,
+  // wird die Karte NICHT in das DOM eingehängt.
+  let archetypeRendered = false;
   if (stem && DAY_MASTER_CAREER[stem]) {
     archetypeValue.textContent = `${stem} — ${DAY_MASTER_CAREER[stem]}`;
+    archetypeRendered = true;
   } else if (stem) {
-    // Profilnaher Fallback via Meaning-Registry statt Platzhaltertext.
-    // Hide-statt-leer ist die Alternative, wenn auch das Element fehlt.
     const stemInfo = lookupStemFromMeanings(stem);
-    if (stemInfo?.resource) {
-      archetypeValue.textContent = `${stem} (${stemInfo.element || ''}) — Arbeitsmodus: ${stemInfo.resource}`;
-    } else {
-      archetypeCard.hidden = true;
+    if (stemInfo?.resource && stemInfo?.element) {
+      archetypeValue.textContent = `${stem} (${stemInfo.element}) — Arbeitsmodus: ${stemInfo.resource}`;
+      archetypeRendered = true;
+    } else if (stemInfo?.resource) {
+      archetypeValue.textContent = `${stem} — Arbeitsmodus: ${stemInfo.resource}`;
+      archetypeRendered = true;
     }
-  } else {
-    archetypeCard.hidden = true;
   }
-  archetypeCard.appendChild(archetypeValue);
-  wrap.appendChild(archetypeCard);
+  if (archetypeRendered) {
+    archetypeCard.appendChild(archetypeValue);
+    wrap.appendChild(archetypeCard);
+  }
 
   // ── c) Kohärenz-Brücke ───────────────────────────────────────────────────
   const coherence = profile.fusion?.coherence_index ?? null;

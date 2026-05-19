@@ -1602,3 +1602,8 @@ input:focus { border-color: var(--accent); }
 .western-education-section { display: flex; flex-direction: column; gap: 8px; }
 .western-education-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 @media (max-width: 640px) { .western-education-grid { grid-template-columns: 1fr; } }
+
+/* WuXing Education Grid */
+.wuxing-education-section { display: flex; flex-direction: column; gap: 8px; }
+.wuxing-education-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .wuxing-education-grid { grid-template-columns: 1fr; } }

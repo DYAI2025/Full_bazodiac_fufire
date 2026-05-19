@@ -16,12 +16,17 @@ test('BRANCH_MEANINGS covers all 12 earthly branches', () => {
   for (const b of branches) assert.ok(BRANCH_MEANINGS[b], `missing branch ${b}`);
 });
 
-test('WUXING_MEANINGS: all five elements have meaning/strong/weak/over/balance', () => {
+test('WUXING_MEANINGS: all five elements have meaning/strong/weak/over plus balance.{today,week,habit}', () => {
   for (const el of ['Holz','Feuer','Erde','Metall','Wasser']) {
     const m = WUXING_MEANINGS[el];
     assert.ok(m, `missing element ${el}`);
-    for (const k of ['meaning','strong','weak','over','balance']) {
+    for (const k of ['meaning','strong','weak','over']) {
       assert.ok(m[k] && m[k].length > 8, `${el}.${k} missing`);
+    }
+    assert.equal(typeof m.balance, 'object', `${el}.balance must be object`);
+    for (const horizon of ['today','week','habit']) {
+      assert.ok(m.balance[horizon] && m.balance[horizon].length > 8,
+        `${el}.balance.${horizon} missing`);
     }
   }
 });

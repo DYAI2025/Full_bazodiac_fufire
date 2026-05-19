@@ -59,7 +59,11 @@ export const WUXING_MEANINGS = {
     strong:  'Du startest leicht und ziehst andere mit; Aufbrüche fallen dir zu.',
     weak:    'Du fängst viel an und verzettelst dich; Richtung verliert sich.',
     over:    'Du überrollst andere mit deinem Tempo und reißt Strukturen nieder.',
-    balance: 'Setze heute einen kleinen Schritt, der erst in einer Woche zählt.',
+    balance: {
+      today: 'Setze heute einen kleinen Schritt, der erst in einer Woche zählt.',
+      week:  'Plane diese Woche eine einzige Achse statt drei.',
+      habit: 'Fixiere jeden Aufbruch schriftlich, bevor du losziehst.',
+    },
   },
   Feuer: {
     label: 'Feuer', symbol: '🔥', polarity: 'leuchtend',
@@ -67,7 +71,11 @@ export const WUXING_MEANINGS = {
     strong:  'Du wärmst andere und reißt mit; Begeisterung ist ansteckend.',
     weak:    'Du hältst dich zurück und wirst übersehen; Funken erlöschen früh.',
     over:    'Du brennst aus, weil du dich pausenlos zeigst und nichts hältst.',
-    balance: 'Zeige heute eine Sache, bevor sie fertig ist — aber nur eine.',
+    balance: {
+      today: 'Zeige heute eine Sache, bevor sie fertig ist — aber nur eine.',
+      week:  'Reserviere diese Woche eine echte Bühne und einen Tag echte Stille.',
+      habit: 'Nach jedem Auftritt 24 h Pause als feste Gewohnheit.',
+    },
   },
   Erde: {
     label: 'Erde', symbol: '🪨', polarity: 'haltend',
@@ -75,7 +83,11 @@ export const WUXING_MEANINGS = {
     strong:  'Andere ruhen bei dir; du wirst zum Boden, der trägt.',
     weak:    'Du schwankst zwischen Bedürfnissen anderer und verlierst dich.',
     over:    'Du nimmst zu viel Last und erstarrst; alles bleibt an dir hängen.',
-    balance: 'Lass heute eine Verantwortung bewusst bei jemand anderem.',
+    balance: {
+      today: 'Lass heute eine Verantwortung bewusst bei jemand anderem.',
+      week:  'Streiche diese Woche eine Aufgabe komplett, ohne Ersatz.',
+      habit: 'Etabliere wöchentlich einen Tag ohne Organisationsarbeit für andere.',
+    },
   },
   Metall: {
     label: 'Metall', symbol: '⚙️', polarity: 'klar',
@@ -83,7 +95,11 @@ export const WUXING_MEANINGS = {
     strong:  'Du triffst klare Entscheidungen und schaffst Struktur.',
     weak:    'Du verlierst dich in Optionen und wirst beliebig.',
     over:    'Du wirst kalt und urteilst, bevor du verstanden hast.',
-    balance: 'Schreib heute eine offene Entscheidung in einem Satz auf.',
+    balance: {
+      today: 'Schreib heute eine offene Entscheidung in einem Satz auf.',
+      week:  'Triff diese Woche drei Entscheidungen schriftlich und schließe sie.',
+      habit: 'Am Tagesende eine offene Sache beenden — als feste Gewohnheit.',
+    },
   },
   Wasser: {
     label: 'Wasser', symbol: '💧', polarity: 'fließend',
@@ -91,7 +107,11 @@ export const WUXING_MEANINGS = {
     strong:  'Du spürst leise Bewegungen und denkst lang nach.',
     weak:    'Du wirkst abwesend und triffst zu spät Entscheidungen.',
     over:    'Du verlierst dich in Optionen und wartest, bis es zu spät ist.',
-    balance: 'Sprich heute eine leise Wahrnehmung laut aus.',
+    balance: {
+      today: 'Sprich heute eine leise Wahrnehmung laut aus.',
+      week:  'Schreibe diese Woche zwei Reflexionen, ohne sie sofort zu lösen.',
+      habit: 'Einmal pro Woche bewusst nichts kommentieren.',
+    },
   },
 };
 
@@ -243,7 +263,7 @@ export function buildDailyLearnImpulse({ dominantElement = null, activeHouse = n
       anchor: `Element ${el.label}`,
       understand: `${el.label} steht heute im Vordergrund: ${el.meaning}`,
       apply:      `In Stärke: ${el.strong} — in Übersteuerung: ${el.over}`,
-      experiment: fallbackExperiment?.instruction || el.balance,
+      experiment: fallbackExperiment?.instruction || el.balance?.today || '24h-Beobachtung deines dominanten Elements.',
     };
   }
   if (dayMasterStem) {
