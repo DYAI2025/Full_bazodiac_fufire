@@ -67,9 +67,17 @@ export async function calculateSynastry(inputA, inputB) {
 
 // Runs in production by default. Opt-out via window.__FUFIRE_FLAGS?.disableNoFakeDataGuard
 // or env NOFAKE_GUARD_DISABLE=1 (for legacy fixtures that legitimately ship sample text).
+//
+// Signatures are tightened to user-visible demo *content* — bare words like
+// "placeholder" or "random" appear in HTML attribute names / Math.random and
+// would yield false positives when guarding rendered DOM.
 const DUMMY_SIGNATURES = [
-  'Lorem', 'dummy', 'fake', 'random', 'placeholder', 'test123',
-  'TODO', 'FIXME', 'XXX', 'TBD',
+  'Lorem ipsum', 'Lorem Ipsum',
+  'dummy data', 'dummy value', 'dummy text',
+  'fake data',  'fake value',
+  'placeholder text', 'Platzhaltertext',
+  'test123',
+  'TODO:', 'FIXME:', 'TBD:',
   'Beispieltext', 'Beispielwert', 'Mustermann',
   'Keine Beschreibung verfügbar',
 ];

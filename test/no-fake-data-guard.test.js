@@ -29,7 +29,7 @@ test('noFakeDataGuard runs in production (no NODE_ENV gate) — runs by default'
   process.env.NODE_ENV = 'production';
   delete process.env.NOFAKE_GUARD_DISABLE;
   try {
-    assert.throws(() => noFakeDataGuard({ field: 'dummy' }, 'prod'), /noFakeDataGuard/);
+    assert.throws(() => noFakeDataGuard({ field: 'dummy data' }, 'prod'), /noFakeDataGuard/);
   } finally {
     process.env.NODE_ENV = prevEnv;
     if (prevDisable !== undefined) process.env.NOFAKE_GUARD_DISABLE = prevDisable;
@@ -40,7 +40,7 @@ test('noFakeDataGuard can be opted out via NOFAKE_GUARD_DISABLE=1', () => {
   const prev = process.env.NOFAKE_GUARD_DISABLE;
   process.env.NOFAKE_GUARD_DISABLE = '1';
   try {
-    assert.doesNotThrow(() => noFakeDataGuard({ field: 'dummy' }, 'opt-out'));
+    assert.doesNotThrow(() => noFakeDataGuard({ field: 'dummy data' }, 'opt-out'));
   } finally {
     if (prev === undefined) delete process.env.NOFAKE_GUARD_DISABLE;
     else process.env.NOFAKE_GUARD_DISABLE = prev;
