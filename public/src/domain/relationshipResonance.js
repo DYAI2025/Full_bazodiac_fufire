@@ -264,6 +264,7 @@ export function buildRelationshipResonance({
       ].filter(Boolean),
       sourceLayer: 'synastry-aspect',
       confidence:  0.85,
+      practice:    'Geht heute bewusst über diese Achse in Kontakt — über ein Thema, das ihr leicht teilt.',
     };
   } else {
     mainConnection = {
@@ -275,6 +276,9 @@ export function buildRelationshipResonance({
       ].filter(Boolean),
       sourceLayer: 'wuxing',
       confidence:  (elA && elB) ? 0.7 : 0.3,
+      practice:    elA && elB
+        ? `Nutzt heute eine Aktivität, die euren ${elA}/${elB}-Modus beide trägt — Halten, Reden, Spüren.`
+        : 'Beobachtet heute, wo der Kontakt von selbst trägt — und merkt es euch.',
     };
   }
 
@@ -293,6 +297,7 @@ export function buildRelationshipResonance({
       ].filter(Boolean),
       sourceLayer: 'synastry-aspect',
       confidence:  0.85,
+      practice:    'Sprecht heute eine Sache an, die ihr sonst rund um diese Achse aussparen würdet.',
     };
   } else if (tensionFromRaw) {
     mainFriction = {
@@ -305,6 +310,7 @@ export function buildRelationshipResonance({
       ].filter(Boolean),
       sourceLayer: 'synastry',
       confidence:  0.7,
+      practice:    `Macht heute eine Sache, die der ${tensionFromRaw.dominant_b}-Seite Raum gibt, ohne die ${tensionFromRaw.dominant_a}-Seite zu opfern.`,
     };
   } else {
     mainFriction = {
@@ -316,6 +322,7 @@ export function buildRelationshipResonance({
       ].filter(Boolean),
       sourceLayer: 'wuxing',
       confidence:  0.4,
+      practice:    'Nicht prüfen, ob die andere Person es von selbst merkt — direkt fragen.',
     };
   }
 

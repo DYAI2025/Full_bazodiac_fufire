@@ -47,10 +47,11 @@ export function containsBannedRelationshipPhrase(text) {
   return false;
 }
 
-// Drei-Satz-Template gemäß STORY-C-001. Build-Funktion in relationshipResonance.js
-// füllt die Slots aus deterministischen Daten.
+// Drei-Satz-Template gemäß STORY-C-001 + Iteration 1A. Build-Funktion in
+// relationshipResonance.js füllt die Slots aus deterministischen Daten.
+// Lead-ins exakt wie in Goal §Akzeptanzkriterium 3 verlangt.
 export const RELATIONSHIP_SUMMARY_LEAD_INS = {
-  connection: 'Was euch verbindet:',
-  friction:   'Wo Reibung entsteht:',
-  practical:  'Was hilft:',
+  connection: 'Hauptverbindung:',
+  friction:   'Hauptspannung:',
+  practical:  'Heutiger Kontaktimpuls:',
 };

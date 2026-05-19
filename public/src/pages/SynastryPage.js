@@ -284,6 +284,7 @@ export function SynastryPage(app) {
           summary:     analysis.mainConnection.summary,
           evidence:    analysis.mainConnection.evidence,
           sourceLayer: analysis.mainConnection.sourceLayer,
+          practice:    analysis.mainConnection.practice,
         }),
       );
     } else {
@@ -299,6 +300,7 @@ export function SynastryPage(app) {
           summary:     analysis.mainFriction.summary,
           evidence:    analysis.mainFriction.evidence,
           sourceLayer: analysis.mainFriction.sourceLayer,
+          practice:    analysis.mainFriction.practice,
         }),
       );
     } else {
