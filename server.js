@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createReadStream, existsSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getHiddenStems } from './public/src/data/hidden-stems.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const PUBLIC_DIR = resolve(__dirname, 'public');
@@ -332,44 +333,14 @@ export function computeFusionRemediation(vector) {
   return { distribution, dominant, deficient, actions, summary };
 }
 
-// ── Hidden Stems Tabelle (Zàng Gān 藏干) ─────────────────────────────────
-// Quelle: klassische BaZi-Literatur (unveränderlich)
-// Format: branch → [ { stem, element, weight, polarity } ]
-const HIDDEN_STEMS = {
-  '子': [{ stem:'癸', element:'Wasser', weight:10.0, polarity:'Yin'  }],
-  '丑': [{ stem:'己', element:'Erde',   weight:6.0,  polarity:'Yin'  },
-         { stem:'癸', element:'Wasser', weight:3.0,  polarity:'Yin'  },
-         { stem:'辛', element:'Metall', weight:1.0,  polarity:'Yin'  }],
-  '寅': [{ stem:'甲', element:'Holz',   weight:7.0,  polarity:'Yang' },
-         { stem:'丙', element:'Feuer',  weight:2.0,  polarity:'Yang' },
-         { stem:'戊', element:'Erde',   weight:1.0,  polarity:'Yang' }],
-  '卯': [{ stem:'乙', element:'Holz',   weight:10.0, polarity:'Yin'  }],
-  '辰': [{ stem:'戊', element:'Erde',   weight:6.0,  polarity:'Yang' },
-         { stem:'乙', element:'Holz',   weight:3.0,  polarity:'Yin'  },
-         { stem:'癸', element:'Wasser', weight:1.0,  polarity:'Yin'  }],
-  '巳': [{ stem:'丙', element:'Feuer',  weight:7.0,  polarity:'Yang' },
-         { stem:'庚', element:'Metall', weight:2.0,  polarity:'Yang' },
-         { stem:'戊', element:'Erde',   weight:1.0,  polarity:'Yang' }],
-  '午': [{ stem:'丁', element:'Feuer',  weight:7.0,  polarity:'Yin'  },
-         { stem:'己', element:'Erde',   weight:3.0,  polarity:'Yin'  }],
-  '未': [{ stem:'己', element:'Erde',   weight:6.0,  polarity:'Yin'  },
-         { stem:'丁', element:'Feuer',  weight:3.0,  polarity:'Yin'  },
-         { stem:'乙', element:'Holz',   weight:1.0,  polarity:'Yin'  }],
-  '申': [{ stem:'庚', element:'Metall', weight:7.0,  polarity:'Yang' },
-         { stem:'壬', element:'Wasser', weight:2.0,  polarity:'Yang' },
-         { stem:'戊', element:'Erde',   weight:1.0,  polarity:'Yang' }],
-  '酉': [{ stem:'辛', element:'Metall', weight:10.0, polarity:'Yin'  }],
-  '戌': [{ stem:'戊', element:'Erde',   weight:6.0,  polarity:'Yang' },
-         { stem:'辛', element:'Metall', weight:3.0,  polarity:'Yin'  },
-         { stem:'丁', element:'Feuer',  weight:1.0,  polarity:'Yin'  }],
-  '亥': [{ stem:'壬', element:'Wasser', weight:7.0,  polarity:'Yang' },
-         { stem:'甲', element:'Holz',   weight:3.0,  polarity:'Yang' }],
-};
-
+// Hidden-stems source-of-truth moved to public/src/data/hidden-stems.js
+// (shared between server orchestrator and frontend BaZi enrichment).
+// Contract test in test/hidden-stems-contract.test.js asserts BY_CHAR
+// and BY_PINYIN remain mirrored.
 function deriveHiddenStems(branch) {
-  const table = HIDDEN_STEMS[branch];
-  if (!table) return [];
-  return table.map(hs => ({ ...hs, source: 'derived_from_branch_table' }));
+  const table = getHiddenStems(branch);
+  if (!table || table.length === 0) return [];
+  return table.map((hs) => ({ ...hs, source: 'derived_from_branch_table' }));
 }
 
 function normalizePillar(raw) {

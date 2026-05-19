@@ -1,16 +1,16 @@
 {
   "date": "2026-05-19",
   "western": {
-    "summary": "Fuer dich als Pisces stehen heute Identitaet, Ressourcen im Fokus. Die Planetenkonstellation aktiviert deine Sektoren 1 und 2.",
+    "summary": "Fuer dich als Scorpio stehen heute Familie, Ressourcen im Fokus. Die Planetenkonstellation aktiviert deine Sektoren 4 und 2.",
     "themes": [
-      "Identitaet",
+      "Familie",
       "Ressourcen"
     ],
     "caution": "Achte in Sektor 2 auf Ueberanstrengung -- hier liegt heute Spannung.",
-    "opportunity": "Sektor 1 bietet dir heute besonderes Potenzial. Nutze die Energie aktiv.",
+    "opportunity": "Sektor 4 bietet dir heute besonderes Potenzial. Nutze die Energie aktiv.",
     "evidence": {
       "transit_sectors": [
-        0,
+        3,
         1
       ],
       "natal_focus": [
@@ -27,7 +27,7 @@
     "weekday_note": "Dienstag (Mars): Tatendrang und Entschlossenheit praegen den Tag."
   },
   "eastern": {
-    "summary": "Heute begegnest du deinem eigenen Element. Dein Day Master Ren findet Resonanz in der Wasser-Schwingung. Solarterm: Lixia.",
+    "summary": "Heute begegnest du deinem eigenen Element. Dein Day Master Gui findet Resonanz in der Wasser-Schwingung. Solarterm: Lixia.",
     "themes": [
       "Gleichklang",
       "Staerkung",
@@ -38,7 +38,7 @@
     "evidence": {
       "transit_sectors": null,
       "natal_focus": null,
-      "day_master": "Ren",
+      "day_master": "Gui",
       "daily_pillar": {
         "stem": "Gui",
         "branch": "Si"
@@ -51,9 +51,9 @@
     "weekday_note": "Dienstag (Mars): Tatendrang und Entschlossenheit praegen den Tag."
   },
   "fusion": {
-    "summary": "Dein Fusionstag verbindet Identitaet aus beiden Systemen. Westlich staerkt dein Transitfeld, oestlich arbeitet dein Day Master Ren in companion-Dynamik.",
-    "synthesis": "Beide Systeme zeigen heute einen gemeinsamen Impuls: Identitaet. Gleichzeitig entsteht Spannung im Bereich Staerkung, Vertrauen. Die Synthese liegt darin, beides bewusst zu halten — den Identitaet-Impuls aktiv zu nutzen und den Spannungsbereich nicht zu verdraengen.",
-    "action": "Nutze heute gezielt den Bereich Identitaet. Plane eine bewusste Handlung, die beide Energien verbindet.",
+    "summary": "Dein Fusionstag verbindet Familie aus beiden Systemen. Westlich staerkt dein Transitfeld, oestlich arbeitet dein Day Master Gui in companion-Dynamik.",
+    "synthesis": "Beide Systeme zeigen heute einen gemeinsamen Impuls: Familie. Gleichzeitig entsteht Spannung im Bereich Staerkung, Vertrauen. Die Synthese liegt darin, beides bewusst zu halten — den Familie-Impuls aktiv zu nutzen und den Spannungsbereich nicht zu verdraengen.",
+    "action": "Nutze heute gezielt den Bereich Familie. Plane eine bewusste Handlung, die beide Energien verbindet.",
     "pushworthy": false,
     "push_text": null,
     "jieqi_note": "Solarterm Lixia faerbt beide Systeme.",
@@ -61,12 +61,12 @@
   },
   "_meta": {
     "bootstrap_profile": {
-      "sun_sign": "Fische",
-      "moon_sign": "Jungfrau",
-      "ascendant_sign": "Widder",
-      "day_master": "Ren",
-      "harmony_index": 0.8571
+      "sun_sign": "Skorpion",
+      "moon_sign": "Schuetze",
+      "ascendant_sign": "Loewe",
+      "day_master": "Gui",
+      "harmony_index": 0
     },
-    "computed_at": "2026-05-19T20:16:46.899Z"
+    "computed_at": "2026-05-19T20:16:47.611Z"
   }
 }

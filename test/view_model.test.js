@@ -79,6 +79,28 @@ test('normalizePillar derives hidden_stems from branch when API omits them', () 
   assert.equal(hs[0].stem, '癸'); // Gui — Yin-Wasser, Hauptstamm der Ratte
 });
 
+test('normalizePillar derives hidden_stems from Pinyin branch (real API uses Pinyin)', () => {
+  // Real /api/azodiac/profile responses send `branch: "Mao"` (Pinyin), NOT 卯 (char).
+  // Pre-refactor, the inline HIDDEN_STEMS map was char-keyed only, so live API
+  // responses silently returned hidden_stems: [] (latent bug). The shared module
+  // now accepts both forms via getHiddenStems().
+  const vm = normalizeAzodiacResult({
+    western: null, fusion: null,
+    bazi: {
+      pillars: {
+        day: { stem: 'Ren', branch: 'Mao', element: 'Wasser' }, // Mao = Hase, HS: 乙
+      },
+    },
+    _meta: {},
+  });
+
+  const hs = vm.bazi.pillars.day.hidden_stems;
+  assert.ok(Array.isArray(hs));
+  assert.ok(hs.length > 0, 'hidden_stems must be derived for Pinyin "Mao" (was silently empty before)');
+  assert.equal(hs[0].source, 'derived_from_branch_table');
+  assert.equal(hs[0].stem, '乙'); // Yi — Yin-Holz, Hauptstamm des Hasen
+});
+
 test('normalizeAzodiacResult derives ascendant sign from angles.Ascendant longitude', () => {
   // FuFirE actual: western.angles.Ascendant = ecliptic longitude (number)
   // 185.34° → index 6 (185/30 = 6.17) → Libra (Waage)

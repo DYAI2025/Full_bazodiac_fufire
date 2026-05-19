@@ -1,0 +1,72 @@
+{
+  "date": "2026-05-19",
+  "western": {
+    "summary": "Fuer dich als Leo stehen heute Familie, Ressourcen im Fokus. Die Planetenkonstellation aktiviert deine Sektoren 4 und 2.",
+    "themes": [
+      "Familie",
+      "Ressourcen"
+    ],
+    "caution": "Achte in Sektor 2 auf Ueberanstrengung -- hier liegt heute Spannung.",
+    "opportunity": "Sektor 4 bietet dir heute besonderes Potenzial. Nutze die Energie aktiv.",
+    "evidence": {
+      "transit_sectors": [
+        3,
+        1
+      ],
+      "natal_focus": [
+        "sun",
+        "ascendant"
+      ],
+      "day_master": null,
+      "daily_pillar": null,
+      "relation_to_day_master": null,
+      "jieqi": null,
+      "weekday": "Dienstag"
+    },
+    "jieqi_note": null,
+    "weekday_note": "Dienstag (Mars): Tatendrang und Entschlossenheit praegen den Tag."
+  },
+  "eastern": {
+    "summary": "Dein Day Master Yi wird heute getragen. Die Wasser-Energie naehrt dich aus der Tiefe. Solarterm: Lixia.",
+    "themes": [
+      "Unterstuetzung",
+      "Naehrung",
+      "Rueckhalt"
+    ],
+    "caution": "Naehrende Energie kann traege machen -- halte deine Eigeninitiative wach.",
+    "opportunity": "Die zufliessende Energie eignet sich hervorragend zum Lernen und Aufbauen.",
+    "evidence": {
+      "transit_sectors": null,
+      "natal_focus": null,
+      "day_master": "Yi",
+      "daily_pillar": {
+        "stem": "Gui",
+        "branch": "Si"
+      },
+      "relation_to_day_master": "resource",
+      "jieqi": "Lixia",
+      "weekday": "Dienstag"
+    },
+    "jieqi_note": "Feuer-Energie steigt: Sichtbarkeit und Aktivitaet nehmen zu.",
+    "weekday_note": "Dienstag (Mars): Tatendrang und Entschlossenheit praegen den Tag."
+  },
+  "fusion": {
+    "summary": "Dein Fusionstag verbindet Familie aus beiden Systemen. Westlich staerkt dein Transitfeld, oestlich arbeitet dein Day Master Yi in resource-Dynamik.",
+    "synthesis": "Beide Systeme zeigen heute einen gemeinsamen Impuls: Familie. Gleichzeitig entsteht Spannung im Bereich Naehrung, Ressourcen. Die Synthese liegt darin, beides bewusst zu halten — den Familie-Impuls aktiv zu nutzen und den Spannungsbereich nicht zu verdraengen.",
+    "action": "Nutze heute gezielt den Bereich Familie. Plane eine bewusste Handlung, die beide Energien verbindet.",
+    "pushworthy": true,
+    "push_text": "Dein Resource-Tag: Familie ruft.",
+    "jieqi_note": "Solarterm Lixia faerbt beide Systeme.",
+    "weekday_note": "Dienstag-Energie verbindet die Impulse."
+  },
+  "_meta": {
+    "bootstrap_profile": {
+      "sun_sign": "Loewe",
+      "moon_sign": "Krebs",
+      "ascendant_sign": "Loewe",
+      "day_master": "Yi",
+      "harmony_index": 0.5021
+    },
+    "computed_at": "2026-05-19T20:16:47.252Z"
+  }
+}

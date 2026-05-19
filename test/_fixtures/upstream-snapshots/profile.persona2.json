@@ -1,0 +1,481 @@
+{
+  "western": {
+    "bodies": {
+      "Sun": {
+        "longitude": 148.22009488092294,
+        "sign": "Leo",
+        "zodiac_sign": 4,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 28.220094880922943
+      },
+      "Moon": {
+        "longitude": 97.86885263105903,
+        "sign": "Cancer",
+        "zodiac_sign": 3,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 7.868852631059028
+      },
+      "Mercury": {
+        "longitude": 169.53555883876697,
+        "sign": "Virgo",
+        "zodiac_sign": 5,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 19.535558838766974
+      },
+      "Venus": {
+        "longitude": 148.42832433682779,
+        "sign": "Leo",
+        "zodiac_sign": 4,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 28.428324336827785
+      },
+      "Mars": {
+        "longitude": 199.26668391111392,
+        "sign": "Libra",
+        "zodiac_sign": 6,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 19.266683911113915
+      },
+      "Jupiter": {
+        "longitude": 246.08010869948936,
+        "sign": "Sagittarius",
+        "zodiac_sign": 8,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 6.080108699489358
+      },
+      "Saturn": {
+        "longitude": 353.08831277720407,
+        "sign": "Pisces",
+        "zodiac_sign": 11,
+        "house": null,
+        "retrograde": true,
+        "degree_in_sign": 23.088312777204067
+      },
+      "Uranus": {
+        "longitude": 297.3318902937512,
+        "sign": "Capricorn",
+        "zodiac_sign": 9,
+        "house": null,
+        "retrograde": true,
+        "degree_in_sign": 27.3318902937512
+      },
+      "Neptune": {
+        "longitude": 293.27430075603763,
+        "sign": "Capricorn",
+        "zodiac_sign": 9,
+        "house": null,
+        "retrograde": true,
+        "degree_in_sign": 23.274300756037633
+      },
+      "Pluto": {
+        "longitude": 237.8646590319346,
+        "sign": "Scorpio",
+        "zodiac_sign": 7,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 27.864659031934593
+      },
+      "Chiron": {
+        "longitude": 177.3804040817953,
+        "sign": "Virgo",
+        "zodiac_sign": 5,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 27.38040408179529
+      },
+      "Lilith": {
+        "longitude": 85.70104010170849,
+        "sign": "Gemini",
+        "zodiac_sign": 2,
+        "house": null,
+        "retrograde": false,
+        "degree_in_sign": 25.701040101708486
+      },
+      "NorthNode": {
+        "longitude": 209.44174521438282,
+        "sign": "Libra",
+        "zodiac_sign": 6,
+        "house": null,
+        "retrograde": true,
+        "degree_in_sign": 29.44174521438282
+      },
+      "TrueNorthNode": {
+        "longitude": 208.58218317759187,
+        "sign": "Libra",
+        "zodiac_sign": 6,
+        "house": null,
+        "retrograde": true,
+        "degree_in_sign": 28.582183177591872
+      }
+    },
+    "houses": {
+      "1": {
+        "longitude": 124.97811306668534,
+        "sign": "Leo"
+      },
+      "2": {
+        "longitude": 146.90948098826073,
+        "sign": "Leo"
+      },
+      "3": {
+        "longitude": 173.08996013658796,
+        "sign": "Virgo"
+      },
+      "4": {
+        "longitude": 204.82552267855294,
+        "sign": "Libra"
+      },
+      "5": {
+        "longitude": 240.275240572961,
+        "sign": "Sagittarius"
+      },
+      "6": {
+        "longitude": 274.6253624194552,
+        "sign": "Capricorn"
+      },
+      "7": {
+        "longitude": 304.97811306668535,
+        "sign": "Aquarius"
+      },
+      "8": {
+        "longitude": 326.9094809882607,
+        "sign": "Aquarius"
+      },
+      "9": {
+        "longitude": 353.08996013658793,
+        "sign": "Pisces"
+      },
+      "10": {
+        "longitude": 24.82552267855293,
+        "sign": "Aries"
+      },
+      "11": {
+        "longitude": 60.275240572960996,
+        "sign": "Gemini"
+      },
+      "12": {
+        "longitude": 94.62536241945517,
+        "sign": "Cancer"
+      }
+    },
+    "aspects": [
+      {
+        "planet1": "Saturn",
+        "planet2": "Neptune",
+        "type": "sextile",
+        "angle": 59.81,
+        "orb": 0.19,
+        "exact_angle": 60
+      },
+      {
+        "planet1": "Sun",
+        "planet2": "Venus",
+        "type": "conjunction",
+        "angle": 0.21,
+        "orb": 0.21,
+        "exact_angle": 0
+      },
+      {
+        "planet1": "Mercury",
+        "planet2": "Mars",
+        "type": "semi-sextile",
+        "angle": 29.73,
+        "orb": 0.27,
+        "exact_angle": 30
+      },
+      {
+        "planet1": "Sun",
+        "planet2": "Pluto",
+        "type": "square",
+        "angle": 89.64,
+        "orb": 0.36,
+        "exact_angle": 90
+      },
+      {
+        "planet1": "Uranus",
+        "planet2": "Pluto",
+        "type": "sextile",
+        "angle": 59.47,
+        "orb": 0.53,
+        "exact_angle": 60
+      },
+      {
+        "planet1": "Venus",
+        "planet2": "Pluto",
+        "type": "square",
+        "angle": 89.44,
+        "orb": 0.56,
+        "exact_angle": 90
+      },
+      {
+        "planet1": "Sun",
+        "planet2": "Uranus",
+        "type": "quincunx",
+        "angle": 149.11,
+        "orb": 0.89,
+        "exact_angle": 150
+      },
+      {
+        "planet1": "Venus",
+        "planet2": "Uranus",
+        "type": "quincunx",
+        "angle": 148.9,
+        "orb": 1.1,
+        "exact_angle": 150
+      },
+      {
+        "planet1": "Moon",
+        "planet2": "Jupiter",
+        "type": "quincunx",
+        "angle": 148.21,
+        "orb": 1.79,
+        "exact_angle": 150
+      },
+      {
+        "planet1": "Mercury",
+        "planet2": "Saturn",
+        "type": "opposition",
+        "angle": 176.45,
+        "orb": 3.55,
+        "exact_angle": 180
+      },
+      {
+        "planet1": "Mercury",
+        "planet2": "Neptune",
+        "type": "trine",
+        "angle": 123.74,
+        "orb": 3.74,
+        "exact_angle": 120
+      },
+      {
+        "planet1": "Mars",
+        "planet2": "Neptune",
+        "type": "square",
+        "angle": 94.01,
+        "orb": 4.01,
+        "exact_angle": 90
+      },
+      {
+        "planet1": "Uranus",
+        "planet2": "Neptune",
+        "type": "conjunction",
+        "angle": 4.06,
+        "orb": 4.06,
+        "exact_angle": 0
+      },
+      {
+        "planet1": "Saturn",
+        "planet2": "Uranus",
+        "type": "sextile",
+        "angle": 55.76,
+        "orb": 4.24,
+        "exact_angle": 60
+      },
+      {
+        "planet1": "Saturn",
+        "planet2": "Pluto",
+        "type": "trine",
+        "angle": 115.22,
+        "orb": 4.78,
+        "exact_angle": 120
+      },
+      {
+        "planet1": "Sun",
+        "planet2": "Jupiter",
+        "type": "square",
+        "angle": 97.86,
+        "orb": 7.86,
+        "exact_angle": 90
+      }
+    ],
+    "ascendant": "Leo",
+    "angles": {
+      "Ascendant": 124.97811306668534,
+      "MC": 24.82552267855293,
+      "Vertex": 258.00678649508353
+    }
+  },
+  "bazi": {
+    "pillars": {
+      "year": {
+        "stem": "Yi",
+        "branch": "Hai",
+        "element": "Holz",
+        "hidden_stems": [
+          {
+            "stem": "壬",
+            "element": "Wasser",
+            "weight": 7,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "甲",
+            "element": "Holz",
+            "weight": 3,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          }
+        ]
+      },
+      "month": {
+        "stem": "Jia",
+        "branch": "Shen",
+        "element": "Holz",
+        "hidden_stems": [
+          {
+            "stem": "庚",
+            "element": "Metall",
+            "weight": 7,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "壬",
+            "element": "Wasser",
+            "weight": 2,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "戊",
+            "element": "Erde",
+            "weight": 1,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          }
+        ]
+      },
+      "day": {
+        "stem": "Yi",
+        "branch": "You",
+        "element": "Holz",
+        "hidden_stems": [
+          {
+            "stem": "辛",
+            "element": "Metall",
+            "weight": 10,
+            "polarity": "Yin",
+            "source": "derived_from_branch_table"
+          }
+        ]
+      },
+      "hour": {
+        "stem": "Wu",
+        "branch": "Yin",
+        "element": "Erde",
+        "hidden_stems": [
+          {
+            "stem": "甲",
+            "element": "Holz",
+            "weight": 7,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "丙",
+            "element": "Feuer",
+            "weight": 2,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "戊",
+            "element": "Erde",
+            "weight": 1,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          }
+        ]
+      }
+    },
+    "day_master": {
+      "stem": "Yi",
+      "branch": "You",
+      "element": "Holz",
+      "hidden_stems": [
+        {
+          "stem": "辛",
+          "element": "Metall",
+          "weight": 10,
+          "polarity": "Yin",
+          "source": "derived_from_branch_table"
+        }
+      ]
+    }
+  },
+  "fusion": {
+    "wu_xing_vectors": {
+      "western_planets": {
+        "Holz": 0.6479418503005259,
+        "Feuer": 0.39669909202073017,
+        "Erde": 0.17190293987564975,
+        "Metall": 0.26446606134715345,
+        "Wasser": 0.5686020318963798
+      },
+      "bazi_pillars": {
+        "Holz": 0.8311982200801943,
+        "Feuer": 0.09235535778668826,
+        "Erde": 0.2955371449174024,
+        "Metall": 0.369421431146753,
+        "Wasser": 0.2770660733600647
+      }
+    },
+    "coherence_index": 0.8812,
+    "fusion_interpretation": "Starke Resonanz - Westliche und östliche Matrix stehen in perfekter Harmonie\n\nHarmonie-Index: 88.12%\nStarke Resonanz - Westliche und östliche Matrix stehen in perfekter Harmonie\n\nWestliche Dominanz: Holz\nÖstliche Dominanz: Holz\n\nIhre westliche und östliche Chart stehen in starker Resonanz.\nDie Energien ergänzen sich harmonisch.",
+    "aspects": [],
+    "house_overlay": null,
+    "dominant_patterns": [],
+    "synthesis_notes": null,
+    "remediation": {
+      "distribution": {
+        "Holz": 0.3161290322580645,
+        "Feuer": 0.1935483870967742,
+        "Erde": 0.08387096774193549,
+        "Metall": 0.12903225806451613,
+        "Wasser": 0.2774193548387096
+      },
+      "dominant": null,
+      "deficient": "Erde",
+      "actions": [
+        {
+          "type": "strengthen",
+          "element": "Erde",
+          "via_generator": "Feuer",
+          "activities": [
+            "Verlässliche Routinen",
+            "Nährende Mahlzeiten kochen",
+            "Gartenarbeit oder Erdkontakt",
+            "Körperliche Verankerung"
+          ],
+          "rationale": "Erde ist unterrepräsentiert (8 %). Feuer nährt Erde im Sheng-Zyklus — beide Elemente kultivieren."
+        }
+      ],
+      "summary": "Erde ist deutlich unterrepräsentiert (8 %) — gezielte Kultivierung empfohlen."
+    }
+  },
+  "_meta": {
+    "input": {
+      "date": "1995-08-22T03:15:00",
+      "tz": "Asia/Tokyo",
+      "lat": 35.6762,
+      "lon": 139.6503
+    },
+    "upstream_status": {
+      "western": 200,
+      "bazi": 200,
+      "fusion": 200,
+      "wuxing": 200,
+      "tst": 200,
+      "wuxing_info": 200
+    },
+    "view_model_version": "2",
+    "fetched_at": "2026-05-19T20:16:47.150Z"
+  }
+}

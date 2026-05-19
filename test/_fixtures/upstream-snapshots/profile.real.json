@@ -291,32 +291,114 @@
         "stem": "Ding",
         "branch": "Mao",
         "element": "Feuer",
-        "hidden_stems": []
+        "hidden_stems": [
+          {
+            "stem": "乙",
+            "element": "Holz",
+            "weight": 10,
+            "polarity": "Yin",
+            "source": "derived_from_branch_table"
+          }
+        ]
       },
       "month": {
         "stem": "Gui",
         "branch": "Mao",
         "element": "Wasser",
-        "hidden_stems": []
+        "hidden_stems": [
+          {
+            "stem": "乙",
+            "element": "Holz",
+            "weight": 10,
+            "polarity": "Yin",
+            "source": "derived_from_branch_table"
+          }
+        ]
       },
       "day": {
         "stem": "Ren",
         "branch": "Xu",
         "element": "Wasser",
-        "hidden_stems": []
+        "hidden_stems": [
+          {
+            "stem": "戊",
+            "element": "Erde",
+            "weight": 6,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "辛",
+            "element": "Metall",
+            "weight": 3,
+            "polarity": "Yin",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "丁",
+            "element": "Feuer",
+            "weight": 1,
+            "polarity": "Yin",
+            "source": "derived_from_branch_table"
+          }
+        ]
       },
       "hour": {
         "stem": "Jia",
         "branch": "Chen",
         "element": "Holz",
-        "hidden_stems": []
+        "hidden_stems": [
+          {
+            "stem": "戊",
+            "element": "Erde",
+            "weight": 6,
+            "polarity": "Yang",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "乙",
+            "element": "Holz",
+            "weight": 3,
+            "polarity": "Yin",
+            "source": "derived_from_branch_table"
+          },
+          {
+            "stem": "癸",
+            "element": "Wasser",
+            "weight": 1,
+            "polarity": "Yin",
+            "source": "derived_from_branch_table"
+          }
+        ]
       }
     },
     "day_master": {
       "stem": "Ren",
       "branch": "Xu",
       "element": "Wasser",
-      "hidden_stems": []
+      "hidden_stems": [
+        {
+          "stem": "戊",
+          "element": "Erde",
+          "weight": 6,
+          "polarity": "Yang",
+          "source": "derived_from_branch_table"
+        },
+        {
+          "stem": "辛",
+          "element": "Metall",
+          "weight": 3,
+          "polarity": "Yin",
+          "source": "derived_from_branch_table"
+        },
+        {
+          "stem": "丁",
+          "element": "Feuer",
+          "weight": 1,
+          "polarity": "Yin",
+          "source": "derived_from_branch_table"
+        }
+      ]
     }
   },
   "fusion": {
@@ -385,6 +467,6 @@
       "wuxing_info": 200
     },
     "view_model_version": "2",
-    "fetched_at": "2026-05-19T20:01:12.038Z"
+    "fetched_at": "2026-05-19T20:16:46.804Z"
   }
 }
