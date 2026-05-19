@@ -1025,10 +1025,21 @@ async function handleGeocodeRequest(req, res, requestOrigin = null) {
 }
 
 // ── Direct proxy for all other FuFirE endpoints ───────────────────────────
+// The slug stripped from `/api/fufire/<slug>` may match EITHER:
+//   - `upstreamPath` (e.g. `calculate/bazi` — path and upstreamPath are identical)
+//   - `path` minus leading slash (e.g. `info/wuxing` where upstreamPath is
+//      `info/wuxing-mapping` — frontend uses path, server proxies to upstreamPath).
+// `allowedEndpointDescriptions()` advertises `/api/fufire${e.path}`, so the
+// path lookup is the canonical form; upstreamPath lookup is kept for legacy
+// callers that already use the upstream slug directly.
 function getProxyEndpoint(pathname) {
-  const requestedPath = decodeURIComponent(pathname.replace(/^\/api\/fufire\/?/, ''))
+  const slug = decodeURIComponent(pathname.replace(/^\/api\/fufire\/?/, ''))
     .replace(/^\/+|\/+$/g, '');
-  return ENDPOINTS_BY_UPSTREAM_PATH.get(requestedPath) || null;
+  return (
+    ENDPOINTS_BY_UPSTREAM_PATH.get(slug) ||
+    ENDPOINTS_BY_PATH.get('/' + slug) ||
+    null
+  );
 }
 
 function allowedEndpointDescriptions() {

@@ -94,6 +94,73 @@ test('compatibility proxy validates FuFirE endpoint allowlist before forwarding'
   });
 });
 
+test('compatibility proxy resolves endpoints where path differs from upstreamPath', async () => {
+  // Regression: /api/fufire/info/wuxing was 404-ing because the lookup only
+  // checked ENDPOINTS_BY_UPSTREAM_PATH (where the key is the upstream slug
+  // `info/wuxing-mapping`), not the advertised path slug `info/wuxing`.
+  // allowedEndpointDescriptions advertises `/api/fufire/info/wuxing`, so this
+  // lookup must succeed.
+  const seen = [];
+  const upstream = createServer((req, res) => {
+    seen.push({ method: req.method, url: req.url });
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ planet_mapping: { Sun: 'fire' } }));
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+  try {
+    await withServer(async (base) => {
+      const response = await fetch(`${base}/api/fufire/info/wuxing`);
+      assert.equal(response.status, 200, 'compat proxy must resolve advertised path slug');
+      const json = await response.json();
+      assert.ok(json.planet_mapping);
+      // Upstream MUST be called with the upstreamPath (info/wuxing-mapping),
+      // not the frontend-facing slug.
+      assert.ok(seen.some((s) => s.url.includes('info/wuxing-mapping')),
+        `upstream must receive info/wuxing-mapping, got: ${JSON.stringify(seen)}`);
+      assert.ok(!seen.some((s) => /info\/wuxing(?!-mapping)/.test(s.url)),
+        `upstream must NOT receive bare info/wuxing, got: ${JSON.stringify(seen)}`);
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL; else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+  }
+});
+
+test('compatibility proxy still resolves endpoints where path equals upstreamPath', async () => {
+  // Sanity: pre-fix behavior must remain intact for normal calculate/* endpoints.
+  const seen = [];
+  const upstream = createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      seen.push({ method: req.method, url: req.url, body });
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+    });
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+  try {
+    await withServer(async (base) => {
+      const response = await fetch(`${base}/api/fufire/calculate/bazi`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: '1987-03-14T07:42:00', tz: 'Europe/Berlin', lat: 52.37, lon: 9.74 }),
+      });
+      assert.equal(response.status, 200);
+      assert.ok(seen.some((s) => s.url.includes('calculate/bazi')));
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL; else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+  }
+});
+
 
 test('explicit v3 endpoints forward to configured upstream with v4 proxy hardening', async () => {
   const seen = [];
