@@ -1,5 +1,9 @@
 import { generateCoreStatement } from '../domain/coreStatement.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
+import { ExplainableCard }       from '../components/ExplainableCard.js';
+import {
+  PILLAR_ROLES, lookupStem, lookupBranch,
+} from '../domain/meanings.js';
 import { UnavailableCard }       from '../components/UnavailableCard.js';
 import { SourcePill }            from '../components/SourcePill.js';
 import { InsightHero }           from '../components/InsightHero.js';
@@ -305,6 +309,42 @@ function renderWesternHouses(profile, topHouses = new Set()) {
   return section;
 }
 
+// ── BaZi Explainable Grid (pure render helper) ───────────────────────────────
+function renderBaziExplainableGrid(profile) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bazi-explainable-grid';
+  const pillars = profile?.bazi?.pillars || {};
+  for (const key of ['year', 'month', 'day', 'hour']) {
+    const p = pillars[key];
+    if (!p || !p.stem) continue;
+    const role       = PILLAR_ROLES[key];
+    const stemInfo   = lookupStem(p.stem);
+    const branchInfo = lookupBranch(p.branch);
+    const isDayMaster = (key === 'day');
+    const value = `${p.stem}${p.branch || ''}${stemInfo.element ? ' · ' + stemInfo.element : ''}`;
+    wrap.appendChild(ExplainableCard({
+      domain: 'bazi',
+      label:  role?.label || key,
+      value,
+      helper: role?.role,
+      highlighted: isDayMaster,
+      meaning: {
+        title:    `${role?.label || key}: ${p.stem}${p.branch || ''}`,
+        subtitle: `${stemInfo.element || ''} ${stemInfo.polarity || ''} · Tier: ${branchInfo.animal || '?'}`.trim(),
+        meaning:  `${role?.role || ''}. Stamm-Energie: ${stemInfo.resource || ''}`.trim(),
+        resource: stemInfo.resource,
+        shadow:   stemInfo.shadow,
+        practice: stemInfo.practice || branchInfo.practice,
+        extras: [
+          branchInfo.resource ? `Zweig (${branchInfo.animal}, ${branchInfo.element || '—'}): ${branchInfo.resource}` : null,
+          branchInfo.shadow   ? `Zweig-Schatten: ${branchInfo.shadow}` : null,
+        ].filter(Boolean),
+      },
+    }));
+  }
+  return wrap;
+}
+
 // ── OverviewPage ──────────────────────────────────────────────────────────────
 export function OverviewPage(app, { profile, onNavigate }) {
   const timeCert = profile._inputMeta?.timeCertainty || 'exact';
@@ -383,6 +423,8 @@ export function OverviewPage(app, { profile, onNavigate }) {
       <div class="three-doors-mount"></div>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">
         <h2>BaZi — Vier Säulen</h2>
+        <p class="section-intro">Klick auf eine Säule öffnet die Erklärung: Säulenrolle, Stamm, Zweig/Tier, Element, Ressource, Schatten, Praxisimpuls.</p>
+        <div class="bazi-explainable-grid"></div>
         <div class="bazi-pillars-wrapper"></div>
       </section>
       <div class="western-houses-placeholder"></div>
@@ -470,6 +512,10 @@ export function OverviewPage(app, { profile, onNavigate }) {
   }
 
   // BaZi Vier Säulen
+  // Education-First: klickbare BaZi-Säulen mit Erklärung (vor renderBaziPillars).
+  const baziHost = app.querySelector('.bazi-explainable-grid');
+  if (baziHost) baziHost.replaceWith(renderBaziExplainableGrid(profile));
+
   app.querySelector('.bazi-pillars-wrapper')
     .appendChild(renderBaziPillars(profile.bazi, { timeCertainty: timeCert }));
 

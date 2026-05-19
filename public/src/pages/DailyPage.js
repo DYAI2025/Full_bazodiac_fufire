@@ -19,6 +19,8 @@ import {
   buildActionExperiment,
 } from '../domain/experienceCopy.js';
 import { buildDailyCompanionViewModel } from '../domain/dailyCompanion.js';
+import { buildDailyLearnImpulse } from '../domain/meanings.js';
+import { DailyLearnImpulseCard } from '../components/DailyLearnImpulseCard.js';
 
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -86,6 +88,7 @@ export function DailyPage(app, { profile = null } = {}) {
       <p class="trust-microcopy" role="note">Der Tagespuls ist kein Urteil. Er ist ein Beobachtungsrahmen für 24 Stunden.</p>
       <div class="score-band-mount"></div>
       <div class="today-new-mount"></div>
+      <div class="daily-learn-impulse-mount"></div>
       <div class="vm-cards-mount"></div>
       <div class="daily-focus-mount"></div>
       <div class="daily-loading" role="status" aria-live="polite">Tagespuls wird berechnet…</div>
@@ -219,6 +222,22 @@ export function DailyPage(app, { profile = null } = {}) {
       scoreMount.remove();
     }
     mountTodayNew(dailyVM);
+
+    // Education-First Daily Learn Impuls
+    const learnMount = app.querySelector('.daily-learn-impulse-mount');
+    if (learnMount) {
+      const activeHouse = dailyVM.western?.activeHouses?.[0]?.house ?? null;
+      const dom = dailyVM.fusion?.synthesis?.match(/\b(Holz|Feuer|Erde|Metall|Wasser)\b/)?.[1] || null;
+      const dm = profile?.bazi?.day_master?.stem || null;
+      const imp = buildDailyLearnImpulse({
+        dominantElement: dom,
+        activeHouse,
+        dayMasterStem: dm,
+        fallbackExperiment: dailyVM.experiment,
+      });
+      learnMount.replaceWith(DailyLearnImpulseCard(imp));
+    }
+
     const vmMount = app.querySelector('.vm-cards-mount');
     const vmWrap = document.createElement('div');
     vmWrap.className = 'vm-cards-stack';

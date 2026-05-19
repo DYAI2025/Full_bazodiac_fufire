@@ -1531,3 +1531,44 @@ input:focus { border-color: var(--accent); }
 .daily-contact-link__body  { color: var(--text); font-size: .92rem; line-height: 1.5; }
 .daily-contact-link__cta   { align-self: flex-start; color: var(--accent); text-decoration: none; font-weight: 700; }
 .daily-contact-link__cta:hover { text-decoration: underline; }
+
+/* Education-First: ExplainableCard + MeaningDrawer */
+.explainable-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.explainable-card--bazi   { border-left: 4px solid var(--accent2); }
+.explainable-card--west   { border-left: 4px solid var(--accent); }
+.explainable-card--fusion { border-left: 4px solid var(--ok); }
+.explainable-card--house  { border-left: 4px solid var(--warn); }
+.explainable-card--highlight { box-shadow: 0 0 0 2px var(--accent) inset; }
+.explainable-card__head { display: flex; justify-content: space-between; align-items: center; }
+.explainable-card__label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.explainable-card__badge { font-size: .68rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); border-radius: 999px; padding: 2px 8px; }
+.explainable-card__value { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+.explainable-card__helper { font-size: .82rem; color: var(--muted); }
+.explainable-card__details > summary { cursor: pointer; padding: 6px 10px; background: var(--panel2); border-radius: var(--radius); color: var(--accent); font-weight: 600; font-size: .82rem; }
+.explainable-card__details[open] > summary { margin-bottom: 8px; }
+
+.meaning-drawer { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; background: var(--panel2); border-radius: var(--radius); }
+.meaning-drawer__title { font-size: 1rem; font-weight: 700; color: var(--text); }
+.meaning-drawer__subtitle { font-size: .82rem; color: var(--muted); }
+.meaning-drawer p { font-size: .92rem; line-height: 1.5; color: var(--text); }
+.meaning-drawer strong { color: var(--accent2); margin-right: 4px; }
+.meaning-drawer__extras { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 3px; color: var(--muted); font-size: .82rem; }
+
+/* DailyLearnImpulseCard */
+.daily-learn-impulse {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--ok);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.daily-learn-impulse__head { display: flex; justify-content: space-between; align-items: baseline; }
+.daily-learn-impulse__eyebrow { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.daily-learn-impulse__anchor  { font-size: .82rem; color: var(--ok); font-weight: 600; }
+.daily-learn-impulse p { font-size: .95rem; line-height: 1.5; color: var(--text); }
+.daily-learn-impulse strong { color: var(--accent2); margin-right: 4px; }
+
+/* Overview — BaZi Explainable Grid */
+.bazi-explainable-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px; }
+@media (max-width: 640px) { .bazi-explainable-grid { grid-template-columns: 1fr; } }
