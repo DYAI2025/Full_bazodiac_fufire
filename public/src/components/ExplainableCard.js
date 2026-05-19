@@ -56,7 +56,10 @@ export function ExplainableCard(opts = {}) {
   details.setAttribute('aria-label', m.a11yLabel);
   details.className = 'explainable-card__details';
   const summary = document.createElement('summary');
-  summary.textContent = 'Erklärung öffnen';
+  const summaryParts = [m.label, m.value].filter(Boolean);
+  summary.textContent = summaryParts.length
+    ? `Erklärung öffnen: ${summaryParts.join(' – ')}`
+    : 'Erklärung öffnen';
   details.appendChild(summary);
   details.appendChild(MeaningDrawer(m.meaning));
   root.appendChild(details);
