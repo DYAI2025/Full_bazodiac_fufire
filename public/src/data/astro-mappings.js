@@ -1,5 +1,46 @@
 // public/src/data/astro-mappings.js
 
+// EN sign → DE label
+export const SIGN_DE = {
+  Aries: 'Widder', Taurus: 'Stier', Gemini: 'Zwillinge', Cancer: 'Krebs',
+  Leo: 'Löwe',     Virgo: 'Jungfrau', Libra: 'Waage',     Scorpio: 'Skorpion',
+  Sagittarius: 'Schütze', Capricorn: 'Steinbock', Aquarius: 'Wassermann', Pisces: 'Fische',
+};
+
+// EN sign → Unicode glyph (sun-style)
+export const SIGN_GLYPH = {
+  Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
+  Leo:   '♌', Virgo:  '♍', Libra:  '♎', Scorpio: '♏',
+  Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
+};
+
+// Planet/body name → DE label + glyph (combined display string)
+export const PLANET_DE = {
+  Sun:           'Sonne ☉',
+  Moon:          'Mond ☽',
+  Mercury:       'Merkur ☿',
+  Venus:         'Venus ♀',
+  Mars:          'Mars ♂',
+  Jupiter:       'Jupiter ♃',
+  Saturn:        'Saturn ♄',
+  Uranus:        'Uranus ♅',
+  Neptune:       'Neptun ♆',
+  Pluto:         'Pluto ♇',
+  Chiron:        'Chiron ⚷',
+  Lilith:        'Lilith ⚸',
+  NorthNode:     'Mondknoten ☊',
+  TrueNorthNode: 'Mondknoten (wahr) ☊',
+};
+
+// Aspect EN → DE label
+export const ASPECT_DE = {
+  conjunction: 'Konjunktion',
+  sextile:     'Sextil',
+  square:      'Quadrat',
+  trine:       'Trigon',
+  opposition:  'Opposition',
+};
+
 // DE + EN sign names → Element
 const SIGN_MAP = {
   // DE
