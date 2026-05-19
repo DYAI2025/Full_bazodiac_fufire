@@ -1534,11 +1534,31 @@ input:focus { border-color: var(--accent); }
 
 /* Education-First: ExplainableCard + MeaningDrawer */
 .explainable-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
-.explainable-card--bazi   { border-left: 4px solid var(--accent2); }
-.explainable-card--west   { border-left: 4px solid var(--accent); }
-.explainable-card--fusion { border-left: 4px solid var(--ok); }
-.explainable-card--house  { border-left: 4px solid var(--warn); }
+.explainable-card--bazi   { border-left: 4px solid var(--accent2); border-radius: 4px; }
+.explainable-card--west   { border-left: 4px solid var(--accent);  border-radius: 12px; }
+.explainable-card--fusion { border-left: 4px solid var(--ok);      border-radius: 16px; }
+.explainable-card--house  { border-left: 4px solid var(--warn);    border-radius: 8px; }
 .explainable-card--highlight { box-shadow: 0 0 0 2px var(--accent) inset; }
+/* Domain glyph on label, mirrors layer-header glyph language */
+.explainable-card__label::before {
+  display: inline-block;
+  margin-right: 0.4em;
+  opacity: 0.55;
+  font-weight: 500;
+}
+.explainable-card--bazi   .explainable-card__label::before { content: '柱'; color: var(--accent2); }
+.explainable-card--west   .explainable-card__label::before { content: '✦';  color: var(--accent); }
+.explainable-card--fusion .explainable-card__label::before { content: '☯'; color: var(--ok); }
+.explainable-card--house  .explainable-card__label::before { content: '⌖'; color: var(--warn); }
+
+/* New 6-field schema rows */
+.meaning-drawer__what    strong { color: var(--accent); }
+.meaning-drawer__meaning strong { color: var(--text); }
+.meaning-drawer__related { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+.meaning-drawer__related-list { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.meaning-drawer__related-list li { font-size: .82rem; color: var(--muted); padding: 2px 8px; background: var(--panel); border-radius: 999px; }
+.meaning-drawer__related-link { color: var(--accent); text-decoration: none; }
+.meaning-drawer__related-link:hover { text-decoration: underline; }
 .explainable-card__head { display: flex; justify-content: space-between; align-items: center; }
 .explainable-card__label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
 .explainable-card__badge { font-size: .68rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); border-radius: 999px; padding: 2px 8px; }
@@ -1607,3 +1627,191 @@ input:focus { border-color: var(--accent); }
 .wuxing-education-section { display: flex; flex-direction: column; gap: 8px; }
 .wuxing-education-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 @media (max-width: 640px) { .wuxing-education-grid { grid-template-columns: 1fr; } }
+
+/* ── Coherence Lens Card (4-Linsen-Modell) ───────────────────────────────── */
+.coherence-lens-card {
+  margin: 1.25rem 0;
+  padding: 1.1rem 1.25rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: var(--radius);
+}
+.coherence-lens-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.coherence-lens-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+.coherence-lens-card__band {
+  font-size: 0.78rem;
+  color: var(--muted);
+  padding: 0.2rem 0.6rem;
+  background: var(--panel2);
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.coherence-lens-card__band--low       { color: var(--muted); }
+.coherence-lens-card__band--mixed     { color: var(--accent2); }
+.coherence-lens-card__band--high      { color: var(--accent); }
+.coherence-lens-card__band--very-high { color: var(--ok); }
+.coherence-lens-card__sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.4rem 0 0.9rem;
+}
+.coherence-lens-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+@media (max-width: 640px) {
+  .coherence-lens-card__grid { grid-template-columns: 1fr; }
+}
+.coherence-lens {
+  padding: 0.75rem 0.85rem;
+  background: var(--panel2);
+  border-radius: 6px;
+  border-left: 2px solid var(--border);
+}
+.coherence-lens--deckung  { border-left-color: var(--ok); }
+.coherence-lens--spannung { border-left-color: var(--warn); }
+.coherence-lens--blind    { border-left-color: var(--accent2); }
+.coherence-lens--growth   { border-left-color: var(--accent); }
+.coherence-lens__label {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.coherence-lens__note {
+  margin: 0 0 0.4rem;
+  font-size: 0.86rem;
+  color: var(--text);
+  line-height: 1.45;
+}
+.coherence-lens__strength,
+.coherence-lens__risk {
+  margin: 0.2rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.coherence-lens__strength strong { color: var(--ok); margin-right: 0.3em; }
+.coherence-lens__risk     strong { color: var(--warn); margin-right: 0.3em; }
+.coherence-lens-card__caveat {
+  margin: 0.75rem 0 0;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── Daily Companion Sequence Steps ──────────────────────────────────────── */
+.daily-step {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.25rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+}
+.daily-step__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--border);
+  flex-wrap: wrap;
+}
+.daily-step__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--text);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.daily-step__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.daily-step__lede {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+  flex-basis: 100%;
+}
+
+/* Step-specific accents — left border family */
+.daily-step--heute-aktiv { border-left: 3px solid var(--accent); }
+.daily-step--bedeutung   { border-left: 3px solid var(--accent2); }
+.daily-step--spannung    { border-left: 3px solid var(--warn); }
+.daily-step--handlung    { border-left: 3px solid var(--ok); }
+.daily-step--checkin     { border-left: 3px solid var(--text); }
+.daily-step--beziehung   { border-left: 3px solid var(--accent); }
+.daily-step--morgen      { border-left: 3px solid var(--muted); }
+
+.daily-step--spannung .daily-step__badge { background: var(--warn); }
+.daily-step--handlung .daily-step__badge { background: var(--ok); }
+
+/* Spannung card content */
+.daily-spannung-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.daily-spannung-row {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 2px solid var(--warn);
+  background: rgba(255, 165, 0, 0.06);
+  border-radius: 4px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.daily-spannung-row--caution { border-left-color: var(--accent); background: rgba(120, 80, 200, 0.06); }
+.daily-spannung-row--risk    { border-left-color: var(--accent2); background: rgba(40, 140, 200, 0.06); }
+.daily-spannung-row strong { font-weight: 700; margin-right: 0.25rem; }
+
+/* Handlung card content */
+.daily-handlung-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.daily-handlung-row {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  background: rgba(40, 180, 120, 0.07);
+  border-left: 2px solid var(--ok);
+  border-radius: 4px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.daily-handlung-row strong { font-weight: 700; margin-right: 0.25rem; }
+
+/* Reduce visual weight of contained mounts so the step header stays primary */
+.daily-step .insight-hero,
+.daily-step .impulse-card,
+.daily-step .checkin-result-card { margin-top: 0.75rem; }
+
+@media (max-width: 640px) {
+  .daily-step { padding: 1rem; }
+  .daily-step__title { font-size: 1.05rem; }
+}

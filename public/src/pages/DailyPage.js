@@ -84,25 +84,81 @@ export function DailyPage(app, { profile = null } = {}) {
         <h1 class="daily-title">Tagespuls</h1>
         <p class="daily-date">${today}</p>
       </header>
-      <div class="insight-hero-mount"></div>
       <p class="trust-microcopy" role="note">Der Tagespuls ist kein Urteil. Er ist ein Beobachtungsrahmen für 24 Stunden.</p>
-      <div class="score-band-mount"></div>
-      <div class="today-new-mount"></div>
-      <div class="daily-learn-impulse-mount"></div>
-      <div class="vm-cards-mount"></div>
-      <div class="daily-focus-mount"></div>
+
+      <section class="daily-step daily-step--heute-aktiv" aria-labelledby="step-heute-aktiv-h">
+        <header class="daily-step__head">
+          <span class="daily-step__badge">1</span>
+          <h2 class="daily-step__title" id="step-heute-aktiv-h">Heute aktiv</h2>
+        </header>
+        <div class="insight-hero-mount"></div>
+        <div class="score-band-mount"></div>
+        <div class="today-new-mount"></div>
+      </section>
+
+      <section class="daily-step daily-step--bedeutung" aria-labelledby="step-bedeutung-h">
+        <header class="daily-step__head">
+          <span class="daily-step__badge">2</span>
+          <h2 class="daily-step__title" id="step-bedeutung-h">Bedeutung</h2>
+          <p class="daily-step__lede">Was dieser Tag aus deiner Signatur trägt.</p>
+        </header>
+        <div class="daily-learn-impulse-mount"></div>
+        <div class="vm-cards-mount"></div>
+      </section>
+
+      <section class="daily-step daily-step--spannung" aria-labelledby="step-spannung-h">
+        <header class="daily-step__head">
+          <span class="daily-step__badge">3</span>
+          <h2 class="daily-step__title" id="step-spannung-h">Spannung</h2>
+          <p class="daily-step__lede">Wo heute Reibung sitzt.</p>
+        </header>
+        <div class="daily-spannung-mount"></div>
+      </section>
+
+      <section class="daily-step daily-step--handlung" aria-labelledby="step-handlung-h">
+        <header class="daily-step__head">
+          <span class="daily-step__badge">4</span>
+          <h2 class="daily-step__title" id="step-handlung-h">Handlung</h2>
+          <p class="daily-step__lede">Konkrete Bewegung für heute.</p>
+        </header>
+        <div class="daily-handlung-mount"></div>
+        <div class="daily-focus-mount"></div>
+        <div class="daily-experiment-mount"></div>
+      </section>
+
+      <section class="daily-step daily-step--checkin" aria-labelledby="step-checkin-h">
+        <header class="daily-step__head">
+          <span class="daily-step__badge">5</span>
+          <h2 class="daily-step__title" id="step-checkin-h">Check-in</h2>
+          <p class="daily-step__lede">Wie war heute wirklich?</p>
+        </header>
+        <div class="daily-checkin-mount"></div>
+        <div class="daily-checkin-result-mount"></div>
+      </section>
+
+      <section class="daily-step daily-step--beziehung" aria-labelledby="step-beziehung-h">
+        <header class="daily-step__head">
+          <span class="daily-step__badge">6</span>
+          <h2 class="daily-step__title" id="step-beziehung-h">Beziehung</h2>
+        </header>
+        <section class="daily-contact-link" aria-label="Heute in Beziehung">
+          <h3 class="daily-contact-link__title">Heute in Beziehung</h3>
+          <p class="daily-contact-link__body">Aus deinem Tagespuls in den Kontakt mit anderen — wie wirkt sich dein heutiges Element auf eine zweite Person aus?</p>
+          <a class="daily-contact-link__cta" href="#/synastry">Zur Beziehungsauswertung →</a>
+        </section>
+      </section>
+
+      <section class="daily-step daily-step--morgen" aria-labelledby="step-morgen-h">
+        <header class="daily-step__head">
+          <span class="daily-step__badge">7</span>
+          <h2 class="daily-step__title" id="step-morgen-h">Morgen</h2>
+        </header>
+        <div class="tomorrow-teaser-mount"></div>
+      </section>
+
       <div class="daily-loading" role="status" aria-live="polite">Tagespuls wird berechnet…</div>
       <div class="daily-content" hidden></div>
       <div class="daily-error" role="alert" hidden></div>
-      <div class="daily-experiment-mount"></div>
-      <div class="daily-checkin-mount"></div>
-      <div class="daily-checkin-result-mount"></div>
-      <section class="daily-contact-link" aria-label="Heute in Beziehung">
-        <h3 class="daily-contact-link__title">Heute in Beziehung</h3>
-        <p class="daily-contact-link__body">Aus deinem Tagespuls in den Kontakt mit anderen — wie wirkt sich dein heutiges Element auf eine zweite Person aus?</p>
-        <a class="daily-contact-link__cta" href="#/synastry">Zur Beziehungsauswertung →</a>
-      </section>
-      <div class="tomorrow-teaser-mount"></div>
       <div class="daily-three-doors-mount"></div>
     </main>
   `;
@@ -206,6 +262,55 @@ export function DailyPage(app, { profile = null } = {}) {
     app.querySelector('.tomorrow-teaser-mount').replaceWith(TomorrowTeaserCard(vm.tomorrow));
   }
 
+  function mountSpannung(vm) {
+    const mount = app.querySelector('.daily-spannung-mount');
+    if (!mount) return;
+    const items = [
+      vm.fusion?.tension && { label: 'Hauptspannung', text: vm.fusion.tension, tone: 'tension' },
+      vm.western?.caution && { label: 'Achtung (westlich)', text: vm.western.caution, tone: 'caution' },
+      vm.bazi?.riskHint && { label: 'Risiko (BaZi)', text: vm.bazi.riskHint, tone: 'risk' },
+    ].filter(Boolean);
+    if (!items.length) {
+      mount.remove();
+      return;
+    }
+    const root = document.createElement('div');
+    root.className = 'daily-spannung-card';
+    for (const it of items) {
+      const row = document.createElement('p');
+      row.className = `daily-spannung-row daily-spannung-row--${it.tone}`;
+      const strong = document.createElement('strong');
+      strong.textContent = `${it.label}:`;
+      row.append(strong, document.createTextNode(` ${it.text}`));
+      root.appendChild(row);
+    }
+    mount.replaceWith(root);
+  }
+
+  function mountHandlung(vm) {
+    const mount = app.querySelector('.daily-handlung-mount');
+    if (!mount) return;
+    const items = [
+      vm.fusion?.balancingAction && { label: 'Ausgleich', text: vm.fusion.balancingAction },
+      vm.western?.microImpulse && { label: 'Mikro-Impuls', text: vm.western.microImpulse },
+    ].filter(Boolean);
+    if (!items.length) {
+      mount.remove();
+      return;
+    }
+    const root = document.createElement('div');
+    root.className = 'daily-handlung-card';
+    for (const it of items) {
+      const row = document.createElement('p');
+      row.className = 'daily-handlung-row';
+      const strong = document.createElement('strong');
+      strong.textContent = `${it.label}:`;
+      row.append(strong, document.createTextNode(` ${it.text}`));
+      root.appendChild(row);
+    }
+    mount.replaceWith(root);
+  }
+
   transitsPromise.then((transits) => {
     dailyVM = buildDailyCompanionViewModel({
       profile,
@@ -245,6 +350,8 @@ export function DailyPage(app, { profile = null } = {}) {
     vmWrap.appendChild(BaziImpulseCard(dailyVM.bazi));
     vmWrap.appendChild(FusionSynthesisCard(dailyVM.fusion));
     vmMount.replaceWith(vmWrap);
+    mountSpannung(dailyVM);
+    mountHandlung(dailyVM);
     mountTomorrow(dailyVM);
     persistTodayState(dailyVM);
   });
