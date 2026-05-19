@@ -12,8 +12,9 @@ import {
   buildRelationshipSummary,
   buildActionExperiment,
 }                                                  from '../domain/experienceCopy.js';
-import { calculateProfile, geocodePlace }          from '../api/client.js';
+import { calculateProfile }                        from '../api/client.js';
 import { readPersonB, savePersonB }                 from '../domain/personState.js';
+import { GeoInput }                                 from '../components/GeoInput.js';
 import { buildHouseComparisons, DOMAIN_HOUSES }    from '../synastry/house-comparison.js';
 
 // Western sign → element group
@@ -451,11 +452,11 @@ export function LovePage(app, { profile, onNavigate }) {
   timeInput.className = 'partner-b-time';
   timeInput.style.cssText = 'padding:8px;border-radius:4px;';
 
-  const placeInput = document.createElement('input');
-  placeInput.type = 'text';
-  placeInput.placeholder = 'Geburtsort';
-  placeInput.className = 'partner-b-place';
-  placeInput.style.cssText = 'padding:8px;border-radius:4px;';
+  // GeoInput handles autocomplete + manual coords + range validation.
+  // selectedPlace contains { display, lat, lon, tz } once a result is chosen.
+  let selectedPlace = null;
+  const geoInput = GeoInput({ onSelect: (p) => { selectedPlace = p; } });
+  geoInput.classList.add('partner-b-place');
 
   const calcBtn = document.createElement('button');
   calcBtn.type = 'button';
@@ -473,7 +474,7 @@ export function LovePage(app, { profile, onNavigate }) {
   partnerBLoading.textContent = 'Wird berechnet…';
   partnerBLoading.hidden = true;
 
-  partnerBForm.append(dateInput, timeInput, placeInput, calcBtn, partnerBError, partnerBLoading);
+  partnerBForm.append(dateInput, timeInput, geoInput, calcBtn, partnerBError, partnerBLoading);
   partnerBSection.appendChild(partnerBForm);
 
   // Prefill from persisted Person-B if available.
@@ -481,7 +482,7 @@ export function LovePage(app, { profile, onNavigate }) {
   if (persistedB) {
     dateInput.value = persistedB.date || '';
     timeInput.value = persistedB.time || '';
-    placeInput.value = persistedB.place?.display || '';
+    selectedPlace   = persistedB.place || null;
     partnerBForm.hidden = false;
     toggleBtn.textContent = 'Partner B ausblenden';
   }
@@ -500,11 +501,10 @@ export function LovePage(app, { profile, onNavigate }) {
     partnerBLoading.hidden = false;
     calcBtn.disabled = true;
 
-    const date  = dateInput.value;
-    const time  = timeInput.value;
-    const place = placeInput.value.trim();
+    const date = dateInput.value;
+    const time = timeInput.value;
 
-    if (!date || !place) {
+    if (!date || !selectedPlace) {
       partnerBError.textContent = 'Bitte Geburtsdatum und Geburtsort eingeben.';
       partnerBError.hidden = false;
       partnerBLoading.hidden = true;
@@ -513,27 +513,22 @@ export function LovePage(app, { profile, onNavigate }) {
     }
 
     try {
-      // 1. Geocode place
-      const geoResult = await geocodePlace(place);
-      if (!geoResult.ok || !geoResult.data) {
-        throw new Error(geoResult.error || 'Geokodierung fehlgeschlagen.');
-      }
-      const { lat, lon, tz } = geoResult.data;
+      const { lat, lon, tz, display } = selectedPlace;
 
-      // 2. Calculate profile for partner B
+      // Calculate profile for partner B (GeoInput already resolved coords + tz).
       const profileResult = await calculateProfile({ date, time, lat, lon, tz });
       if (!profileResult.ok || !profileResult.data) {
         throw new Error(profileResult.error || 'Profilberechnung fehlgeschlagen.');
       }
       const profileB = profileResult.data;
 
-      // 3. Persist valid Person B for reuse on next visit / in Synastry.
+      // Persist valid Person B for reuse on next visit / in Synastry.
       savePersonB({
         alias: '',
         date,
         time: time || '12:00',
         certainty: 'exact',
-        place: { display: place, lat, lon, tz },
+        place: { display, lat, lon, tz },
       });
 
       // 3. Update WuxingBar with partner B overlay

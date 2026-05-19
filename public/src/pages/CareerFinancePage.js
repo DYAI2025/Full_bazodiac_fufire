@@ -13,8 +13,9 @@ import { UnavailableCard } from '../components/UnavailableCard.js';
 import { lookupStem as lookupStemFromMeanings } from '../domain/meanings.js';
 import { WuxingBar } from '../components/WuxingBar.js';
 import { buildHouseComparisons, DOMAIN_HOUSES } from '../synastry/house-comparison.js';
-import { calculateProfile, geocodePlace } from '../api/client.js';
-import { readPersonB, savePersonB }       from '../domain/personState.js';
+import { calculateProfile }         from '../api/client.js';
+import { readPersonB, savePersonB } from '../domain/personState.js';
+import { GeoInput }                 from '../components/GeoInput.js';
 
 // ── Fusion-Layer constants ────────────────────────────────────────────────────
 
@@ -273,11 +274,10 @@ function buildPartnerBSection(profile, wuxingVecA) {
   timeInput.className = 'factor-card';
   timeInput.style.cssText = 'padding:0.5rem;color:#fff;background:#1a1a1a;border:1px solid #333;border-radius:6px;';
 
-  const placeInput = document.createElement('input');
-  placeInput.type = 'text';
-  placeInput.placeholder = 'Geburtsort';
-  placeInput.className = 'factor-card';
-  placeInput.style.cssText = 'padding:0.5rem;color:#fff;background:#1a1a1a;border:1px solid #333;border-radius:6px;';
+  // GeoInput handles autocomplete + manual coords + range validation.
+  let selectedPlace = null;
+  const geoInput = GeoInput({ onSelect: (p) => { selectedPlace = p; } });
+  geoInput.classList.add('factor-card');
 
   const calcBtn = document.createElement('button');
   calcBtn.className = 'new-calc-btn';
@@ -290,7 +290,7 @@ function buildPartnerBSection(profile, wuxingVecA) {
   const resultsWrap = document.createElement('div');
   resultsWrap.style.cssText = 'display:flex;flex-direction:column;gap:1rem;margin-top:1rem;';
 
-  formWrap.append(dateInput, timeInput, placeInput, calcBtn, statusMsg, resultsWrap);
+  formWrap.append(dateInput, timeInput, geoInput, calcBtn, statusMsg, resultsWrap);
   section.appendChild(formWrap);
 
   // Prefill from persisted Person-B if available.
@@ -298,7 +298,7 @@ function buildPartnerBSection(profile, wuxingVecA) {
   if (persistedB) {
     dateInput.value = persistedB.date || '';
     timeInput.value = persistedB.time || '';
-    placeInput.value = persistedB.place?.display || '';
+    selectedPlace   = persistedB.place || null;
     formWrap.style.display = 'flex';
     toggleBtn.textContent = 'Partner B ausblenden';
   }
@@ -314,11 +314,10 @@ function buildPartnerBSection(profile, wuxingVecA) {
 
   // Calculate handler
   calcBtn.addEventListener('click', async () => {
-    const date  = dateInput.value.trim();
-    const time  = timeInput.value.trim();
-    const place = placeInput.value.trim();
+    const date = dateInput.value.trim();
+    const time = timeInput.value.trim();
 
-    if (!date || !place) {
+    if (!date || !selectedPlace) {
       statusMsg.textContent = 'Bitte Geburtsdatum und Geburtsort angeben.';
       statusMsg.style.display = 'block';
       return;
@@ -330,17 +329,9 @@ function buildPartnerBSection(profile, wuxingVecA) {
     resultsWrap.innerHTML = '';
 
     try {
-      // 1. Geocode
-      const geoRes = await geocodePlace(place);
-      if (!geoRes.ok || !geoRes.data) {
-        statusMsg.textContent = `Geocoding fehlgeschlagen: ${geoRes.error ?? 'Unbekannter Fehler'}`;
-        calcBtn.disabled = false;
-        return;
-      }
+      const { lat, lon, tz, display } = selectedPlace;
 
-      const { lat, lon, tz } = geoRes.data;
-
-      // 2. Calculate profile B
+      // Calculate profile B (GeoInput already resolved coords + tz).
       const profRes = await calculateProfile({ date, time: time || '12:00', lat, lon, tz });
       if (!profRes.ok || !profRes.data) {
         statusMsg.textContent = `Profilberechnung fehlgeschlagen: ${profRes.error ?? 'Unbekannter Fehler'}`;
@@ -350,13 +341,13 @@ function buildPartnerBSection(profile, wuxingVecA) {
 
       const profileB = profRes.data;
 
-      // 3. Persist valid Person B for reuse across pages.
+      // Persist valid Person B for reuse across pages.
       savePersonB({
         alias: '',
         date,
         time: time || '12:00',
         certainty: 'exact',
-        place: { display: place, lat, lon, tz },
+        place: { display, lat, lon, tz },
       });
 
       // 3. House comparisons
