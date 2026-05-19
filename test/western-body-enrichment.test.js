@@ -134,6 +134,32 @@ test('enrichBody: retrograde flag survives through enrichment (Persona3 has retr
   assert.equal(enriched.retrograde, pluto.retrograde);
 });
 
+test('enrichBody: accepts is_retrograde field-name (standalone /calculate/western shape)', () => {
+  // The orchestrator endpoint /api/azodiac/profile returns `retrograde: bool`
+  // but the standalone endpoint /api/fufire/calculate/western returns the
+  // verbose form `is_retrograde: bool`. Both are real upstream shapes
+  // (verified in test/_fixtures/upstream-snapshots/profile.real.json vs
+  // western.real.json). The enrichment layer must accept both — otherwise
+  // a future MethodPage refresh-button via calculateWestern() would silently
+  // lose the retrograde flag.
+  const out = enrichBody(
+    'Pluto',
+    { sign: 'Scorpio', is_retrograde: true, degree_in_sign: 9.7, longitude: 219.7 },
+    {},
+  );
+  assert.equal(out.retrograde, true, 'is_retrograde must be honored');
+});
+
+test('enrichBody: prefers `retrograde` over `is_retrograde` when both are present', () => {
+  // Orchestrator field wins if both happen to appear. Defensive.
+  const out = enrichBody(
+    'Mars',
+    { sign: 'Leo', retrograde: false, is_retrograde: true, degree_in_sign: 5, longitude: 125 },
+    {},
+  );
+  assert.equal(out.retrograde, false, 'orchestrator field must take precedence');
+});
+
 test('enrichBody: missing sign yields null narrative without crashing', () => {
   const enriched = enrichBody('Mystery', { longitude: 100, sign: 'NotARealSign', degree_in_sign: 10 }, {});
   assert.equal(enriched.sign, 'NotARealSign');
