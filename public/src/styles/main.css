@@ -1838,3 +1838,67 @@ input:focus { border-color: var(--accent); }
   cursor: pointer;
 }
 .profile-missing-cta:hover { filter: brightness(1.05); }
+
+/* ── InputPage v2: fieldsets, Person-B, category preview ─────────────────── */
+.form-section {
+  border: 1px solid var(--border, rgba(255,255,255,.10));
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 0 0 1rem;
+  background: var(--card, rgba(255,255,255,.02));
+}
+.form-section legend {
+  padding: 0 .5rem;
+  font-weight: 600;
+  font-size: .92rem;
+  color: var(--muted, #b6bcc4);
+}
+.form-section--person-b summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: .25rem 0;
+}
+.form-section--person-b summary .optional-hint {
+  color: var(--muted, #b6bcc4);
+  font-weight: 400;
+  margin-left: .25rem;
+}
+.relationship-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .5rem;
+}
+.relationship-context label {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .35rem .65rem;
+  background: var(--card, rgba(255,255,255,.04));
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  border-radius: 999px;
+  font-size: .82rem;
+  cursor: pointer;
+}
+.person-b-clear-btn {
+  margin-top: .5rem;
+  padding: .35rem .75rem;
+  background: transparent;
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  color: var(--muted, #b6bcc4);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: .85rem;
+}
+.person-b-clear-btn:hover { color: var(--bad, #d97a6c); border-color: var(--bad, #d97a6c); }
+.category-preview {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--card, rgba(255,255,255,.02));
+  border-radius: 10px;
+}
+.category-preview-title { margin: 0 0 .5rem; font-size: .95rem; }
+.category-preview-list { margin: 0; padding-left: 1.25rem; }
+.category-preview-list li { margin: .25rem 0; font-size: .88rem; line-height: 1.4; }
+.geo-manual-helper { color: var(--muted, #b6bcc4); font-size: .78rem; margin: 0 0 .5rem; }
+.geo-manual-error  { color: var(--bad, #d97a6c); font-size: .82rem; margin: .5rem 0 0; }

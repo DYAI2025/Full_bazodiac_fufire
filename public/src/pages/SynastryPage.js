@@ -4,6 +4,7 @@ import { SourceBadge }           from '../components/SourceBadge.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { calculateProfile, calculateSynastry } from '../api/client.js';
+import { readPersonB, savePersonB } from '../domain/personState.js';
 import { createSynastryProjection } from '../domain/projections.js';
 import { computeDomainScores }    from '../synastry/domain-score.js';
 import { HeatmapOverview }        from '../synastry/HeatmapOverview.js';
@@ -111,6 +112,14 @@ export function SynastryPage(app) {
   let placeA = null;
   let placeB = null;
 
+  // Prefill Person B from localStorage if available (saved via InputPage Partnerprofil).
+  const persistedB = readPersonB();
+  if (persistedB) {
+    dateB.value = persistedB.date || '';
+    timeB.value = persistedB.time || '';
+    placeB = persistedB.place;
+  }
+
   const geoA = GeoInput({ onSelect: (p) => { placeA = p; validate(); } });
   const geoB = GeoInput({ onSelect: (p) => { placeB = p; validate(); } });
   app.querySelector('#geo-group-a').appendChild(geoA);
@@ -171,6 +180,14 @@ export function SynastryPage(app) {
         profileA       = res.data.personA;
         profileB       = res.data.personB;
         synastrySummary = res.data.synastry || null;
+        // Persist Person B for reuse on next visit / in InputPage Partnerprofil.
+        savePersonB({
+          alias: '',
+          date: inputB.date,
+          time: inputB.time,
+          certainty: 'exact',
+          place: { display: placeB.display, lat: placeB.lat, lon: placeB.lon, tz: placeB.tz },
+        });
       } else {
         // Solo profile — no Person B
         const res = await calculateProfile(inputA);

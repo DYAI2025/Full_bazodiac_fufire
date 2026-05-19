@@ -1,5 +1,6 @@
 // Geocode-Autocomplete mit Debounce, Tastaturnavigation, Fallback
 import { geocodePlace } from '../api/client.js';
+import { validateCoordinates } from '../domain/personState.js';
 
 export function GeoInput({ onSelect }) {
   const wrapper = document.createElement('div');
@@ -14,9 +15,11 @@ export function GeoInput({ onSelect }) {
       <button class="geo-change-btn" type="button" aria-label="Ort ändern">Ändern</button>
     </div>
     <div class="geo-manual" hidden>
-      <label>Lat <input type="number" class="geo-lat" step="0.001" /></label>
-      <label>Lon <input type="number" class="geo-lon" step="0.001" /></label>
+      <p class="geo-manual-helper">Manuelle Koordinaten (WGS84, bis zu 7 Nachkommastellen).</p>
+      <label>Lat <input type="number" class="geo-lat" step="0.0000001" min="-90" max="90" /></label>
+      <label>Lon <input type="number" class="geo-lon" step="0.0000001" min="-180" max="180" /></label>
       <label>Zeitzone <input type="text" class="geo-tz" placeholder="Europe/Berlin" /></label>
+      <p class="geo-manual-error" role="alert" hidden></p>
     </div>
     <button class="geo-manual-toggle" type="button">Koordinaten manuell eingeben</button>
   `;
@@ -80,10 +83,20 @@ export function GeoInput({ onSelect }) {
   });
 
   function syncManual() {
-    const lat = Number(manualDiv.querySelector('.geo-lat').value);
-    const lon = Number(manualDiv.querySelector('.geo-lon').value);
-    const tz  = manualDiv.querySelector('.geo-tz').value.trim() || 'UTC';
-    if (lat && lon) onSelect?.({ display: `${lat}, ${lon}`, lat, lon, tz });
+    const latRaw = manualDiv.querySelector('.geo-lat').value;
+    const lonRaw = manualDiv.querySelector('.geo-lon').value;
+    const tz     = manualDiv.querySelector('.geo-tz').value.trim() || 'UTC';
+    const errEl  = manualDiv.querySelector('.geo-manual-error');
+    if (latRaw === '' || lonRaw === '') { errEl.hidden = true; return; }
+    const v = validateCoordinates(latRaw, lonRaw);
+    if (!v.ok) {
+      errEl.textContent = v.error;
+      errEl.hidden = false;
+      onSelect?.(null);
+      return;
+    }
+    errEl.hidden = true;
+    onSelect?.({ display: `${v.lat}, ${v.lon}`, lat: v.lat, lon: v.lon, tz });
   }
 
   manualDiv.querySelector('.geo-lat').addEventListener('change', syncManual);
