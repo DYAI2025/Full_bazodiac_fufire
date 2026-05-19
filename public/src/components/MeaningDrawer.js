@@ -14,7 +14,7 @@ export function meaningDrawerModel({
   return {
     title,
     subtitle,
-    meaning:  meaning  || 'Basisdeutung folgt — Element- und Pol-Beschreibung weiter oben in der Karte.',
+    meaning:  meaning  || subtitle || 'Klick zur ausgeklappten Detail-Erklärung der Karte oben.',
     resource: resource || '',
     shadow:   shadow   || '',
     practice: practice || '',

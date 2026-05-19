@@ -1572,3 +1572,33 @@ input:focus { border-color: var(--accent); }
 /* Overview — BaZi Explainable Grid */
 .bazi-explainable-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px; }
 @media (max-width: 640px) { .bazi-explainable-grid { grid-template-columns: 1fr; } }
+
+/* Unified MVP — Visual layer separation: BaZi / Western / Fusion / House. */
+.layer-header {
+  display: flex; align-items: baseline; gap: 10px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+.layer-header__glyph { font-size: 1.2rem; }
+.layer-header__title { font-size: 1rem; font-weight: 700; color: var(--text); }
+.layer-header__sub   { font-size: .78rem; color: var(--muted); font-style: italic; }
+.layer-header--bazi   { border-bottom-color: var(--accent2); }
+.layer-header--west   { border-bottom-color: var(--accent); }
+.layer-header--fusion { border-bottom-color: var(--ok); }
+.layer-header--house  { border-bottom-color: var(--warn); }
+.layer-header--bazi   .layer-header__glyph { color: var(--accent2); }
+.layer-header--west   .layer-header__glyph { color: var(--accent); }
+.layer-header--fusion .layer-header__glyph { color: var(--ok); }
+.layer-header--house  .layer-header__glyph { color: var(--warn); }
+
+/* Section-Domain-Klassen für Overview-Sektionen */
+.bazi-section, .signature-cards-section, .western-houses-section { position: relative; }
+.bazi-section::before { content: '柱'; position: absolute; right: 8px; top: 4px; opacity: .15; font-size: 2rem; color: var(--accent2); pointer-events: none; }
+.signature-cards-section::before { content: '✦'; position: absolute; right: 8px; top: 4px; opacity: .15; font-size: 2rem; color: var(--accent); pointer-events: none; }
+.western-houses-section::before { content: '⌖'; position: absolute; right: 8px; top: 4px; opacity: .15; font-size: 2rem; color: var(--warn); pointer-events: none; }
+
+/* Western Education Grid */
+.western-education-section { display: flex; flex-direction: column; gap: 8px; }
+.western-education-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .western-education-grid { grid-template-columns: 1fr; } }

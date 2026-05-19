@@ -2,7 +2,7 @@ import { generateCoreStatement } from '../domain/coreStatement.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
 import { ExplainableCard }       from '../components/ExplainableCard.js';
 import {
-  PILLAR_ROLES, lookupStem, lookupBranch,
+  PILLAR_ROLES, lookupStem, lookupBranch, lookupSign,
 } from '../domain/meanings.js';
 import { UnavailableCard }       from '../components/UnavailableCard.js';
 import { SourcePill }            from '../components/SourcePill.js';
@@ -428,6 +428,14 @@ export function OverviewPage(app, { profile, onNavigate }) {
         <div class="bazi-pillars-wrapper"></div>
       </section>
       <div class="western-houses-placeholder"></div>
+      <section class="western-education-section" aria-label="Westliche Signatur">
+        <header class="layer-header layer-header--west">
+          <span class="layer-header__glyph">✦</span>
+          <span class="layer-header__title">Westliche Signatur</span>
+          <span class="layer-header__sub">Sonne · Mond · Aszendent — klickbar erklärt</span>
+        </header>
+        <div class="western-education-grid"></div>
+      </section>
       <section class="signature-cards-section" aria-label="Technische Basis">
         <h2>Technische Basis</h2>
         <div class="cards-grid"></div>
@@ -501,7 +509,15 @@ export function OverviewPage(app, { profile, onNavigate }) {
   }
 
   // Three Doors
-  app.querySelector('.three-doors-mount').replaceWith(ThreeDoors());
+  // Three-Mode Entry (Unified MVP): Lernen / Heute anwenden / Beziehung reflektieren.
+  // Mappt auf bestehende Pages, ohne neue Routen einzuführen.
+  app.querySelector('.three-doors-mount').replaceWith(ThreeDoors({
+    doors: [
+      { path: '/personality', eyebrow: 'Lernen',     title: 'Signatur verstehen',  hint: 'Schichten, Säulen, Element-Logik klickbar erklärt' },
+      { path: '/daily',       eyebrow: 'Anwenden',   title: 'Heute anwenden',       hint: 'Tagespuls, Mini-Experiment, Check-in für heute' },
+      { path: '/synastry',    eyebrow: 'Beziehung',  title: 'Beziehung reflektieren', hint: 'Kontaktsignatur, Resonanz und 24h-Experiment' },
+    ],
+  }));
 
   // Hinweis fehlende Daten
   if (missing.length) {
@@ -518,6 +534,35 @@ export function OverviewPage(app, { profile, onNavigate }) {
 
   app.querySelector('.bazi-pillars-wrapper')
     .appendChild(renderBaziPillars(profile.bazi, { timeCertainty: timeCert }));
+
+  // Westliche Signatur — Sonne/Mond/Asz klickbar mit lookupSign-Meaning
+  const westernGrid = app.querySelector('.western-education-grid');
+  if (westernGrid) {
+    const bodies = [
+      { key: 'Sun',  label: 'Sonne',     sign: profile.western?.bodies?.Sun?.sign },
+      { key: 'Moon', label: 'Mond',      sign: profile.western?.bodies?.Moon?.sign },
+      { key: 'Asc',  label: 'Aszendent', sign: typeof profile.western?.ascendant === 'string' ? profile.western.ascendant : profile.western?.ascendant?.sign },
+    ];
+    for (const b of bodies) {
+      if (!b.sign) continue;
+      const s = lookupSign(b.sign);
+      if (!s) continue;
+      westernGrid.appendChild(ExplainableCard({
+        domain: 'west',
+        label: b.label,
+        value: `${s.de} (${s.element}, ${s.mode})`,
+        helper: `${s.resource}`,
+        meaning: {
+          title:    `${b.label} im ${s.de}`,
+          subtitle: `${s.element} · ${s.mode}`,
+          meaning:  s.resource,
+          resource: s.resource,
+          shadow:   s.shadow,
+          practice: s.practice,
+        },
+      }));
+    }
+  }
 
   // Westliche Häuser (Top 3 nach Planetenaktivierung aufgeklappt)
   const housesPlaceholder = app.querySelector('.western-houses-placeholder');

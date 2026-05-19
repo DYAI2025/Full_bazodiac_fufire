@@ -10,6 +10,7 @@ import {
 import { SourceBadge }   from '../components/SourceBadge.js';
 import { ConfidenceBar } from '../components/ConfidenceBar.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
+import { lookupStem as lookupStemFromMeanings } from '../domain/meanings.js';
 import { WuxingBar } from '../components/WuxingBar.js';
 import { buildHouseComparisons, DOMAIN_HOUSES } from '../synastry/house-comparison.js';
 import { calculateProfile, geocodePlace } from '../api/client.js';
@@ -190,10 +191,16 @@ function buildFusionLayer(profile) {
   if (stem && DAY_MASTER_CAREER[stem]) {
     archetypeValue.textContent = `${stem} — ${DAY_MASTER_CAREER[stem]}`;
   } else if (stem) {
-    archetypeValue.textContent = `${stem} — Keine Archetyp-Beschreibung verfügbar.`;
+    // Profilnaher Fallback via Meaning-Registry statt Platzhaltertext.
+    // Hide-statt-leer ist die Alternative, wenn auch das Element fehlt.
+    const stemInfo = lookupStemFromMeanings(stem);
+    if (stemInfo?.resource) {
+      archetypeValue.textContent = `${stem} (${stemInfo.element || ''}) — Arbeitsmodus: ${stemInfo.resource}`;
+    } else {
+      archetypeCard.hidden = true;
+    }
   } else {
-    archetypeValue.textContent = 'Day-Master-Daten nicht verfügbar.';
-    archetypeValue.className = 'factor-note';
+    archetypeCard.hidden = true;
   }
   archetypeCard.appendChild(archetypeValue);
   wrap.appendChild(archetypeCard);
