@@ -156,6 +156,19 @@ export function SynastryPage(app) {
     const pg = CalculationProgress();
     progress.appendChild(pg);
 
+    // Sprint-L Step-0: consolidate the three identical loading-cleanup
+    // stanzas (A+B success, solo success, .catch) into one helper, and
+    // the three error-display stanzas into another.
+    function finishLoading() {
+      pg.stop();
+      progress.remove();
+      calcBtn.disabled = false;
+    }
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+    }
+
     try {
       let profileA, profileB, synastrySummary;
 
@@ -169,12 +182,9 @@ export function SynastryPage(app) {
           tz:   placeB.tz,
         };
         const res = await calculateSynastry(inputA, inputB);
-        pg.stop();
-        progress.remove();
-        calcBtn.disabled = false;
+        finishLoading();
         if (!res.ok) {
-          errorEl.textContent = res.error || `HTTP ${res.status}`;
-          errorEl.hidden = false;
+          showError(res.error || `HTTP ${res.status}`);
           return;
         }
         profileA       = res.data.personA;
@@ -191,12 +201,9 @@ export function SynastryPage(app) {
       } else {
         // Solo profile — no Person B
         const res = await calculateProfile(inputA);
-        pg.stop();
-        progress.remove();
-        calcBtn.disabled = false;
+        finishLoading();
         if (!res.ok) {
-          errorEl.textContent = `Person A: ${res.error || `HTTP ${res.status}`}`;
-          errorEl.hidden = false;
+          showError(`Person A: ${res.error || `HTTP ${res.status}`}`);
           return;
         }
         profileA       = res.data;
@@ -206,11 +213,8 @@ export function SynastryPage(app) {
 
       renderResult(profileA, profileB, synastrySummary);
     } catch (err) {
-      pg.stop();
-      progress.remove();
-      calcBtn.disabled = false;
-      errorEl.textContent = `Netzwerkfehler: ${err.message}`;
-      errorEl.hidden = false;
+      finishLoading();
+      showError(`Netzwerkfehler: ${err.message}`);
     }
   });
 
