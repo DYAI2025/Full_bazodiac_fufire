@@ -1,5 +1,14 @@
 // Single source of truth für Hero-Statements, Score-Erklärungen, Experiments.
 // Reine Funktionen, kein DOM. Tests pinnen das Output-Shape.
+//
+// WuXing single-source-of-truth (Sprint smoke-fix A2): dominantElement +
+// deficientElement now flow through enrichWuxing(profile) — same resolution
+// path (remediation.distribution preferred over wu_xing_vectors) as
+// FusionPage / WuxingPage / projections.js. Eliminates the previous fork
+// where this file read wu_xing_vectors.fusion/western_planets while pages
+// like CareerFinance read bazi_pillars (yielding contradictory dominance).
+
+import { enrichWuxing } from './wuxingEnrichment.js';
 
 const SIGN_DE = {
   Aries:    'Widder',
@@ -25,15 +34,13 @@ const signDE = (s) => (s ? SIGN_DE[s] || s : null);
 export function buildExperienceProfile(profile) {
   const ascRaw  = profile?.western?.ascendant;
   const ascSign = typeof ascRaw === 'string' ? ascRaw : ascRaw?.sign;
-  const v =
-    profile?.fusion?.wu_xing_vectors?.fusion ||
-    profile?.fusion?.wu_xing_vectors?.western_planets || null;
-  let dominantElement = null, deficientElement = null;
-  if (v) {
-    const entries = Object.entries(v);
-    dominantElement  = entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
-    deficientElement = entries.reduce((a, b) => (b[1] < a[1] ? b : a))[0];
-  }
+  // Sprint smoke-fix A2: dominant + deficient come from enrichWuxing so
+  // every page agrees on the same labels. Without this, this file would pick
+  // the western_planets-derived dominant while CareerFinancePage / FusionPage
+  // pick the remediation.distribution-derived one.
+  const wx = enrichWuxing(profile);
+  const dominantElement  = wx?.dominant?.label  || null;
+  const deficientElement = wx?.deficient?.label || null;
   const ciRaw = profile?.fusion?.coherence_index;
   const coherence = (ciRaw == null) ? null : Math.round(Number(ciRaw) * 100);
   return {

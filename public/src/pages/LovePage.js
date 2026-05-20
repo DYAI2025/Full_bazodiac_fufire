@@ -16,6 +16,9 @@ import { calculateProfile }                        from '../api/client.js';
 import { readPersonB, savePersonB }                 from '../domain/personState.js';
 import { GeoInput }                                 from '../components/GeoInput.js';
 import { buildHouseComparisons, DOMAIN_HOUSES }    from '../synastry/house-comparison.js';
+// Sprint smoke-fix A2: dominant element + element vector both route through
+// enrichWuxing (single source of truth across pages).
+import { enrichWuxing }                            from '../domain/wuxingEnrichment.js';
 
 // Western sign → element group
 const SIGN_ELEMENT = {
@@ -145,17 +148,17 @@ export function LovePage(app, { profile, onNavigate }) {
   const moonSign  = profile?.western?.bodies?.Moon?.sign;
   const tension   = getElementTension(venusSign, moonSign);
 
-  const wxEl     = profile?.fusion?.wu_xing_vectors?.fusion
-                || profile?.fusion?.wu_xing_vectors?.western_planets;
-  let dominantEl = null;
-  if (wxEl) {
-    let max = -Infinity;
-    for (const [k, v] of Object.entries(wxEl)) { if (v > max) { max = v; dominantEl = k; } }
-  }
+  // Sprint smoke-fix A2: dominant element via single source — agrees with
+  // CareerFinancePage / PersonalityPage / FusionPage.
+  const wx = enrichWuxing(profile);
+  const dominantEl = wx?.dominant?.label || null;
   const wxLove = dominantEl ? WUXING_LOVE[dominantEl] : null;
 
-  // BaZi pillar vector and Day-Master stem for fusion layer
-  const fusionVec = profile?.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
+  // Element-Resonanz vector for the Fusion-Layer — same normalized
+  // distribution as the rest of the app (WuxingBar expects {Holz:0..1,...}).
+  const fusionVec = wx && wx.distribution.length > 0
+    ? Object.fromEntries(wx.distribution.map((e) => [e.label, e.intensity / 100]))
+    : null;
   const dayMasterStem = profile?.bazi?.day_master?.stem ?? null;
   const dayMasterText = dayMasterStem ? DAY_MASTER_LOVE[dayMasterStem] ?? null : null;
   const coherenceIndex = profile?.fusion?.coherence_index ?? null;
@@ -531,8 +534,12 @@ export function LovePage(app, { profile, onNavigate }) {
         place: { display, lat, lon, tz },
       });
 
-      // 3. Update WuxingBar with partner B overlay
-      const vecB = profileB?.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
+      // 3. Update WuxingBar with partner B overlay — Person B routed
+      //    through enrichWuxing so A + B share the same normalized scale.
+      const wxB = enrichWuxing(profileB);
+      const vecB = (wxB && wxB.distribution.length > 0)
+        ? Object.fromEntries(wxB.distribution.map((e) => [e.label, e.intensity / 100]))
+        : null;
       if (fusionVec && vecB) {
         wuxingContainer.innerHTML = '';
         wuxingContainer.appendChild(WuxingBar(fusionVec, vecB, 'love'));

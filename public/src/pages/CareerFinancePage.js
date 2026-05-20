@@ -16,6 +16,11 @@ import { buildHouseComparisons, DOMAIN_HOUSES } from '../synastry/house-comparis
 import { calculateProfile }         from '../api/client.js';
 import { readPersonB, savePersonB } from '../domain/personState.js';
 import { GeoInput }                 from '../components/GeoInput.js';
+// Sprint smoke-fix A2: route Element-Verteilung through enrichWuxing so the
+// percentages sum to ~100 and the dominant element matches PersonalityPage /
+// WuxingPage / FusionPage. Pre-fix the page read wu_xing_vectors.bazi_pillars
+// un-normalized × 100 (sum ~194%).
+import { enrichWuxing } from '../domain/wuxingEnrichment.js';
 
 // ── Fusion-Layer constants ────────────────────────────────────────────────────
 
@@ -41,6 +46,18 @@ const DAY_MASTER_CAREER = {
 };
 
 // ── helpers ───────────────────────────────────────────────────────────────────
+
+// Convert enrichWuxing distribution (array of entries with intensity 0..100)
+// into the {Holz:0..1, …} dict shape WuxingBar expects. Returns null when
+// the distribution is empty (no fusion data available).
+function distributionAsVector(wx) {
+  if (!wx || !wx.distribution || wx.distribution.length === 0) return null;
+  const out = {};
+  for (const entry of wx.distribution) {
+    out[entry.label] = (Number(entry.intensity) || 0) / 100;
+  }
+  return out;
+}
 
 function factorCard(factor) {
   const el = document.createElement('div');
@@ -129,11 +146,15 @@ function buildFusionLayer(profile) {
   heading.style.cssText = 'margin:0;';
   wrap.appendChild(heading);
 
-  // ── a) WuxingBar ──────────────────────────────────────────────────────────
-  const vector = profile.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
+  // ── a) Element-Verteilung — via enrichWuxing (single source of truth) ────
+  // Sprint smoke-fix A2: replaced direct wu_xing_vectors.bazi_pillars × 100
+  // (sum ~194%) with the same normalized distribution used by WuxingPage /
+  // FusionPage. enrichWuxing prefers fusion.remediation.distribution (sum=1)
+  // over wu_xing_vectors.bazi_pillars (un-normalized).
+  const wx = enrichWuxing(profile);
 
   const wuxingSection = document.createElement('div');
-  wuxingSection.className = 'factor-card';
+  wuxingSection.className = 'factor-card wuxing-distribution';
 
   const wuxingHeading = document.createElement('div');
   wuxingHeading.className = 'factor-card-header';
@@ -143,27 +164,61 @@ function buildFusionLayer(profile) {
   wuxingHeading.appendChild(wuxingLabel);
   wuxingSection.appendChild(wuxingHeading);
 
-  // WuxingBar gets an id so Partner B can update it
+  // Container is kept so Partner-B comparison overlay can attach a marker.
   const wuxingBarContainer = document.createElement('div');
   wuxingBarContainer.id = 'wuxing-bar-career';
   wuxingBarContainer.style.cssText = 'margin-top:0.5rem;';
 
-  if (vector) {
-    wuxingBarContainer.appendChild(WuxingBar(vector, null, 'career'));
+  if (wx && wx.distribution.length > 0) {
+    // Render 5 intensity bars using the same pattern WuxingPage uses.
+    const bars = document.createElement('div');
+    bars.className = 'wuxing-bars wuxing-distribution-pct';
+    for (const entry of wx.distribution) {
+      const row = document.createElement('article');
+      row.className = `wuxing-row wuxing-row--${entry.key}`;
 
-    // dominant element quality
-    const dominant = Object.entries(vector).sort((a, b) => b[1] - a[1])[0];
-    if (dominant) {
-      const [elemName] = dominant;
+      const head = document.createElement('header');
+      head.className = 'wuxing-row__head';
+
+      const glyph = document.createElement('span');
+      glyph.className = 'wuxing-row__glyph';
+      glyph.textContent = entry.glyph;
+
+      const label = document.createElement('span');
+      label.className = 'wuxing-row__label';
+      label.textContent = entry.label;
+
+      const pct = document.createElement('span');
+      pct.className = 'wuxing-row__pct';
+      pct.textContent = `${entry.intensity}%`;
+
+      head.append(glyph, label, pct);
+
+      const track = document.createElement('div');
+      track.className = 'wuxing-bar-track';
+      const fill = document.createElement('div');
+      fill.className = 'wuxing-bar-fill';
+      fill.style.width = `${entry.intensity}%`;
+      track.appendChild(fill);
+
+      row.append(head, track);
+      bars.appendChild(row);
+    }
+    wuxingBarContainer.appendChild(bars);
+    wuxingSection.appendChild(wuxingBarContainer);
+
+    // Dominant element quality copy — sourced from enrichWuxing so the
+    // label matches PersonalityPage + WuxingPage.
+    const elemName = wx.dominant?.label;
+    if (elemName) {
       const quality = CAREER_QUALITIES[elemName] ?? '';
       const qualityP = document.createElement('p');
       qualityP.className = 'factor-value';
       qualityP.style.cssText = 'margin-top:0.5rem;';
-      qualityP.textContent = `Dominantes Element: ${elemName} — ${quality}`;
-      wuxingSection.appendChild(wuxingBarContainer);
+      qualityP.textContent = quality
+        ? `Dominantes Element: ${elemName} — ${quality}`
+        : `Dominantes Element: ${elemName}`;
       wuxingSection.appendChild(qualityP);
-    } else {
-      wuxingSection.appendChild(wuxingBarContainer);
     }
   } else {
     wuxingSection.appendChild(wuxingBarContainer);
@@ -364,10 +419,11 @@ function buildPartnerBSection(profile, wuxingVecA) {
       comparisons.forEach((entry) => grid.appendChild(renderHouseEntry(entry)));
       resultsWrap.appendChild(grid);
 
-      // 4. Update WuxingBar with Partner B overlay
+      // 4. Update WuxingBar with Partner B overlay — both vectors routed
+      //    through enrichWuxing so A and B share the same normalized scale.
       const wuxingContainer = document.getElementById('wuxing-bar-career');
       if (wuxingContainer) {
-        const vecB = profileB.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
+        const vecB = distributionAsVector(enrichWuxing(profileB));
         // Clear and re-render with overlay
         const existingBar = wuxingContainer.querySelector('.wuxing-bar-wrap');
         if (existingBar) {
@@ -486,8 +542,10 @@ export function CareerFinancePage(app, { profile, onNavigate }) {
   // 24h Arbeitsimpuls (always visible)
   app.querySelector('.career-experiment-mount').replaceWith(ActionExperimentCard(experiment));
 
-  // Partner B section deferred under details (team comparison beta)
-  const wuxingVecA = profile.fusion?.wu_xing_vectors?.bazi_pillars ?? null;
+  // Partner B section deferred under details (team comparison beta).
+  // Vector A comes from enrichWuxing (single source) — same normalized
+  // distribution as the Element-Verteilung block above.
+  const wuxingVecA = distributionAsVector(enrichWuxing(profile));
   const partnerDetails = document.createElement('details');
   partnerDetails.className = 'career-partner-b-details';
   const summary = document.createElement('summary');

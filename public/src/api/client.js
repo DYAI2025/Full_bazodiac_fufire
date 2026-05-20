@@ -92,3 +92,35 @@ export function noFakeDataGuard(data, label = '') {
     }
   }
 }
+
+// Sprint smoke-fix A2 — math regression guard for the WuXing distribution.
+// Pre-fix the codebase had three+ parallel WuXing read paths; CareerFinancePage
+// rendered Holz/Feuer/Erde/Metall/Wasser percentages summing to ~194% because
+// it consumed un-normalized wu_xing_vectors.bazi_pillars directly. After the
+// single-source-of-truth fix every page renders distribution from
+// enrichWuxing(profile) which is normalized to sum 1 (rounded to ~100 ±2).
+//
+// This guard fires *only* when a string contains a canonical 5-element WuXing
+// %% sequence in order Holz → Feuer → Erde → Metall → Wasser with each
+// element directly followed by a percentage. The strict ordering avoids
+// false-positives on unrelated %% values (confidence bars, retention metrics,
+// width:N% inline styles for non-WuXing UI) because those never share the
+// in-order Holz…Wasser context.
+//
+// Disable hooks:
+//   - window.__FUFIRE_FLAGS?.disableNoFakeMathGuard
+//   - process.env.NOFAKE_GUARD_DISABLE === '1'
+export function noFakeMathGuard(domString, label = '') {
+  if (typeof window !== 'undefined' && window.__FUFIRE_FLAGS?.disableNoFakeMathGuard) return;
+  if (typeof process !== 'undefined' && process.env?.NOFAKE_GUARD_DISABLE === '1') return;
+  if (typeof domString !== 'string' || domString.length === 0) return;
+  // 5-element-in-order WuXing %% pattern. Each element followed within ≤80
+  // non-digit chars by a percentage; intervening markup between rows ≤500.
+  const re = /Holz[^0-9]{0,80}(\d+)\s*%[\s\S]{0,500}?Feuer[^0-9]{0,80}(\d+)\s*%[\s\S]{0,500}?Erde[^0-9]{0,80}(\d+)\s*%[\s\S]{0,500}?Metall[^0-9]{0,80}(\d+)\s*%[\s\S]{0,500}?Wasser[^0-9]{0,80}(\d+)\s*%/;
+  const m = domString.match(re);
+  if (!m) return;
+  const sum = [1, 2, 3, 4, 5].reduce((s, i) => s + Number(m[i]), 0);
+  if (sum < 95 || sum > 105) {
+    throw new Error(`[noFakeMathGuard] WuXing %% in "${label}" sum to ${sum}, must be ~100 ±5`);
+  }
+}

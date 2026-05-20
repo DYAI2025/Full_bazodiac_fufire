@@ -11,6 +11,8 @@ import {
   RELATIONSHIP_SUMMARY_LEAD_INS,
 } from './relationshipCopy.js';
 import { createSynastryProjection } from './projections.js';
+// Sprint smoke-fix A2: dominantElement via single source.
+import { enrichWuxing } from './wuxingEnrichment.js';
 
 // Aspect harmony lookup. Spiegelt ASPECT_DEFS aus projections.js inline,
 // um zirkuläre Re-Exports zu vermeiden.
@@ -31,11 +33,7 @@ const ELEMENT_NUTZER = {
 };
 
 function dominantElement(profile) {
-  const v = profile?.fusion?.wu_xing_vectors?.fusion
-         || profile?.fusion?.wu_xing_vectors?.western_planets;
-  if (!v) return null;
-  if (Object.keys(v).length === 0) return null;
-  return Object.entries(v).reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+  return enrichWuxing(profile)?.dominant?.label || null;
 }
 
 function ascendantSign(profile) {

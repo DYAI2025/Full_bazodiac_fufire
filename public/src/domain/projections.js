@@ -1,6 +1,14 @@
 // Domain Projection Layer — Love, Career, Finance, Personality
 // All functions return: { primaryFactors, supportingFactors, missingFactors, sourceTrace, confidence }
 // Rules: no LLM values, no financial advice, no diagnoses, confidence drops on missing key factors
+//
+// WuXing single-source-of-truth (Sprint smoke-fix A2): every reading of the
+// dominant WuXing element routes through enrichWuxing(profile) from
+// wuxingEnrichment.js — resolution order is remediation.distribution first,
+// then bazi_pillars (un-normalized) as fallback. Direct access to
+// fusion.wu_xing_vectors.* is no longer permitted at the projection layer.
+
+import { enrichWuxing } from './wuxingEnrichment.js';
 
 export const COHERENCE_FACTOR_LABEL = 'Fusions-Kohärenz';
 
@@ -140,15 +148,13 @@ function getHouseSign(profile, houseNum) {
 function getDayElement(profile) { return profile?.bazi?.pillars?.day?.element || null; }
 function getMonthElement(profile) { return profile?.bazi?.pillars?.month?.element || null; }
 
+// Sprint smoke-fix A2: single source of truth — route through
+// enrichWuxing(profile).dominant.label instead of reading wu_xing_vectors
+// directly. enrichWuxing prefers fusion.remediation.distribution (server-
+// normalized sum=1) over the raw vectors, so this returns the same element
+// that FusionPage / WuxingPage / CareerFinancePage report.
 function getDominantFusionElement(profile) {
-  const v = profile?.fusion?.wu_xing_vectors?.fusion
-         || profile?.fusion?.wu_xing_vectors?.western_planets;
-  if (!v) return null;
-  let max = -Infinity, el = null;
-  for (const [k, val] of Object.entries(v)) {
-    if (val > max) { max = val; el = k; }
-  }
-  return el;
+  return enrichWuxing(profile)?.dominant?.label || null;
 }
 
 function buildProjection() {

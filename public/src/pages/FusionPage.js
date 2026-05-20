@@ -1,6 +1,15 @@
 // FusionPage — WuXing Element Deep-Dive
 // Visualisiert Element-Signatur (Wheel + Matrix), Per-Element-Narrative
 // und Remediation-Empfehlungen aus fusion.remediation (server-seitig berechnet).
+//
+// Sprint smoke-fix A2: the pentagram-radar distribution now routes through
+// enrichWuxing() — single source of truth across the app. enrichWuxing's
+// resolution order is remediation.distribution > wu_xing_vectors.fusion >
+// bazi_pillars > western_planets. Pre-fix this page preferred
+// vectors.fusion || vectors.western_planets (skipping bazi_pillars) which
+// could diverge from WuxingPage / CareerFinancePage on partial fixtures.
+
+import { enrichWuxing } from '../domain/wuxingEnrichment.js';
 
 const ELEMENT_KEYS = ['Holz', 'Feuer', 'Erde', 'Metall', 'Wasser'];
 
@@ -239,22 +248,15 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
     return;
   }
 
-  // Prefer fusion vector if present, else western (matches server-side priority)
-  const vectors = fusion.wu_xing_vectors || {};
-  const sourceVec = vectors.fusion && Object.keys(vectors.fusion).length
-    ? vectors.fusion
-    : vectors.western_planets || {};
-
+  // Pentagram-radar source: enrichWuxing returns a distribution array; we
+  // reshape to the {Holz:0..1,...} dict the wheel/narrative cards expect.
+  // remediation is still consulted separately for the bottom 3-step-plan
+  // panel since it carries actions[].activities and summary text.
   const remediation = fusion.remediation;
-  const distribution = remediation?.distribution
-    || (() => {
-      // Fallback: normalize sourceVec if remediation absent (older API responses)
-      const total = ELEMENT_KEYS.reduce((s, k) => s + (Number(sourceVec[k]) || 0), 0);
-      if (total <= 0) return null;
-      const d = {};
-      for (const k of ELEMENT_KEYS) d[k] = (Number(sourceVec[k]) || 0) / total;
-      return d;
-    })();
+  const wx = enrichWuxing(profile);
+  const distribution = (wx && wx.distribution.length > 0)
+    ? Object.fromEntries(wx.distribution.map((e) => [e.label, e.intensity / 100]))
+    : null;
 
   const ci = fusion.coherence_index;
   const coherencePill = (typeof ci === 'number')

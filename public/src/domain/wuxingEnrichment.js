@@ -59,23 +59,44 @@ export function classifyElementRole(element, distribution) {
 }
 
 // ── enrichWuxingDistribution ──────────────────────────────────────────────
-// Returns an ordered 5-entry array. Source preference:
-//   1. fusion.remediation.distribution (normalized 0..1 sum=1)
-//   2. fusion.wu_xing_vectors.bazi_pillars (un-normalized)
-// Falls back to [] if neither present.
+// Returns an ordered 5-entry array. Source preference (single source of
+// truth across all WuXing-rendering pages — Sprint smoke-fix A2):
+//   1. fusion.remediation.distribution    (server-normalized, sum=1)
+//   2. fusion.wu_xing_vectors.fusion       (fusion-aggregated, un-normalized)
+//   3. fusion.wu_xing_vectors.bazi_pillars (BaZi-only, un-normalized)
+//   4. fusion.wu_xing_vectors.western_planets (Western-only, un-normalized)
+// Falls back to [] if none present. Resolution layers 2-4 mirror the legacy
+// projections.js / experienceCopy.js fallback chain so callers that route
+// through enrichWuxing yield the same dominant label they did before the
+// migration on partial fixtures.
 export function enrichWuxingDistribution(profile) {
   const fusion = profile?.fusion;
   if (!fusion || typeof fusion !== 'object') return [];
 
   const remed = fusion.remediation?.distribution;
-  const vec   = fusion.wu_xing_vectors?.bazi_pillars;
-  const raw   = (remed && typeof remed === 'object') ? remed : vec;
+  const vectors = fusion.wu_xing_vectors || {};
+  const fusionVec   = vectors.fusion;
+  const baziVec     = vectors.bazi_pillars;
+  const westernVec  = vectors.western_planets;
+
+  let raw = null;
+  let useNormalize = false;
+  if (remed && typeof remed === 'object') {
+    raw = remed; // already normalized server-side
+  } else if (fusionVec && typeof fusionVec === 'object') {
+    raw = fusionVec;
+    useNormalize = true;
+  } else if (baziVec && typeof baziVec === 'object') {
+    raw = baziVec;
+    useNormalize = true;
+  } else if (westernVec && typeof westernVec === 'object') {
+    raw = westernVec;
+    useNormalize = true;
+  }
   if (!raw || typeof raw !== 'object') return [];
 
-  // Normalize to 0..1 sum=1 if we're using the un-normalized vector path.
   let total = 0;
   for (const el of ELEMENT_ORDER) total += Number(raw[el]) || 0;
-  const useNormalize = (remed === null || remed === undefined);
   const normalized = {};
   for (const el of ELEMENT_ORDER) {
     const v = Number(raw[el]) || 0;
