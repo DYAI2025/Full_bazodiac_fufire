@@ -1,0 +1,68 @@
+---
+description: Trace a missing UI field through the 4-layer Azodiac pipeline (FuFirE upstream → server.js orchestrator → ViewModel → projection → page) and pinpoint where it drops out.
+allowed-tools: Bash, Read, Grep, Glob
+---
+
+## Context
+
+This project has a 4-layer data pipeline. When a field shows as "keine Daten verfügbar" / "missing" on a page but the API actually returns it, the drop happens at one of these layers:
+
+```
+[FuFirE upstream JSON] → callFuFire() → orchestrate*() → normalizeAzodiacResult() → public/src/domain/projections.js → public/src/pages/*.js → DOM
+```
+
+Each layer can rename, filter, or drop a field. Common culprits:
+
+- **server.js `normalizeAzodiacResult`** — explicit field mapping; if the source key changed upstream and the normalizer wasn't updated, the field becomes `null`/missing.
+- **`HIDDEN_STEMS` / `normalizePillar`** — bazi-specific; hidden_stems may be derived only when raw is empty.
+- **`projections.js`** — projection functions (createPersonalityProjection, createLoveProjection, createCareerProjection) cherry-pick fields. A typo or wrong path silently produces `null`.
+- **Page-level read** — pages read `profile.fusion.coherence_index` etc. Wrong path → undefined → UI fallback.
+
+`view_model_version` is bumped when ViewModel shape changes (currently `'2'`). README has example payloads at lines 87 and 166 — also a good ground-truth reference.
+
+## Your Task
+
+Given a field name or symptom (e.g. "Sonnenzeichen missing on PersonalityPage", "day master element empty"), walk the pipeline and report exactly where it drops out.
+
+### Steps
+
+1. **Clarify input.** Ask the user (or infer from the command args) which field is missing and on which page. Translate to canonical path if needed (e.g. "Sun sign" → `profile.western.bodies.Sun.sign`).
+
+2. **Check ground truth — FuFirE response shape.**
+   - Read README.md examples (lines ~50–170 cover fusion + synastry payloads).
+   - Grep `server.js` for the upstream field name in `callFuFire('calculate/...')` paths and in `normalizeAzodiacResult` source extraction.
+   - If a contract test exists: `node --test test/contract.test.js` (opt-in, requires `FUFIRE_CONTRACT_TEST=true` + live `FUFIRE_BASE_URL`).
+
+3. **Inspect server.js normalizer.**
+   - Find where the field is mapped in `normalizeAzodiacResult` (server.js ~line 312+).
+   - Confirm the target ViewModel path matches what the consumer expects.
+   - Check for fallback chains (`?? raw.foo ?? raw.bar`) that may not cover the upstream's actual key.
+
+4. **Inspect projection layer.**
+   - File: `public/src/domain/projections.js`.
+   - Find the relevant projection function for the page (createPersonalityProjection, createLoveProjection, createCareerProjection, createOverviewProjection, createSynastryProjection, …).
+   - Grep for the field path. Note any `?? ` fallbacks, `noFakeDataGuard` calls, or sourceTrace push entries that mention "nicht verfügbar".
+
+5. **Inspect page module.**
+   - File: `public/src/pages/<PageName>.js`.
+   - Find where the field is read from `profile.*` or from a projection result.
+   - Confirm DOM rendering branch — does the "missing" fallback path get hit?
+
+6. **Localize the drop.** For each layer, mark: present / missing / mis-named. The first layer where the field is missing (or where its name diverges from what the next layer expects) is the bug site.
+
+7. **Verify with a focused test.**
+   - For ViewModel: add a case to `test/view_model.test.js` with a fixture that contains the field at the upstream path and assert it survives normalization.
+   - For projection: add to `test/projections.test.js`.
+   - Run: `node --test test/view_model.test.js test/projections.test.js`.
+
+8. **Report.** One-line per layer with verdict + the exact file:line where the drop happens + a one-line fix recommendation. Do not implement the fix unless the user asks — surfacing the drop point is the goal.
+
+### Guardrails
+
+- **Do not assume the upstream API changed without evidence.** Check README example payloads and (if available) recent FuFirE contract test output before claiming upstream drift. The nuggets store has `bazodiac/fufire-endpoints` and `bazodiac/fufire-gotchas` — check those first.
+- **Do not silently change `view_model_version` while tracing.** If the trace reveals a ViewModel shape change is needed, that's a separate task (the version bump touches `server.js:439`, `test/view_model.test.js:50`, `test/server.test.js:174`, `README.md:87` + `:166` — see `bazodiac/view-model-version` nugget).
+- **German element names are canonical in the ViewModel** (`Holz/Feuer/Erde/Metall/Wasser`). Upstream may send English; `toDE()` in `server.js` handles the mapping. If a field appears in English in the ViewModel, the normalizer skipped the toDE conversion.
+- **Don't grep for the wrong key.** `hidden_stems` in the API may be `zang_gan`; pillars use `stamm`/`zweig`/`tier` not `stem`/`branch`/`animal`. Check `bazodiac/fufire-gotchas` nugget for the full alias table.
+
+---
+*Generated by /reflect-skills from 1 explicit + architecturally-recurring pattern in this project.*
