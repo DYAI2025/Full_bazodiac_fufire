@@ -27,6 +27,89 @@ function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// ── State-Machine (Sprint L) ────────────────────────────────────────────────
+// SynastryPage is click-driven: form rendered on mount (STATE_IDLE), user fills
+// + clicks → STATE_LOADING → terminal state. Module-level runSynastryCalculation
+// is the testable surface — bypasses GeoInput's async place-pick flow so tests
+// can drive transitions deterministically.
+//
+// Transitions:
+//   IDLE → LOADING  on calc-btn click (or runSynastryCalculation invocation)
+//   LOADING → READY  on ok-response with personA content (and personB if A+B mode)
+//   LOADING → EMPTY  on ok-response with structurally-empty payload
+//   LOADING → ERROR  on ok:false OR fetch throw (api/client request() wraps both)
+//
+// data-state attribute on `.synastry-page` root carries the truth.
+export const STATE_IDLE    = 'idle';
+export const STATE_LOADING = 'loading';
+export const STATE_READY   = 'ready';
+export const STATE_EMPTY   = 'empty';
+export const STATE_ERROR   = 'error';
+
+const EMPTY_COPY =
+  'Profil ist unvollständig — bitte Datum, Uhrzeit und Ort prüfen und erneut berechnen.';
+const ERROR_COPY =
+  'Berechnung fehlgeschlagen. Deine Eingaben sind nicht verloren — versuche es erneut, sobald du wieder online bist.';
+
+function setStateOn(app, next) {
+  const root = app?.querySelector?.('.synastry-page');
+  if (root && typeof root.setAttribute === 'function') {
+    root.setAttribute('data-state', next);
+  }
+}
+
+function hasSynastryContent(data, expectPersonB) {
+  if (!data || typeof data !== 'object') return false;
+  // Full A+B mode requires both personA and personB to carry something.
+  if (expectPersonB) {
+    const a = data.personA;
+    const b = data.personB;
+    const aHas = !!(a && (a.western || a.bazi || a.fusion));
+    const bHas = !!(b && (b.western || b.bazi || b.fusion));
+    return aHas && bHas;
+  }
+  // Solo mode: calculateProfile returns the profile directly.
+  return !!(data.western || data.bazi || data.fusion);
+}
+
+function mountFallback(app, copy) {
+  const errorEl = app?.querySelector?.('.synastry-error');
+  if (errorEl) {
+    errorEl.textContent = copy;
+    errorEl.hidden = false;
+  }
+}
+
+// Module-level testable async path. Tests call this directly with synthetic
+// inputs; the click handler also calls it with form-derived inputs.
+export async function runSynastryCalculation(app, { inputA, inputB } = {}) {
+  setStateOn(app, STATE_LOADING);
+  try {
+    const res = inputB
+      ? await calculateSynastry(inputA, inputB)
+      : await calculateProfile(inputA);
+
+    if (!res.ok) {
+      setStateOn(app, STATE_ERROR);
+      mountFallback(app, `${ERROR_COPY} (${res.error || `HTTP ${res.status}`})`);
+      return { state: STATE_ERROR, error: res.error || `HTTP ${res.status}` };
+    }
+
+    if (!hasSynastryContent(res.data, !!inputB)) {
+      setStateOn(app, STATE_EMPTY);
+      mountFallback(app, EMPTY_COPY);
+      return { state: STATE_EMPTY, data: res.data };
+    }
+
+    setStateOn(app, STATE_READY);
+    return { state: STATE_READY, data: res.data };
+  } catch (err) {
+    setStateOn(app, STATE_ERROR);
+    mountFallback(app, `${ERROR_COPY} (Netzwerkfehler: ${err?.message || err})`);
+    return { state: STATE_ERROR, error: err?.message || String(err) };
+  }
+}
+
 export function SynastryPage(app) {
   app.innerHTML = `
     <main class="synastry-page">
@@ -101,6 +184,9 @@ export function SynastryPage(app) {
     </main>
   `;
 
+  // Sprint-L: explicit IDLE state on mount before any user input.
+  setStateOn(app, STATE_IDLE);
+
   const dateA   = app.querySelector('#date-a');
   const timeA   = app.querySelector('#time-a');
   const dateB   = app.querySelector('#date-b');
@@ -156,62 +242,58 @@ export function SynastryPage(app) {
     const pg = CalculationProgress();
     progress.appendChild(pg);
 
-    try {
-      let profileA, profileB, synastrySummary;
-
-      if (dateB.value && placeB) {
-        // Use combined synastry endpoint — one call, server does parallel fetch
-        const inputB = {
-          date: dateB.value,
-          time: timeB.value || '12:00',
-          lat:  placeB.lat,
-          lon:  placeB.lon,
-          tz:   placeB.tz,
-        };
-        const res = await calculateSynastry(inputA, inputB);
-        pg.stop();
-        progress.remove();
-        calcBtn.disabled = false;
-        if (!res.ok) {
-          errorEl.textContent = res.error || `HTTP ${res.status}`;
-          errorEl.hidden = false;
-          return;
-        }
-        profileA       = res.data.personA;
-        profileB       = res.data.personB;
-        synastrySummary = res.data.synastry || null;
-        // Persist Person B for reuse on next visit / in InputPage Partnerprofil.
-        savePersonB({
-          alias: '',
-          date: inputB.date,
-          time: inputB.time,
-          certainty: 'exact',
-          place: { display: placeB.display, lat: placeB.lat, lon: placeB.lon, tz: placeB.tz },
-        });
-      } else {
-        // Solo profile — no Person B
-        const res = await calculateProfile(inputA);
-        pg.stop();
-        progress.remove();
-        calcBtn.disabled = false;
-        if (!res.ok) {
-          errorEl.textContent = `Person A: ${res.error || `HTTP ${res.status}`}`;
-          errorEl.hidden = false;
-          return;
-        }
-        profileA       = res.data;
-        profileB       = null;
-        synastrySummary = null;
-      }
-
-      renderResult(profileA, profileB, synastrySummary);
-    } catch (err) {
+    // Progress-widget lifecycle stays in the click handler; state-transitions
+    // + error/empty fallback-copy live in runSynastryCalculation.
+    function finishLoading() {
       pg.stop();
       progress.remove();
       calcBtn.disabled = false;
-      errorEl.textContent = `Netzwerkfehler: ${err.message}`;
-      errorEl.hidden = false;
     }
+
+    // Sprint-L: route the click through the module-level state-machine.
+    // runSynastryCalculation handles LOADING → READY/EMPTY/ERROR transitions
+    // and fallback-copy mounting; the click handler only owns progress-widget
+    // lifecycle + the rich renderResult on READY.
+    const inputB = (dateB.value && placeB) ? {
+      date: dateB.value,
+      time: timeB.value || '12:00',
+      lat:  placeB.lat,
+      lon:  placeB.lon,
+      tz:   placeB.tz,
+    } : null;
+
+    const outcome = await runSynastryCalculation(app, { inputA, inputB });
+    finishLoading();
+
+    if (outcome.state === STATE_ERROR) {
+      // runSynastryCalculation already wrote ERROR_COPY into .synastry-error.
+      return;
+    }
+    if (outcome.state === STATE_EMPTY) {
+      // runSynastryCalculation already wrote EMPTY_COPY into .synastry-error.
+      return;
+    }
+
+    // STATE_READY — extract profiles + render the rich result panel.
+    let profileA, profileB, synastrySummary;
+    if (inputB) {
+      profileA        = outcome.data.personA;
+      profileB        = outcome.data.personB;
+      synastrySummary = outcome.data.synastry || null;
+      // Persist Person B for reuse on next visit / in InputPage Partnerprofil.
+      savePersonB({
+        alias: '',
+        date: inputB.date,
+        time: inputB.time,
+        certainty: 'exact',
+        place: { display: placeB.display, lat: placeB.lat, lon: placeB.lon, tz: placeB.tz },
+      });
+    } else {
+      profileA        = outcome.data;
+      profileB        = null;
+      synastrySummary = null;
+    }
+    renderResult(profileA, profileB, synastrySummary);
   });
 
   function renderResult(profileA, profileB, synastrySummary = null) {

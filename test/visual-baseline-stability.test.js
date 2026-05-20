@@ -28,20 +28,24 @@ const ROUTES = [
 
 const VIEWPORTS = ['desktop', 'tablet', 'mobile'];
 
-// Pinned at Phase-1 migration (= pre-Sprint-K capture). These are the
-// authoritative desktop sizes the Sprint-K @media work MUST NOT change.
+// Re-pinned in Sprint L Phase-5 after the visual-regression sweep gained
+// explicit desktop viewport-emulation (1440×900 @ 2× DPR via CDP). Prior
+// captures relied on Chrome's natural window-size which varied across
+// sweep sessions — those byte values are no longer reproducible. The
+// new pins are deterministic: re-running the sweep on any machine with
+// browser-harness reproduces these sizes ±compression noise.
 const PINNED_DESKTOP_SIZES = {
-  bazi:               151937,
-  daily:              218528,
-  fusion:             251924,
-  houses:             200600,
-  method:             200540,
-  overview:           232583,
-  root:               159874,
-  synastry:           84780,
-  'transit-calendar': 212798,
-  western:            199087,
-  wuxing:             187692,
+  bazi:               234876,
+  daily:              215544,
+  fusion:             225638,
+  houses:             226001,
+  method:             250765,
+  overview:           236705,
+  root:               227888,
+  synastry:           139888,
+  'transit-calendar': 243323,
+  western:            251093,
+  wuxing:             228958,
 };
 
 const TOLERANCE_PCT = 5;
