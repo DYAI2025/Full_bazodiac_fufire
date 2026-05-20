@@ -2177,3 +2177,41 @@ input:focus { border-color: var(--accent); }
 .secondary-nav__tab[data-lane="bazi"][data-active="true"]   { color: var(--gold-light, #d4b483); }
 .secondary-nav__tab[data-lane="west"][data-active="true"]   { color: var(--accent, #6f8af5); }
 .secondary-nav__tab[data-lane="fusion"][data-active="true"] { color: var(--gold-light, #d4b483); }
+
+/* ── Sprint H2 — data-lane-driven visual identity ────────────────────────
+   Every page that sets `data-lane` on its <main> gets per-lane chrome.
+   Body chrome tokens (`--lane-*`) cascade down via tokens.css recipes.
+*/
+main[data-lane] .page-eyebrow,
+main[data-lane] .layer-eyebrow {
+  color: var(--lane-fg);
+}
+main[data-lane] .page-title {
+  color: var(--lane-fg);
+}
+main[data-lane] .cta-btn:not(.cta-btn--ghost) {
+  background: var(--lane-fg);
+}
+main[data-lane] .cta-btn--ghost {
+  color: var(--lane-fg);
+  border-color: var(--lane-border);
+}
+
+/* Lane-specific tile + section accents that pre-H2 hard-coded gold-light
+   colors. Re-route via --lane-* so the same component renders bazi-gold
+   on BaZiPage but saphir-blue on WesternPage when reused. */
+main[data-lane] .bazi-dm-tile,
+main[data-lane] .bazi-pillar-card {
+  border-color: var(--lane-border);
+}
+main[data-lane] .bazi-dm-stemchar,
+main[data-lane] .bazi-pillar-stem-char {
+  color: var(--lane-fg);
+}
+main[data-lane] .western-aspect-row {
+  border-left-color: var(--lane-fg-2);
+}
+main[data-lane] .wuxing-today-lever {
+  background: var(--lane-bg);
+  border-color: var(--lane-border);
+}
