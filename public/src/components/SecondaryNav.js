@@ -23,9 +23,9 @@ export function SecondaryNav() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'secondary-nav__tab';
-    // Use setAttribute for data-lane so capture-DOM-stub records the value
-    // under _attrs (dataset assignments would be invisible to the stub).
+    // Use setAttribute (not dataset.*) so capture-DOM-stub records under _attrs.
     btn.setAttribute('data-lane', route.lane);
+    btn.setAttribute('data-path', route.path);
     if (route.path === currentPath) {
       btn.setAttribute('data-active', 'true');
     }
@@ -40,28 +40,52 @@ export function SecondaryNav() {
   return nav;
 }
 
+// Resolve the currently active route-path from window.location.hash. Returns
+// '/' when no hash is set (initial load). Pure for testability.
+function pathFromHash() {
+  const raw = (typeof window !== 'undefined' && window.location?.hash) || '#/';
+  return raw.replace(/^#\/?/, '/').replace(/^\/+/, '/') || '/';
+}
+
+// Iterate over rendered .secondary-nav__tab elements WITHOUT touching the
+// capture-DOM stub's private _children. querySelectorAll is the canonical
+// path; the stub also supports it (see test/_helpers/dom-capture-stub.js
+// querySelectorAll mock).
+function tabsOf(nav) {
+  if (!nav) return [];
+  if (typeof nav.querySelectorAll === 'function') {
+    const list = nav.querySelectorAll('.secondary-nav__tab');
+    if (list && list.length) return Array.from(list);
+  }
+  return Array.from(nav._children || []);
+}
+
 // Mount the SecondaryNav once at app boot, then keep its data-active state
 // in sync with the URL hash. Called from app.js after the router starts.
+// Re-init safe: clears host before re-appending so hot-reload / re-import
+// can not produce duplicated navs (same bug class as the duplicate-strip
+// regression test guards against in test/transit-calendar-page.test.js).
 export function mountGlobalNav(host) {
   if (!host || typeof host.appendChild !== 'function') return null;
+  if (typeof host.replaceChildren === 'function') host.replaceChildren();
+  else if ('innerHTML' in host) host.innerHTML = '';
+
   const nav = SecondaryNav();
   host.appendChild(nav);
 
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('hashchange', () => {
-      const currentHash = window.location?.hash || '#/';
-      const currentPath = currentHash.replace(/^#\/?/, '/').replace(/^\/+/, '/') || '/';
-      for (const tab of nav._children || nav.querySelectorAll?.('.secondary-nav__tab') || []) {
-        if (!tab || typeof tab.removeAttribute !== 'function') continue;
-        tab.removeAttribute('data-active');
+      const currentPath = pathFromHash();
+      // Clear all then set one — keyed by data-path, NOT by positional index,
+      // so filtering / re-ordering tabs in the future does not silently break
+      // the active-state.
+      for (const tab of tabsOf(nav)) {
+        tab.removeAttribute?.('data-active');
       }
-      // After clear, re-set on the matching tab.
-      const tabs = nav._children || [];
-      for (let i = 0; i < tabs.length; i++) {
-        if (ROUTES[i] && ROUTES[i].path === currentPath) {
-          tabs[i].setAttribute?.('data-active', 'true');
-        }
-      }
+      const active = (typeof nav.querySelector === 'function')
+        ? nav.querySelector(`[data-path="${currentPath}"]`)
+        : tabsOf(nav).find((t) => t.getAttribute?.('data-path') === currentPath);
+      if (active) active.setAttribute?.('data-active', 'true');
     });
   }
   return nav;
