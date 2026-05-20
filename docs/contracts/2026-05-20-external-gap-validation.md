@@ -76,6 +76,18 @@ The external analyst was working from an older Ist-screenshot **before Sprint E 
 - **Don't bundle V3-Signatur into this Sprint.** Separate scope-decision required first; V3 has its own visualization-logic (12 poles / 6 axes / 12 trails, not a wheel).
 - **Don't break Sprint-H token system.** All new components must respect `--bz-*` palette + `data-lane="west"` for Wheel.
 
+## §7 Deferred to later sprints (out of scope for Sprint I)
+
+The following AstroAPP findings + spot-check observations are documented but explicitly not scheduled inside Sprint I. Each carries a one-line rationale so the next planner does not re-debate the deferral.
+
+| Item | Why deferred | Next move |
+|---|---|---|
+| **G7/B8 — V3-Signatur scope-decision** | Requires standalone product-decision session with the user. V3 has its own visualization logic (12 poles / 6 axes / 12 trails) — different geometry, different metaphor. Not a Wheel-Hero variant. | Schedule scope-decision conversation; create separate Sprint plan if V3 enters roadmap. |
+| **G9/B9 — Responsive polish (mobile/tablet)** | Sprint I validates desktop-only. Mobile (375×667) + tablet (768×1024) baselines would double the visual-regression-sweep surface and benefit from CSS-token work that has not landed. | Sprint J candidate: add `--viewport-mobile` flag to `scripts/visual-regression.sh`, capture 22 PNGs (11 routes × 2 extra viewports), Sprint-H tokens get media-query adjustments. |
+| **B10 — Automated pixel-diff CI** | Baseline capture is currently manual + human-spot-check. CI-integrated diff requires deterministic-rendering investment (font fallback pinning, animation freezing, screenshot stability). | Spike: evaluate `playwright @screenshot-with-tolerance` vs. `pixelmatch` + golden-file storage strategy. |
+| **N2 — `/` vs `/overview` route semantic** | UX-decision; current behavior (`/` = InputPage = "Daten", `/overview` = Übersicht) is preserved. Auto-redirect from `/` to `/overview` when a profile exists could shave one click but breaks the explicit "neue Berechnung"-entry-flow. | Defer until user-research signal indicates first-visit-on-/-without-profile is the dominant cold-start path. |
+| **N3 — `/daily` empty-state on stub fetch** | Real-API hydration not verified inside Sprint-I tests because DailyCompanion data-flow audit is a separate concern (bootstrap → daily fetch sequencing, sessionStorage caching, fallback copy). | Sprint candidate: dedicated DailyCompanion data-flow audit; assert `/daily` renders meaningful step-1/2/3 content against live `/api/azodiac/daily` response shape. |
+
 ---
 
-*Generated 2026-05-20 by cross-referencing `main` (commit `7b564da`) against external AstroAPP LiveAgent analysis dated 2026-05-20 15:22.*
+*Generated 2026-05-20 by cross-referencing `main` (commit `7b564da`) against external AstroAPP LiveAgent analysis dated 2026-05-20 15:22. §7 appended on Sprint-I closing.*
