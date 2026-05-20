@@ -1,0 +1,95 @@
+// Task 1 — profileToOverviewModel aggregator (Sprint I).
+//
+// Single Source-of-Truth that wraps the existing modular enrichers
+// (westernBodyEnrichment, aspectEnrichment, wuxingEnrichment) into the
+// shape that /overview binds to. Adds a normalized chartWheel section
+// so NatalChartWheel doesn't have to know about raw API field names.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+function loadFixture(name) {
+  return JSON.parse(readFileSync(
+    join(__dirname, '_fixtures', 'upstream-snapshots', name), 'utf8'
+  ));
+}
+const lina = loadFixture('profile.real.json');
+
+const { profileToOverviewModel } = await import('../public/src/domain/overviewModel.js');
+
+test('overviewModel: produces all top-level sections', () => {
+  const m = profileToOverviewModel(lina);
+  for (const key of ['identity', 'topFacts', 'chartWheel', 'baziPillars',
+                     'westernFactors', 'fusionSummary', 'elementEconomy',
+                     'nextDoors', 'methodMeta', 'warnings']) {
+    assert.ok(key in m, `missing section ${key}`);
+  }
+});
+
+test('overviewModel.chartWheel: normalized bodies array carries name + longitude + signDE', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  assert.ok(Array.isArray(chartWheel.bodies), 'bodies must be array');
+  assert.ok(chartWheel.bodies.length >= 7,
+    `at least 7 luminaries/planets, got ${chartWheel.bodies.length}`);
+  const sun = chartWheel.bodies.find((b) => b.name === 'Sun');
+  assert.ok(sun, 'Sun must be present by English key');
+  assert.equal(typeof sun.longitude, 'number');
+  assert.equal(sun.signDE, 'Fische');
+});
+
+test('overviewModel.chartWheel: asc + mc are numeric longitudes', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  assert.equal(typeof chartWheel.asc, 'number');
+  assert.equal(typeof chartWheel.mc,  'number');
+  assert.ok(chartWheel.asc >= 0 && chartWheel.asc < 360, 'asc in [0,360)');
+  assert.ok(chartWheel.mc  >= 0 && chartWheel.mc  < 360, 'mc in [0,360)');
+});
+
+test('overviewModel.chartWheel.houses: array of {number, cuspLongitude}', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  assert.ok(Array.isArray(chartWheel.houses));
+  assert.equal(chartWheel.houses.length, 12, '12 cusps expected');
+  const h1 = chartWheel.houses.find((h) => h.number === 1);
+  assert.ok(h1, 'house 1 must be present');
+  assert.equal(typeof h1.cuspLongitude, 'number');
+});
+
+test('overviewModel.chartWheel.aspects: normalized {source, target, type, orb}', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  assert.ok(Array.isArray(chartWheel.aspects));
+  if (chartWheel.aspects.length > 0) {
+    const a = chartWheel.aspects[0];
+    assert.equal(typeof a.source, 'string');
+    assert.equal(typeof a.target, 'string');
+    assert.equal(typeof a.type,   'string');
+  }
+});
+
+test('overviewModel.topFacts: dayMaster + sun + coherence', () => {
+  const m = profileToOverviewModel(lina);
+  const labels = m.topFacts.map((f) => f.label);
+  assert.ok(labels.some((l) => /Day Master|Kern/i.test(l)));
+  assert.ok(labels.some((l) => /Sonne|Sun/i.test(l)));
+  assert.ok(labels.some((l) => /Kohärenz|Coherence/i.test(l)));
+});
+
+test('overviewModel.warnings: present when houses missing', () => {
+  const noHouses = JSON.parse(JSON.stringify(lina));
+  delete noHouses.western.houses;
+  const m = profileToOverviewModel(noHouses);
+  assert.ok(m.warnings.some((w) => /Häuser|Haus|house/i.test(w)),
+    'must warn when houses missing');
+  assert.equal(m.chartWheel.houses.length, 0,
+    'chartWheel.houses must be empty when API omits houses');
+});
+
+test('overviewModel: gracefully tolerates empty profile', () => {
+  const m = profileToOverviewModel({});
+  assert.ok('chartWheel' in m);
+  assert.equal(m.chartWheel.bodies.length, 0);
+  assert.equal(m.chartWheel.houses.length, 0);
+  assert.equal(m.warnings.length >= 1, true, 'must warn on empty profile');
+});
