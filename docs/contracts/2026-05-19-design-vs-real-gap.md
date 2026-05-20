@@ -360,3 +360,57 @@ Each module: pure function + unit tests against `test/_fixtures/upstream-snapsho
 4. Begin **vertical slice: BaziPage** end-to-end using enriched VM + real snapshots.
 
 **No upstream changes required. No new runtime deps. No server.js normalization changes. All work additive on frontend.**
+
+---
+
+## 8. Authoritative-Field Resolution Order
+
+The FuFire API returns several redundant or near-redundant fields for the same concept. Pages and enrichment modules MUST use the canonical field; secondary fields are diagnostic only. This table is the source-of-truth when choosing between them.
+
+| Concept | Canonical (use this) | Secondary (do NOT use as primary) | Why |
+|---|---|---|---|
+| WuXing element distribution | `fusion.remediation.distribution` (normalized, sum=1, server-side combines western + bazi contributions) | `fusion.wu_xing_vectors.bazi_pillars` (un-normalized, BaZi-only) or `fusion.wu_xing_vectors.western_planets` | remediation is the post-processed, balanced view. Raw vectors are useful for transparency on MethodPage only. |
+| Dominant element flag | `fusion.remediation.dominant` (string, server-computed) | Frontend-derived `classifyElementRole(el, dist) === 'dominant'` | Server already labels it. Frontend may use threshold logic for the OTHER 4 elements but must accept server's `dominant` for the top one. |
+| Deficient element flag | `fusion.remediation.deficient` (string, server-computed) | Frontend-derived `intensity < 0.12` threshold | Same — server flag is authoritative when present. Threshold is fallback. |
+| Fusion narrative (long) | `fusion.remediation.summary` (curated text, mentions element + percentage + path) | `fusion.fusion_interpretation` (terse band label like "Starke Resonanz...") | `fusion_interpretation` is a 1-sentence band tag. `remediation.summary` is the page-ready narrative. |
+| BaZi pillar field names | `stem` / `branch` (Pinyin, orchestrator endpoint `/api/azodiac/profile`) | `stamm` / `zweig` (German, standalone `/api/fufire/calculate/bazi`) | Orchestrator-shape is canonical for page rendering. Enrichment modules MUST accept both (verified in baziPillarEnrichment). |
+| Retrograde flag | `retrograde: bool` (orchestrator endpoint) | `is_retrograde: bool` (standalone `/calculate/western`) | Accept both per westernBodyEnrichment review fix I-2. Orchestrator field wins when both present. |
+| Animal name | derived frontend from `branch` Pinyin via BRANCH_MEANINGS[branch].animal | `tier` (standalone `/calculate/bazi` only — German animal name) | Orchestrator response drops `tier`. Derive from registry to avoid endpoint coupling. |
+| Hidden stems | API-supplied `hidden_stems[]` IF non-empty; else derive via `getHiddenStems(branch)` from shared module | n/a — API often returns empty `[]` | Server orchestrator does NOT derive these for Pinyin branches (latent bug fixed in commit `5d13af8`). Frontend derivation is now load-bearing. |
+| Element of a pillar | `pillar.element` (STEM element, e.g. Ding pillar → Feuer) | n/a | Pillar.element is ALWAYS stem element, never branch element. Branch element must be derived separately via BRANCH_MEANINGS. Confirmed against fixtures. |
+| Ascendant | `western.ascendant` (string, EN sign) | `western.angles.Ascendant` (raw longitude number) | String form is page-ready. Longitude needed for body-to-house computation in westernBodyEnrichment.computeBodyHouse + for MC sign derivation via signFromLongitude. |
+| House cusps | `western.houses[i].longitude` + `western.houses[i].sign` | NEVER `western.houses[i].cusp` (this field DOES NOT EXIST in real API — historical artifact in synthetic fixture, now corrected) | Synthetic-profile.js audit (2026-05-20) caught this drift before it broke a real test. |
+| Coherence value | `fusion.coherence_index` (0..1 float) | `fusion.harmony_index` (when present from standalone `/calculate/fusion` — same value under different name) | Orchestrator returns `coherence_index`. Standalone returns `harmony_index.harmony_index` (nested!). Frontend reads orchestrator name; if you ever consume the standalone endpoint, normalize at that boundary. |
+
+**Rule when a new redundant pair surfaces:** add a row here BEFORE writing code that picks one. Picking blind = +1.5R drift cost per pages risk-manager assessment.
+
+---
+
+## 9. Lessons after 3 Sprint-E Pages (BaZi / Western / WuXing)
+
+Captured 2026-05-20 after WuxingPage commit `6a49685`. Stop-loss + take-profit triggers set per risk-manager evaluation.
+
+### Observations + verdicts
+
+| # | Observation | Verdict | Trigger / Action |
+|---|---|---|---|
+| 1 | Capture-DOM stub covers ~95% of real DOM. Each page surfaces one missing method (so far: `style.setProperty` in WuxingPage). | DEFER | **Stop-loss:** at 4th occurrence (next page that hits a stub gap), extend the stub with the missing surface instead of working around in page code. |
+| 2 | Synthetic-profile.js shape drifted from real API (`western.ascendant` object vs string, `houses[i].cusp` vs `longitude`, etc). | INTERVENED 2026-05-20 | This Lessons section + §8 above. Synthetic-profile rewritten field-by-field against `profile.real.json`. |
+| 3 | API redundant fields (wu_xing_vectors vs remediation, retrograde vs is_retrograde) need an authoritative-field doc. | INTERVENED 2026-05-20 | §8 above. |
+| 4 | `ExplainableCard` domain enum (`bazi`/`west`/`fusion`/`house`) already covers all Sprint E pages. | NONE | — |
+| 5 | Page-Layout pattern emerging: Page-Head + sections (eyebrow + title + grid/list) + page-actions. | DEFER | **Take-profit:** at 5th page (after HousesPage + MethodPage), extract `PageLayout` component if pattern still holds. |
+| 6 | Aspect salience heuristic (luminary-first + orb-tightness) works for all 3 personas. | NONE | Reuse in Sprint G fusionSynthesis instead of re-implementing scoring. |
+| 7 | 3 personas (Lina/Persona2/Persona3) cover Yang/Yin DMs + extreme distributions. | DEFER | Persona4 only on-demand via `scripts/capture-fixtures.sh` if a future module hits a coverage gap. |
+| 8 | `UnavailableCard` is the established pattern for deferred API data (Luck Pillar, missing sections). | NONE | Continue. |
+| 9 | server.js has not changed since `332ffc3` (Compat-Proxy fix). All Sprint D′/E work is pure frontend. | NONE (Virtue) | Confirms Camp B (frontend enrichment) decision was correct. Keep server untouched unless orchestration change is unavoidable. |
+| 10 | Commit size varies: 2 files (Compat-Proxy fix) to 7 files (Wuxing module + page bundle). | NONE | Logical cohesion > LOC cap. |
+| 11 | `aspectEnrichment.js` only consumed by WesternPage so far. Underutilized until Sprint G `fusionSynthesis`. | TRACK | Sprint G plan MUST explicitly require reuse — no re-implementation of aspect scoring. |
+
+### Cross-cutting takeaway
+
+**Frontend enrichment layer scales linearly** with page count. Each new page = ~1 enrichment module (if missing) + ~1 page module + ~2 test files. No combinatoric explosion. Architecture vindicated.
+
+**Biggest discovered risk** was concentration on FIXTURE TRUTH (Obs 2 + 3, correlation 0.7 per risk-manager). Bundle-intervene was the cheapest hedge — fixed both in one commit instead of patching each at the next surface.
+
+**Pattern that will eventually need extraction** is the page layout (Obs 5). Not yet — rule of three says wait until pattern is proven at 5 pages.
+
