@@ -2,7 +2,7 @@
 // breadcrumbs, future Method-page-overview reads consume this list.
 // Lane attribute drives Phase-C lane-color-coded styling.
 //
-// 9 design-mockup routes (Solution C per plan
+// 10 design-mockup routes (Solution C per plan
 // docs/plans/2026-05-20-smoke-fixes-and-design-shift.md §B2):
 //   /overview, /bazi, /western, /wuxing, /fusion, /daily, /synastry, /, /method
 //
@@ -17,6 +17,7 @@ export const ROUTES = [
   { path: '/wuxing',   label: 'Wu-Xing',    lane: 'wuxing',  needsProfile: true  },
   { path: '/fusion',   label: 'Fusion',     lane: 'fusion',  needsProfile: true  },
   { path: '/daily',    label: 'Tagespuls',  lane: 'daily',   needsProfile: false },
+  { path: '/houses',   label: 'Häuser',     lane: 'fusion',  needsProfile: true  },
   { path: '/synastry', label: 'Beziehung',  lane: 'rel',     needsProfile: false },
   { path: '/',         label: 'Daten',      lane: 'intake',  needsProfile: false },
   { path: '/method',   label: 'Methode',    lane: 'method',  needsProfile: false },

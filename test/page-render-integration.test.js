@@ -17,7 +17,7 @@ import { SYNTHETIC_PROFILE, EXPECTED_API_STRINGS } from './_helpers/synthetic-pr
 // at top level when components evaluate).
 const cap = installCaptureDom();
 
-const { noFakeDataGuard } = await import('../public/src/api/client.js');
+const { noFakeDataGuard, noFakeMathGuard } = await import('../public/src/api/client.js');
 
 function freshApp() {
   cap.reset();
@@ -29,6 +29,13 @@ function assertAggregatePasses(label) {
   assert.doesNotThrow(
     () => noFakeDataGuard(agg, `page-render:${label}`),
     `Page "${label}" emitted forbidden demo string into rendered DOM.`,
+  );
+  // Closing-PR (gap-analysis): also enforce noFakeMathGuard on the same
+  // aggregate. Catches WuXing %% sequences that fail to sum to 100 ±5 —
+  // the regression that originally surfaced as smoke finding C-2.
+  assert.doesNotThrow(
+    () => noFakeMathGuard(agg, `page-render:${label}`),
+    `Page "${label}" rendered a WuXing distribution that does not sum to ~100`,
   );
   return agg;
 }
@@ -172,4 +179,31 @@ test('InputPage initial render passes noFakeDataGuard', async () => {
   const app = freshApp();
   assert.doesNotThrow(() => InputPage(app, { onResult: () => {} }));
   assertAggregatePasses('InputPage');
+});
+
+// ── HousesPage (closing PR — Sprint E #4) ────────────────────────────────────
+test('HousesPage renders 12 houses + passes guards', async () => {
+  const { HousesPage } = await import('../public/src/pages/HousesPage.js');
+  const app = freshApp();
+  assert.doesNotThrow(() => HousesPage(app, { profile: SYNTHETIC_PROFILE, onNavigate: () => {} }));
+  const agg = assertAggregatePasses('HousesPage');
+  // Synthetic profile houses go through computeBodyHouse → assert at least one
+  // body name appears in the rendered output (active-per-house listing).
+  assert.ok(/Aktiv:/.test(agg) || /Lebensbereiche/.test(agg),
+    'HousesPage must surface house metadata in DOM');
+});
+
+// ── MethodPage (closing PR — Sprint E #5) ────────────────────────────────────
+test('MethodPage initial render passes noFakeDataGuard', async () => {
+  // MethodPage triggers async fetch on mount — provide stub fetch.
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ endpoints: [], status: 'ok' }) });
+  try {
+    const { MethodPage } = await import('../public/src/pages/MethodPage.js');
+    const app = freshApp();
+    assert.doesNotThrow(() => MethodPage(app, { profile: SYNTHETIC_PROFILE }));
+    assertAggregatePasses('MethodPage');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

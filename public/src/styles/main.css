@@ -2316,3 +2316,61 @@ h1.page-title, h2.layer-title {
 .confidence-pct, .factor-value {
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Closing-PR: HousesPage + MethodPage ────────────────────────────────── */
+.houses-page { padding: 1rem 1.25rem; max-width: 980px; margin: 0 auto; }
+.houses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.house-card {
+  padding: 1rem 1.1rem;
+  background: var(--card, rgba(255,255,255,.02));
+  border: 1px solid var(--border, rgba(255,255,255,.10));
+  border-left: 4px solid var(--lane-fg-2, var(--bz-saphir));
+  border-radius: 8px;
+}
+.house-card__head { display: flex; align-items: baseline; gap: .65rem; margin: 0 0 .5rem; }
+.house-card__num { font-weight: 700; color: var(--lane-fg, var(--bz-gold-light)); }
+.house-card__title { margin: 0; font-size: 1rem; }
+.house-card__glyph { margin-left: auto; opacity: .65; }
+.house-card__sign  { margin: 0 0 .3rem; font-size: .85rem; color: var(--lane-fg-2); }
+.house-card__context { margin: 0 0 .35rem; font-size: .8rem; color: var(--muted); }
+.house-card__active  { margin: 0; font-size: .78rem; color: var(--lane-fg); font-weight: 600; }
+
+.method-page { padding: 1rem 1.25rem; max-width: 980px; margin: 0 auto; }
+.method-section { margin: 1.5rem 0; }
+.method-pre {
+  background: rgba(0,0,0,.35);
+  border: 1px solid var(--border, rgba(255,255,255,.10));
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: auto;
+  max-height: 400px;
+  font-family: var(--bz-font-mono, ui-monospace, monospace);
+  font-size: .78rem;
+  white-space: pre-wrap;
+}
+.method-endpoints { display: grid; gap: .5rem; }
+.method-endpoint {
+  padding: .65rem .85rem;
+  background: var(--card, rgba(255,255,255,.02));
+  border-radius: 6px;
+}
+.method-endpoint__head { display: flex; gap: .6rem; align-items: baseline; }
+.method-endpoint__verb {
+  font-family: var(--bz-font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(212,175,55,.15);
+  color: var(--bz-gold-light);
+}
+.method-endpoint__verb--get  { background: rgba(96,165,250,.15); color: #60a5fa; }
+.method-endpoint__verb--post { background: rgba(212,175,55,.15); color: var(--bz-gold-light); }
+.method-endpoint__path {
+  font-family: var(--bz-font-mono); font-size: .85rem; color: var(--fg);
+}
+.method-endpoint__desc { margin: .35rem 0 0; font-size: .8rem; color: var(--muted); }

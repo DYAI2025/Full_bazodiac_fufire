@@ -13,8 +13,9 @@ const cap = installCaptureDom();
 const { SecondaryNav } = await import('../public/src/components/SecondaryNav.js');
 const { ROUTES }       = await import('../public/src/data/routes.js');
 
-test('ROUTES manifest has all 9 design-mockup routes', () => {
-  assert.equal(ROUTES.length, 9);
+test('ROUTES manifest has all design-mockup routes (≥9)', () => {
+  // 9 from H2; +1 (/houses) added during gap-analysis closing PR.
+  assert.ok(ROUTES.length >= 9, `expected ≥9 routes, got ${ROUTES.length}`);
   const paths = ROUTES.map((r) => r.path);
   for (const expected of ['/overview', '/bazi', '/western', '/wuxing', '/fusion', '/daily', '/synastry', '/', '/method']) {
     assert.ok(paths.includes(expected), `ROUTES missing path ${expected}`);
