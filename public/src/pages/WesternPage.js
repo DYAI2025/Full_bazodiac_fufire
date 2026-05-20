@@ -116,7 +116,7 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
   const aspects = enrichWesternAspects(profile?.western, 3);
 
   app.innerHTML = `
-    <main class="western-page system-layer system-layer--west">
+    <main class="western-page system-layer system-layer--west" data-lane="west">
       <div class="sig-bar-mount"></div>
       <nav class="page-nav">
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>

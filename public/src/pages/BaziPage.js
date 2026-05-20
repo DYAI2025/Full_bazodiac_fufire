@@ -85,7 +85,7 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
   const dm = enriched?.dayMaster;
 
   app.innerHTML = `
-    <main class="bazi-page system-layer system-layer--bazi">
+    <main class="bazi-page system-layer system-layer--bazi" data-lane="bazi">
       <div class="sig-bar-mount"></div>
       <nav class="page-nav">
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>

@@ -110,7 +110,7 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
   const vm = enrichWuxing(profile);
 
   app.innerHTML = `
-    <main class="wuxing-page system-layer system-layer--fusion">
+    <main class="wuxing-page system-layer system-layer--fusion" data-lane="wuxing">
       <div class="sig-bar-mount"></div>
       <nav class="page-nav">
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>

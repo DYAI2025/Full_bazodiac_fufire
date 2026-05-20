@@ -206,3 +206,56 @@
   --bad:          var(--bz-copper);
   --radius:       var(--bz-radius-md);
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   SPRINT H2 — THREE-LANE RECIPES
+   Each FuFire system gets a distinct chromatic identity. Use `--lane-*`
+   tokens inside components; they re-bind at `[data-lane]` scope so a single
+   component can render in BaZi-gold, Western-blue, or Fusion-hybrid by
+   moving the data-lane attribute up the tree.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Default (fusion / fallback) */
+  --lane-fg:        var(--bz-gold-light);
+  --lane-fg-2:      var(--bz-gold);
+  --lane-bg:        var(--bz-bg-glass);
+  --lane-border:    var(--bz-border-1);
+  --lane-glow:      var(--bz-glow-gold);
+}
+
+[data-lane="bazi"] {
+  /* Ost · warm · gold-erden — Siegel-Ästhetik */
+  --lane-fg:      var(--bz-gold-light);
+  --lane-fg-2:    var(--bz-gold);
+  --lane-bg:      linear-gradient(180deg, rgba(60,46,22,.35), rgba(30,22,12,.45));
+  --lane-border:  var(--bz-gold-antique);
+  --lane-glow:    var(--bz-glow-gold);
+}
+
+[data-lane="west"] {
+  /* Hellenistisch · kühl · saphir-blau — Orbital-Ästhetik */
+  --lane-fg:      #8AA6FF;
+  --lane-fg-2:    var(--bz-saphir);
+  --lane-bg:      linear-gradient(180deg, rgba(20,28,60,.25), rgba(10,14,30,.45));
+  --lane-border:  rgba(59,130,246,.30);
+  --lane-glow:    0 0 20px rgba(59,130,246,.15);
+}
+
+[data-lane="fusion"] {
+  /* Hybrid · Bridge · Gradient — verbindet Ost und West */
+  --lane-fg:      var(--bz-gold-light);
+  --lane-fg-2:    #C0A7DA;
+  --lane-bg:      linear-gradient(135deg, rgba(60,46,22,.30), rgba(20,28,60,.30));
+  --lane-border:  rgba(192,167,218,.30);
+  --lane-glow:    0 0 20px rgba(192,167,218,.15);
+}
+
+[data-lane="wuxing"] {
+  /* Element-Ökonomie · 5-Farben — Übergeordnet warm wie Fusion */
+  --lane-fg:      var(--bz-gold-light);
+  --lane-fg-2:    var(--bz-emerald);
+  --lane-bg:      var(--bz-bg-glass);
+  --lane-border:  var(--bz-border-2);
+  --lane-glow:    var(--bz-glow-gold);
+}

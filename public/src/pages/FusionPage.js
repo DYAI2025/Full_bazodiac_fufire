@@ -241,7 +241,7 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
   const fusion = profile?.fusion;
   if (!fusion) {
     app.innerHTML = `
-      <main class="fusion-page">
+      <main class="fusion-page" data-lane="fusion">
         <p class="error-detail">Kein Profil geladen. <a href="#/">Zur Eingabe</a></p>
       </main>
     `;
@@ -273,7 +273,7 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
   const leverEl = remediation?.actions?.[0]?.element || deficientEl;
 
   app.innerHTML = `
-    <main class="fusion-page">
+    <main class="fusion-page" data-lane="fusion">
       <nav class="page-nav">
         <a href="#/overview"       class="nav-link">← Übersicht</a>
         <a href="#/personality"    class="nav-link">Persönlichkeit</a>
