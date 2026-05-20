@@ -55,6 +55,25 @@ test('OverviewPage renders only API-derived data + passes noFakeDataGuard', asyn
   assertContainsApiValues(agg, 'OverviewPage');
 });
 
+// Sprint I: NatalChartWheel additive Hero-Section below the Identity-Hero.
+test('OverviewPage: renders NatalChartWheel section after the Identity-Hero', async () => {
+  const { OverviewPage } = await import('../public/src/pages/OverviewPage.js');
+  const app = freshApp();
+  OverviewPage(app, { profile: SYNTHETIC_PROFILE, onNavigate: () => {} });
+  const agg = cap.aggregate();
+  assert.ok(agg.includes('natal-wheel-section'),
+    'OverviewPage must contain a .natal-wheel-section');
+  // The InsightHero / core-statement always renders first; Wheel section is
+  // added after it. Assert positional order via the template markup that ends
+  // up in cap.aggregate().
+  const coreIdx  = agg.indexOf('core-statement-section');
+  const wheelIdx = agg.indexOf('natal-wheel-section');
+  assert.ok(coreIdx >= 0, 'core-statement-section must be present');
+  assert.ok(wheelIdx > coreIdx,
+    `natal-wheel-section must appear after core-statement-section ` +
+    `(core=${coreIdx}, wheel=${wheelIdx})`);
+});
+
 // ── PersonalityPage ──────────────────────────────────────────────────────────
 // We verify guard passes; the projection layer may rename day-master to a
 // label that doesn't include the raw stem string, so we skip the API-strings

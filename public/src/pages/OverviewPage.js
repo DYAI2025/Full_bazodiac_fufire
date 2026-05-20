@@ -1,4 +1,6 @@
-import { generateCoreStatement } from '../domain/coreStatement.js';
+import { generateCoreStatement }    from '../domain/coreStatement.js';
+import { profileToOverviewModel }   from '../domain/overviewModel.js';
+import { NatalChartWheel }          from '../components/NatalChartWheel.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
 import { ExplainableCard }       from '../components/ExplainableCard.js';
 import { WuXingEducationGrid }   from '../components/WuXingEducationGrid.js';
@@ -424,6 +426,15 @@ export function OverviewPage(app, { profile, onNavigate }) {
       <div class="coherence-lens-mount"></div>
       <div class="score-band-mount"></div>
       <div class="three-doors-mount"></div>
+      <section class="natal-wheel-section" aria-label="Geburtsrad">
+        <header class="layer-header layer-header--west">
+          <span class="layer-header__glyph">☉</span>
+          <span class="layer-header__title">Geburtsrad</span>
+          <span class="layer-header__sub">Tierkreis · Häuser · Aszendent · Planeten</span>
+        </header>
+        <div class="natal-wheel-mount"></div>
+        <ul class="natal-wheel-warnings" aria-live="polite"></ul>
+      </section>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">
         <h2>BaZi — Vier Säulen</h2>
         <p class="section-intro">Klick auf eine Säule öffnet die Erklärung: Säulenrolle, Stamm, Zweig/Tier, Element, Ressource, Schatten, Praxisimpuls.</p>
@@ -545,6 +556,25 @@ export function OverviewPage(app, { profile, onNavigate }) {
       { path: '/synastry',    eyebrow: 'Beziehung',  title: 'Beziehung reflektieren', hint: 'Kontaktsignatur, Resonanz und 24h-Experiment' },
     ],
   }));
+
+  // Sprint I — Natal Chart Wheel as additive Hero-Section below Identity-Hero.
+  // Consumes the normalized chartWheel from profileToOverviewModel so this
+  // page never touches raw API field names directly.
+  const overviewModel = profileToOverviewModel(profile);
+  const wheelMount    = app.querySelector('.natal-wheel-mount');
+  if (wheelMount) {
+    wheelMount.replaceWith(NatalChartWheel({ wheel: overviewModel.chartWheel }));
+  }
+  const warningsList = app.querySelector('.natal-wheel-warnings');
+  if (warningsList && Array.isArray(overviewModel.warnings)) {
+    for (const w of overviewModel.warnings) {
+      const li = document.createElement('li');
+      li.className = 'natal-wheel-warning';
+      li.textContent = w;
+      warningsList.appendChild(li);
+    }
+    if (!overviewModel.warnings.length) warningsList.remove();
+  }
 
   // Hinweis fehlende Daten
   if (missing.length) {
