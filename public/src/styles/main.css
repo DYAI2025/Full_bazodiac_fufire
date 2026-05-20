@@ -2400,10 +2400,7 @@ h1.page-title, h2.layer-title {
   .bazi-pillars,
   .bazi-explainable-grid { grid-template-columns: repeat(2, 1fr); }
   /* Western core grid: 4 cards become 2x2 */
-  .western-education-grid,
-  .western-core-grid { grid-template-columns: repeat(2, 1fr); }
-  /* Fusion trio: vertical pairs on tablet */
-  .fusion-trio { grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .western-education-grid { grid-template-columns: repeat(2, 1fr); }
   /* Houses 12-grid: 3x4 fits but tighter padding */
   .houses-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
   /* Daily steps: keep one-column flow */
@@ -2436,13 +2433,10 @@ h1.page-title, h2.layer-title {
   .bazi-pillars,
   .bazi-explainable-grid { grid-template-columns: 1fr; }
   /* Western: stack 4 cores */
-  .western-education-grid,
-  .western-core-grid { grid-template-columns: 1fr; }
+  .western-education-grid { grid-template-columns: 1fr; }
   /* WuXing radar: shrink so labels stay readable */
   .wuxing-radar svg,
   .wuxing-radar { max-width: 280px; margin-inline: auto; }
-  /* Fusion trio: stack vertically */
-  .fusion-trio { grid-template-columns: 1fr; gap: 0.75rem; }
   /* Daily step cards: tighter padding + smaller badge */
   .daily-step { padding: 0.75rem; margin-block: 0.75rem; }
   .daily-step__badge { width: 1.5rem; height: 1.5rem; font-size: 0.85rem; }
@@ -2458,15 +2452,17 @@ h1.page-title, h2.layer-title {
   .synastry-input-grid input,
   .person-input input { min-height: 44px; }
   /* Transit weekly strip: allow horizontal scroll instead of clipping */
-  .transit-week-strip { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .transit-week-strip { overflow-x: auto; }
   /* InputPage (root /) form: wide touch targets */
   .input-page input,
   .input-page select { min-height: 44px; font-size: 16px; /* prevent iOS zoom */ }
   /* Persistent Signature Bar: smaller chip-bar */
-  .persistent-signature-bar { flex-wrap: wrap; gap: 0.35rem; font-size: 0.78rem; }
+  .sig-bar { flex-wrap: wrap; gap: 0.35rem; font-size: 0.78rem; }
   /* Identity-Hero (Sprint-H InsightHero): hero-text scales via tokens */
   .insight-hero h1,
   .insight-hero__title { font-size: var(--bz-font-hero); }
-  /* Suppress horizontal overflow at viewport-root level */
-  body, #app { overflow-x: hidden; }
+  /* Suppress horizontal overflow without breaking nested scrolling
+     containers (e.g. .transit-week-strip). overflow-x: clip is the
+     modern alternative — supported in all evergreen browsers since 2022. */
+  body, #app { overflow-x: clip; }
 }
