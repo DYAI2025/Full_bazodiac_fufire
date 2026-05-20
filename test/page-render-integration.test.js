@@ -78,6 +78,18 @@ test('BaziPage renders only API-derived data + passes noFakeDataGuard', async ()
   assertContainsApiValues(agg, 'BaziPage', ['Bing', 'Geng', 'Xin']);
 });
 
+// ── WesternPage ──────────────────────────────────────────────────────────────
+// Second Sprint E page. Binds through westernBodyEnrichment + aspectEnrichment.
+test('WesternPage renders only API-derived data + passes noFakeDataGuard', async () => {
+  const { WesternPage } = await import('../public/src/pages/WesternPage.js');
+  const app = freshApp();
+  assert.doesNotThrow(() => WesternPage(app, { profile: SYNTHETIC_PROFILE, onNavigate: () => {} }));
+  const agg = assertAggregatePasses('WesternPage');
+  // Must surface enriched sign labels — synthetic profile has Sun in Taurus
+  // (Stier DE) and Moon in Scorpio (Skorpion DE).
+  assertContainsApiValues(agg, 'WesternPage', ['Stier', 'Skorpion']);
+});
+
 // ── DashboardPage ────────────────────────────────────────────────────────────
 test('DashboardPage renders only API-derived data + passes noFakeDataGuard', async () => {
   const { DashboardPage } = await import('../public/src/pages/DashboardPage.js');

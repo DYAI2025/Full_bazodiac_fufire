@@ -30,6 +30,8 @@ export const PLANET_DE = {
   Lilith:        'Lilith ⚸',
   NorthNode:     'Mondknoten ☊',
   TrueNorthNode: 'Mondknoten (wahr) ☊',
+  Ascendant:     'Aszendent ↑',
+  MC:            'Medium Coeli ⊥',
 };
 
 // Aspect EN → DE label. Covers the 7 aspect types FuFire returns in
@@ -53,7 +55,26 @@ export const PLANET_DE_CLEAN = {
   Uranus: 'Uranus', Neptune: 'Neptun', Pluto: 'Pluto',
   Chiron: 'Chiron', Lilith: 'Lilith',
   NorthNode: 'Mondknoten', TrueNorthNode: 'Mondknoten (wahr)',
+  Ascendant: 'Aszendent', MC: 'Medium Coeli',
 };
+
+// Sign order in ecliptic longitude: index 0..11 → Aries..Pisces.
+// Used to derive sign from raw angle longitude (Asc/MC come as numbers
+// only in the API; bodies come pre-tagged with sign).
+const SIGN_ORDER = [
+  'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+  'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
+];
+
+export function signFromLongitude(longitude) {
+  if (longitude === null || longitude === undefined) return null;
+  const n = Number(longitude);
+  if (!Number.isFinite(n)) return null;
+  // Normalize to [0, 360) then floor to 30°-segment index.
+  const wrapped = ((n % 360) + 360) % 360;
+  const idx = Math.floor(wrapped / 30);
+  return SIGN_ORDER[idx] ?? null;
+}
 
 // DE + EN sign names → Element
 const SIGN_MAP = {

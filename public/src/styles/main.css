@@ -1957,3 +1957,61 @@ input:focus { border-color: var(--accent); }
   background: transparent; color: var(--gold-light, #d4b483);
   border: 1px solid var(--border, rgba(255,255,255,.18));
 }
+
+/* ── WesternPage ─────────────────────────────────────────────────────────── */
+.western-page { padding: 1rem 1.25rem; max-width: 980px; margin: 0 auto; }
+.western-page .page-head { margin: 1rem 0 2rem; }
+.western-page .page-eyebrow {
+  text-transform: uppercase; letter-spacing: 0.18em;
+  font-size: .72rem; color: var(--accent, #6f8af5); margin: 0 0 .5rem;
+}
+.western-page .page-title { margin: 0 0 .75rem; font-size: 1.6rem; }
+.western-page .page-intro { color: var(--muted, #b6bcc4); line-height: 1.55; max-width: 65ch; }
+.western-page .layer-eyebrow {
+  text-transform: uppercase; letter-spacing: 0.18em; font-size: .7rem;
+  color: var(--accent, #6f8af5); margin: 0 0 .35rem;
+}
+.western-page .layer-title { margin: 0 0 1rem; font-size: 1.15rem; }
+
+.western-cores       { margin: 0 0 1.75rem; }
+.western-cores-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.western-planets     { margin: 0 0 1.75rem; }
+.western-planets-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: .75rem;
+}
+.western-activations { margin: 0 0 1.5rem; }
+.western-activations-list {
+  display: grid; gap: .75rem;
+}
+.western-aspect-row {
+  padding: .75rem 1rem;
+  border-left: 4px solid var(--accent, #6f8af5);
+  background: var(--card, rgba(255,255,255,.02));
+  border-radius: 6px;
+}
+.western-aspect-row__head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: .75rem;
+}
+.western-aspect-row__label {
+  font-weight: 600; color: var(--fg, #e9ecef);
+}
+.western-aspect-row__orb {
+  font-size: .8rem; color: var(--muted, #b6bcc4);
+}
+
+.western-page .page-actions {
+  display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem;
+  padding-top: 1.25rem; border-top: 1px solid var(--border, rgba(255,255,255,.10));
+}
+.western-page .cta-btn {
+  padding: .6rem 1.2rem; background: var(--accent, #6f8af5); color: var(--bg, #0f1115);
+  border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+.western-page .cta-btn--ghost {
+  background: transparent; color: var(--accent, #6f8af5);
+  border: 1px solid var(--border, rgba(255,255,255,.18));
+}
