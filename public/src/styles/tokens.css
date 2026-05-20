@@ -286,3 +286,48 @@
   --fg:         var(--bz-ink);
   color-scheme: light;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   SPRINT K — RESPONSIVE BREAKPOINTS
+   Single source of truth for the mobile/tablet/desktop ladder. Pinned by
+   test/breakpoints.test.js so the CSS values cannot drift from the JS
+   constants in public/src/data/breakpoints.js.
+
+   Tier ladder (non-overlapping):
+     mobile  ≤ 480px
+     tablet  481–1024px
+     desktop ≥ 1025px
+
+   @media blocks below override spacing + typography tokens. Per-page
+   layout adjustments live in main.css and read these tokens — no page
+   needs to know the literal pixel values.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bz-bp-mobile-max:  480px;
+  --bz-bp-tablet-max:  1024px;
+
+  /* Responsive scale tokens (desktop defaults). main.css consumes these. */
+  --bz-space-hero:     2.5rem;
+  --bz-space-stack:    1.25rem;
+  --bz-font-hero:      2.5rem;
+  --bz-font-body:      1rem;
+}
+
+@media (max-width: 480px) {
+  :root {
+    --bz-space-hero:   1.5rem;
+    --bz-space-stack:  0.75rem;
+    --bz-font-hero:    1.5rem;
+    --bz-font-body:    0.95rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 1024px) {
+  :root {
+    --bz-space-hero:   2rem;
+    --bz-space-stack:  1rem;
+    --bz-font-hero:    2rem;
+    --bz-font-body:    1rem;
+  }
+}
