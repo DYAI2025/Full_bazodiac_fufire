@@ -61,7 +61,7 @@ function pillarCard(pillar, role) {
   const isDayMaster = (role === 'day');
   const labelLine = [pillar.stem, pillar.branch, pillar.animal].filter(Boolean).join(' · ');
   const helperBits = [pillar.stemElement, pillar.polarity].filter(Boolean).join(' · ');
-  return ExplainableCard({
+  const card = ExplainableCard({
     domain:      'bazi',
     label:       ROLE_LABEL[role] || role,
     value:       labelLine || '—',
@@ -69,6 +69,15 @@ function pillarCard(pillar, role) {
     highlighted: isDayMaster,
     meaning:     pillarDrawerMeaning(pillar, role),
   });
+  // Wrap with CJK stem-char header (Phase C style-shift step 1 — pillar siegel).
+  const wrap = document.createElement('section');
+  wrap.className = `bazi-pillar-card bazi-pillar-card--${role}${isDayMaster ? ' bazi-pillar-card--day-master' : ''}`;
+  const stem = document.createElement('div');
+  stem.className = 'bazi-pillar-stem-char';
+  stem.textContent = pillar.stemChar || pillar.stem || '';
+  wrap.appendChild(stem);
+  wrap.appendChild(card);
+  return wrap;
 }
 
 export function BaziPage(app, { profile, onNavigate } = {}) {

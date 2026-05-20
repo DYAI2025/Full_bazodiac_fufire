@@ -1940,9 +1940,28 @@ input:focus { border-color: var(--accent); }
 
 .bazi-pillars { margin: 0 0 1.5rem; }
 .bazi-pillars-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
+@media (max-width: 720px) {
+  .bazi-pillars-grid { grid-template-columns: 1fr; }
+}
+
+.bazi-pillar-card { position: relative; }
+.bazi-pillar-stem-char {
+  font-family: 'Noto Serif CJK SC', serif;
+  font-size: 3.5rem;
+  color: var(--gold-light, #d4b483);
+  line-height: 1;
+  text-align: center;
+  margin-bottom: .75rem;
+  opacity: .9;
+}
+.bazi-pillar-card--day-master .bazi-pillar-stem-char {
+  font-size: 4.5rem;
+  text-shadow: 0 0 30px rgba(212, 175, 55, .3);
+}
+
 .bazi-luck-pillar { margin: 0 0 1.5rem; }
 
 .bazi-page .page-actions {

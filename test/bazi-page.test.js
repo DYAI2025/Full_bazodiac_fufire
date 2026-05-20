@@ -124,3 +124,15 @@ test('BaziPage: day pillar receives Day Master highlight (ExplainableCard --high
   // injected by ExplainableCard when highlighted.
   assert.match(agg, /Day Master/);
 });
+
+// ── Pillar CJK stem-char header (Phase C style-shift) ─────────────────────
+
+test('BaziPage: each pillar card displays the CJK stem character prominently', () => {
+  const app = freshApp();
+  BaziPage(app, { profile: lina, onNavigate: () => {} });
+  const agg = aggregate();
+  // Lina pillars: Ding/Gui/Ren/Jia → 丁 癸 壬 甲
+  for (const cjk of ['丁', '癸', '壬', '甲']) {
+    assert.match(agg, new RegExp(cjk), `pillar must show CJK stem ${cjk}`);
+  }
+});
