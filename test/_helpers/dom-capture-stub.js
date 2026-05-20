@@ -77,6 +77,10 @@ export function installCaptureDom() {
         for (const c of String(v).split(/\s+/)) if (c) this.classList.add(c);
       },
       _mountByClass: {},
+      // dataset: plain object so `node.dataset.foo = "bar"` doesn't throw.
+      // Sprint-J added this to support pages that build form buttons with
+      // dataset.field / dataset.value (DailyCheckin).
+      dataset: {},
       appendChild(c) { this._children.push(c); return c; },
       append(...kids) { for (const k of kids) this._children.push(k); },
       replaceWith(other) { /* tracked but no parent linkage */ if (other && typeof other === 'object') this._children.push(other); },
