@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Azodiac</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Sprint H1: design-tokens drop. tokens.css imports the full Bazodiac
+       font stack (Cormorant Garamond, Manrope, Inter, JetBrains Mono,
+       Noto Sans SC) + defines --bz-* color/spacing/typography vars + a
+       legacy-alias bridge so existing main.css var(--gold-light) etc.
+       continue to resolve. Must load BEFORE main.css. -->
+  <link rel="stylesheet" href="src/styles/tokens.css" />
   <link rel="stylesheet" href="src/styles/main.css" />
 </head>
 <body>
