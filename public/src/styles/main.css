@@ -2275,3 +2275,44 @@ body > #app {
   padding: 0;
 }
 #global-nav-host .secondary-nav { flex: 1; }
+
+/* ── Sprint H6 — Typography rollout (per tokens.css font stack) ─────────── */
+
+/* Body baseline → Manrope sans */
+body, .input-page, .bazi-page, .western-page, .wuxing-page, .fusion-page,
+.synastry-page, .daily-page, .overview-page, .personality-page,
+.career-finance-page, .love-page, .dashboard-page, .transit-calendar-page {
+  font-family: var(--bz-font-sans, system-ui, sans-serif);
+  line-height: var(--bz-lh-body, 1.7);
+}
+
+/* Display + headings → Cormorant Garamond serif */
+.page-title, .layer-title,
+.bazi-dm-label, .wuxing-headline,
+.bz-display, .bz-h1, .bz-h2, .bz-h3, .bz-h4,
+h1.page-title, h2.layer-title {
+  font-family: var(--bz-font-serif, "Cormorant Garamond", ui-serif, serif);
+  font-weight: 500;
+  letter-spacing: var(--bz-ls-heading, 0.05em);
+}
+
+/* Eyebrows + over-labels → Inter UI */
+.page-eyebrow, .layer-eyebrow,
+.factor-label, .source-pill, .wuxing-row__role,
+.secondary-nav__tab {
+  font-family: var(--bz-font-ui, "Inter", system-ui, sans-serif);
+  letter-spacing: var(--bz-ls-overline, 0.2em);
+  text-transform: uppercase;
+}
+
+/* CJK chars (BaZi stems/branches) → Noto Sans SC */
+.bazi-dm-stemchar, .bazi-pillar-stem-char,
+.wheel-node-label, .wheel-node-pct {
+  font-family: var(--bz-font-cjk, "Noto Sans SC", ui-sans-serif, sans-serif);
+}
+
+/* Tabular numerics (longitudes, degrees, percentages) → JetBrains Mono */
+.bz-data, .wuxing-row__pct, .western-aspect-row__orb,
+.confidence-pct, .factor-value {
+  font-variant-numeric: tabular-nums;
+}
