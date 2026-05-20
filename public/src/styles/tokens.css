@@ -259,3 +259,30 @@
   --lane-border:  var(--bz-border-2);
   --lane-glow:    var(--bz-glow-gold);
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   SPRINT H5 — THEME RECIPES (planetarium dark / morning light)
+   Activated via <html data-theme="planetarium"|"morning">. data-theme is
+   set by ThemeToggle bootstrapTheme() before any page mounts.
+   ════════════════════════════════════════════════════════════════════════ */
+:root[data-theme="planetarium"] {
+  --bz-bg-1:    var(--bz-obsidian);
+  --bz-bg-2:    var(--bz-ash);
+  --bz-fg-1:    rgba(255, 255, 255, 0.95);
+  --bz-fg-2:    rgba(255, 255, 255, 0.75);
+  --bz-fg-3:    rgba(255, 255, 255, 0.50);
+  --bg:         var(--bz-obsidian);
+  --fg:         rgba(255, 255, 255, 0.95);
+  color-scheme: dark;
+}
+
+:root[data-theme="morning"] {
+  --bz-bg-1:    var(--bz-dawn);
+  --bz-bg-2:    var(--bz-parchment);
+  --bz-fg-1:    var(--bz-ink);
+  --bz-fg-2:    rgba(30, 41, 59, 0.75);
+  --bz-fg-3:    rgba(30, 41, 59, 0.50);
+  --bg:         var(--bz-dawn);
+  --fg:         var(--bz-ink);
+  color-scheme: light;
+}
