@@ -15,6 +15,7 @@ import { WuxingPage }          from './pages/WuxingPage.js';
 import { ProfileMissingBanner } from './components/ProfileMissingBanner.js';
 import { PersistentSignatureBar } from './components/PersistentSignatureBar.js';
 import { mountGlobalNav } from './components/SecondaryNav.js';
+import { mountStarfield } from './components/Starfield.js';
 import { buildExperienceProfile, buildCoreIdentity } from './domain/experienceCopy.js';
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
@@ -112,4 +113,6 @@ router
 if (typeof document !== 'undefined') {
   const navHost = document.getElementById?.('global-nav-host');
   if (navHost) mountGlobalNav(navHost);
+  // Sprint H4: procedural starfield as global background layer (z-index 0).
+  if (document.body) mountStarfield(document.body);
 }
