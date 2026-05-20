@@ -90,6 +90,19 @@ test('WesternPage renders only API-derived data + passes noFakeDataGuard', async
   assertContainsApiValues(agg, 'WesternPage', ['Stier', 'Skorpion']);
 });
 
+// ── WuxingPage ───────────────────────────────────────────────────────────────
+// Third Sprint E page. Binds through wuxingEnrichment over fusion.remediation.
+test('WuxingPage renders only API-derived data + passes noFakeDataGuard', async () => {
+  const { WuxingPage } = await import('../public/src/pages/WuxingPage.js');
+  const app = freshApp();
+  assert.doesNotThrow(() => WuxingPage(app, { profile: SYNTHETIC_PROFILE, onNavigate: () => {} }));
+  const agg = assertAggregatePasses('WuxingPage');
+  // Synthetic fusion has dominant Feuer + deficient Wasser; both must surface.
+  // (Note: synthetic distribution is not from remediation, so our threshold
+  // applies — Wasser at 0.05 will register as unterrepräsentiert.)
+  assertContainsApiValues(agg, 'WuxingPage', ['Holz', 'Feuer', 'Erde', 'Metall', 'Wasser']);
+});
+
 // ── DashboardPage ────────────────────────────────────────────────────────────
 test('DashboardPage renders only API-derived data + passes noFakeDataGuard', async () => {
   const { DashboardPage } = await import('../public/src/pages/DashboardPage.js');

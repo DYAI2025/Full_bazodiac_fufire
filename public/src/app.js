@@ -11,6 +11,7 @@ import { DailyPage }           from './pages/DailyPage.js';
 import { FusionPage }          from './pages/FusionPage.js';
 import { BaziPage }            from './pages/BaziPage.js';
 import { WesternPage }         from './pages/WesternPage.js';
+import { WuxingPage }          from './pages/WuxingPage.js';
 import { ProfileMissingBanner } from './components/ProfileMissingBanner.js';
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ router
   .register('/fusion', (app) => mountWithProfile(FusionPage, app, 'die Fusion-Synthese'))
   .register('/bazi',    (app) => mountWithProfile(BaziPage,    app, 'deine vier Säulen'))
   .register('/western', (app) => mountWithProfile(WesternPage, app, 'die westliche Karte'))
+  .register('/wuxing',  (app) => mountWithProfile(WuxingPage,  app, 'deine Element-Ökonomie'))
   .register('/daily', (app) => {
     // Daily zeigt eigenes Onboarding bei fehlendem Profil — kein zusätzlicher Banner.
     DailyPage(app, {
