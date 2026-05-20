@@ -2215,3 +2215,25 @@ main[data-lane] .wuxing-today-lever {
   background: var(--lane-bg);
   border-color: var(--lane-border);
 }
+
+/* ── Sprint H4 — Starfield (procedural, fixed under all content) ────────── */
+.starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.starfield i {
+  position: absolute;
+  display: block;
+  background: var(--bz-fg-1, #fff);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(255, 255, 255, .35);
+}
+/* Pages and nav stay above the starfield. */
+body > #global-nav-host,
+body > #app {
+  position: relative;
+  z-index: 1;
+}
