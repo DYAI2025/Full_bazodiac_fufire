@@ -14,6 +14,7 @@ import { WesternPage }         from './pages/WesternPage.js';
 import { WuxingPage }          from './pages/WuxingPage.js';
 import { ProfileMissingBanner } from './components/ProfileMissingBanner.js';
 import { PersistentSignatureBar } from './components/PersistentSignatureBar.js';
+import { mountGlobalNav } from './components/SecondaryNav.js';
 import { buildExperienceProfile, buildCoreIdentity } from './domain/experienceCopy.js';
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
@@ -100,3 +101,11 @@ router
     TransitCalendarPage(app, { profile: currentProfile });
   })
   .start();
+
+// Global top-nav: mount once after the router starts. Lives in #global-nav-host
+// (above the #app shell in index.html) so it persists across hash-route changes.
+// Falls back silently when running headless / capture-DOM tests.
+if (typeof document !== 'undefined') {
+  const navHost = document.getElementById?.('global-nav-host');
+  if (navHost) mountGlobalNav(navHost);
+}

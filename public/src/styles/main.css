@@ -2142,3 +2142,38 @@ input:focus { border-color: var(--accent); }
   background: transparent; color: var(--gold-light, #d4b483);
   border: 1px solid var(--border, rgba(255,255,255,.18));
 }
+
+/* ── SecondaryNav (Task B2 / smoke M-3) ──────────────────────────────────── */
+/* Global top tab-strip mounted in #global-nav-host above #app. Lane-color    */
+/* hooks (data-lane) are stubbed here — Phase-C Sprint H will refine colors. */
+.secondary-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  padding: .5rem 1.25rem;
+  max-width: 980px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,.10));
+}
+.secondary-nav__tab {
+  padding: .5rem .85rem;
+  background: transparent;
+  border: none;
+  color: var(--muted, #b6bcc4);
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: .85rem;
+  letter-spacing: .04em;
+}
+.secondary-nav__tab:hover {
+  color: var(--fg, #e9ecef);
+  background: rgba(255,255,255,.05);
+}
+.secondary-nav__tab[data-active="true"] {
+  color: var(--gold-light, #d4b483);
+  background: rgba(212,175,55,.08);
+}
+/* Phase C lane styling — data-lane attribute already set on each tab. */
+.secondary-nav__tab[data-lane="bazi"][data-active="true"]   { color: var(--gold-light, #d4b483); }
+.secondary-nav__tab[data-lane="west"][data-active="true"]   { color: var(--accent, #6f8af5); }
+.secondary-nav__tab[data-lane="fusion"][data-active="true"] { color: var(--gold-light, #d4b483); }
