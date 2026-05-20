@@ -13,6 +13,7 @@
 
 import { enrichWuxing } from '../domain/wuxingEnrichment.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
+import { WuxingRadar } from '../components/WuxingRadar.js';
 
 function elementBar(entry) {
   const row = document.createElement('article');
@@ -130,6 +131,7 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
       <section class="wuxing-distribution" aria-label="Element-Verteilung">
         <p class="layer-eyebrow">Verteilung</p>
         <h2 class="layer-title wuxing-headline"></h2>
+        <div class="wuxing-radar-mount"></div>
         <div class="wuxing-bars"></div>
         <p class="wuxing-today-lever"></p>
       </section>
@@ -167,6 +169,13 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
     const domLabel = vm.dominant?.label || '—';
     const defLabel = vm.deficient?.label || '—';
     headline.textContent = `${domLabel} dominant · ${defLabel} unterrepräsentiert`;
+
+    // Sprint H3: pentagonal radar (Sheng/Ke) above the bars — shared
+    // component with FusionPage so the same wheel renders on both routes.
+    const radarMount = app.querySelector('.wuxing-radar-mount');
+    if (radarMount) {
+      radarMount.appendChild(WuxingRadar(vm.distribution, { size: 360 }));
+    }
 
     const bars = app.querySelector('.wuxing-bars');
     for (const entry of vm.distribution) bars.appendChild(elementBar(entry));

@@ -10,12 +10,10 @@
 // could diverge from WuxingPage / CareerFinancePage on partial fixtures.
 
 import { enrichWuxing } from '../domain/wuxingEnrichment.js';
-
-const ELEMENT_KEYS = ['Holz', 'Feuer', 'Erde', 'Metall', 'Wasser'];
-
-// Sheng (生) / Ke (克) parents — must match server.js
-const SHENG_PARENT = { Holz: 'Wasser', Feuer: 'Holz', Erde: 'Feuer', Metall: 'Erde', Wasser: 'Metall' };
-const KE_PARENT    = { Holz: 'Metall', Feuer: 'Wasser', Erde: 'Holz', Metall: 'Feuer', Wasser: 'Erde'  };
+// Sprint H3: Pentagonal radar extracted into pure-function module so
+// WuxingPage + FusionPage share one source. cycleRelation + SHENG/KE
+// also live there now.
+import { buildRadarSVG, cycleRelation, ELEMENT_ORDER as ELEMENT_KEYS } from '../domain/wuxingRadar.js';
 
 const ELEMENT_COLORS = {
   Holz:   '#34d399',
@@ -60,16 +58,6 @@ const FUSION_ELEMENT_PROFILE = {
   },
 };
 
-// Cycle relation labels for the 5×5 matrix
-function cycleRelation(a, b) {
-  if (a === b) return { kind: 'identity', label: '∞', tone: 'identity' };
-  if (SHENG_PARENT[b] === a) return { kind: 'sheng-gives', label: '生→', tone: 'sheng' };
-  if (SHENG_PARENT[a] === b) return { kind: 'sheng-takes', label: '←生', tone: 'sheng' };
-  if (KE_PARENT[b]    === a) return { kind: 'ke-gives',    label: '克→', tone: 'ke'    };
-  if (KE_PARENT[a]    === b) return { kind: 'ke-takes',    label: '←克', tone: 'ke'    };
-  return { kind: 'neutral', label: '·', tone: 'neutral' };
-}
-
 function esc(s) {
   const d = document.createElement('div');
   d.textContent = String(s ?? '');
@@ -80,9 +68,22 @@ function esc(s) {
 function pct(v) { return Math.round((v ?? 0) * 100) + ' Punkte Intensität'; }
 
 // ── ElementWheel ──────────────────────────────────────────────────────────
-// 5 nodes on a circle. Radius of each node ∝ vector value.
-// Sheng arrows (green) on outer pentagon, Ke arrows (red) on inner star.
+// Sprint H3: original inline implementation extracted to
+// domain/wuxingRadar.js buildRadarSVG. Kept as thin adapter here for the
+// FusionPage innerHTML template flow (returns string with legend appended).
 function ElementWheel(distribution) {
+  return `
+    ${buildRadarSVG(distribution, { size: 360 })}
+    <div class="fusion-wheel-legend">
+      <span class="legend-item"><span class="legend-swatch legend-swatch--sheng"></span> Sheng (生) — nährt</span>
+      <span class="legend-item"><span class="legend-swatch legend-swatch--ke"></span> Ke (克) — kontrolliert</span>
+    </div>
+  `;
+}
+
+// Legacy implementation (lines 95-163 below) is kept for one PR-cycle for
+// diff readability — H7 visual-regression sweep deletes after parity confirm.
+function _legacyElementWheel(distribution) {
   const CX = 180, CY = 180, R = 120;
   // Position elements clockwise starting from top: Holz, Feuer, Erde, Metall, Wasser
   const order = ['Holz', 'Feuer', 'Erde', 'Metall', 'Wasser'];
