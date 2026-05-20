@@ -2374,3 +2374,99 @@ h1.page-title, h2.layer-title {
   font-family: var(--bz-font-mono); font-size: .85rem; color: var(--fg);
 }
 .method-endpoint__desc { margin: .35rem 0 0; font-size: .8rem; color: var(--muted); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   SPRINT K — RESPONSIVE COVERAGE
+   Single consolidated section. Each rule is scoped to one selector +
+   one viewport so the desktop layout stays pixel-stable. Reads
+   --bz-bp-mobile-max + --bz-bp-tablet-max from tokens.css; the literal
+   480px / 1024px values are kept in this file for @media compatibility
+   (CSS does not yet support custom-property values inside @media queries
+   in stable Chromium per 2026-05).
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet (481 – 1024px) ────────────────────────────────────────────────── */
+@media (min-width: 481px) and (max-width: 1024px) {
+  /* Global nav: 10 routes wrap to multi-row, smaller font */
+  #global-nav-host nav,
+  .secondary-nav {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+  /* Overview Wheel: cap width so it doesn't push the page wider */
+  .natal-wheel-section svg.natal-chart-wheel { max-width: 420px; }
+  /* BaZi pillar grid: 2x2 already fits tablet — explicit lock */
+  .bazi-pillars,
+  .bazi-explainable-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Western core grid: 4 cards become 2x2 */
+  .western-education-grid,
+  .western-core-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Fusion trio: vertical pairs on tablet */
+  .fusion-trio { grid-template-columns: 1fr 1fr; gap: 1rem; }
+  /* Houses 12-grid: 3x4 fits but tighter padding */
+  .houses-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  /* Daily steps: keep one-column flow */
+  .daily-step { padding: 1rem; }
+  /* Synastry already collapses to 1-col below 600px — see line 265 */
+}
+
+/* ── Mobile (≤ 480px) ─────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Global nav: stack tabs, larger touch targets */
+  #global-nav-host nav,
+  .secondary-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    padding: 0.5rem 0.25rem;
+  }
+  .secondary-nav button,
+  .secondary-nav a {
+    flex: 1 1 30%;
+    min-width: 0;
+    text-align: center;
+    padding: 0.5rem 0.4rem;
+  }
+  /* Overview Wheel: scale to fit narrow viewport */
+  .natal-wheel-section svg.natal-chart-wheel { max-width: 320px; }
+  .natal-wheel-section { padding-inline: 0.5rem; }
+  /* BaZi pillar grid: 4 cards stack vertically */
+  .bazi-pillars,
+  .bazi-explainable-grid { grid-template-columns: 1fr; }
+  /* Western: stack 4 cores */
+  .western-education-grid,
+  .western-core-grid { grid-template-columns: 1fr; }
+  /* WuXing radar: shrink so labels stay readable */
+  .wuxing-radar svg,
+  .wuxing-radar { max-width: 280px; margin-inline: auto; }
+  /* Fusion trio: stack vertically */
+  .fusion-trio { grid-template-columns: 1fr; gap: 0.75rem; }
+  /* Daily step cards: tighter padding + smaller badge */
+  .daily-step { padding: 0.75rem; margin-block: 0.75rem; }
+  .daily-step__badge { width: 1.5rem; height: 1.5rem; font-size: 0.85rem; }
+  .daily-step__title { font-size: 1rem; }
+  /* Daily three-doors: stack */
+  .three-doors { grid-template-columns: 1fr; }
+  /* Houses 12-grid: stack to single column */
+  .houses-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+  /* Method endpoint catalog: tighter rows */
+  .method-endpoint { padding: 0.5rem 0.65rem; }
+  .method-endpoint__path { font-size: 0.8rem; word-break: break-all; }
+  /* Synastry form inputs: full-width with bigger touch targets */
+  .synastry-input-grid input,
+  .person-input input { min-height: 44px; }
+  /* Transit weekly strip: allow horizontal scroll instead of clipping */
+  .transit-week-strip { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* InputPage (root /) form: wide touch targets */
+  .input-page input,
+  .input-page select { min-height: 44px; font-size: 16px; /* prevent iOS zoom */ }
+  /* Persistent Signature Bar: smaller chip-bar */
+  .persistent-signature-bar { flex-wrap: wrap; gap: 0.35rem; font-size: 0.78rem; }
+  /* Identity-Hero (Sprint-H InsightHero): hero-text scales via tokens */
+  .insight-hero h1,
+  .insight-hero__title { font-size: var(--bz-font-hero); }
+  /* Suppress horizontal overflow at viewport-root level */
+  body, #app { overflow-x: hidden; }
+}
