@@ -36,12 +36,14 @@ export const SYNTHETIC_PROFILE = {
     ],
   },
   bazi: {
-    day_master: 'Bing',
+    // Mirror real /api/azodiac/profile shape: day_master is a pillar object,
+    // not a bare stem string. Verified in test/_fixtures/upstream-snapshots/profile.real.json.
+    day_master: { stem: 'Bing', branch: 'Yin', element: 'Feuer', hidden_stems: [] },
     pillars: {
-      year:  { stem: 'Geng', branch: 'Wu', element: 'Metall', animal: 'Pferd' },
-      month: { stem: 'Xin', branch: 'Si', element: 'Metall', animal: 'Schlange' },
-      day:   { stem: 'Bing', branch: 'Yin', element: 'Feuer', animal: 'Tiger' },
-      hour:  { stem: 'Wu',  branch: 'Zi',  element: 'Erde',   animal: 'Ratte' },
+      year:  { stem: 'Geng', branch: 'Wu', element: 'Metall', hidden_stems: [] },
+      month: { stem: 'Xin',  branch: 'Si', element: 'Metall', hidden_stems: [] },
+      day:   { stem: 'Bing', branch: 'Yin', element: 'Feuer', hidden_stems: [] },
+      hour:  { stem: 'Wu',   branch: 'Zi', element: 'Erde',   hidden_stems: [] },
     },
   },
   fusion: {

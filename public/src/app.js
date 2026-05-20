@@ -9,6 +9,7 @@ import { SynastryPage }       from './pages/SynastryPage.js';
 import { TransitCalendarPage } from './pages/TransitCalendarPage.js';
 import { DailyPage }           from './pages/DailyPage.js';
 import { FusionPage }          from './pages/FusionPage.js';
+import { BaziPage }            from './pages/BaziPage.js';
 import { ProfileMissingBanner } from './components/ProfileMissingBanner.js';
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
@@ -59,6 +60,7 @@ router
   .register('/personality', (app) => mountWithProfile(PersonalityPage, app, 'die Persönlichkeits-Schichten'))
   .register('/dashboard', (app) => mountWithProfile(DashboardPage, app, 'das Dashboard'))
   .register('/fusion', (app) => mountWithProfile(FusionPage, app, 'die Fusion-Synthese'))
+  .register('/bazi',   (app) => mountWithProfile(BaziPage,   app, 'deine vier Säulen'))
   .register('/daily', (app) => {
     // Daily zeigt eigenes Onboarding bei fehlendem Profil — kein zusätzlicher Banner.
     DailyPage(app, {

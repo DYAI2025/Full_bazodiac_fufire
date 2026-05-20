@@ -1902,3 +1902,58 @@ input:focus { border-color: var(--accent); }
 .category-preview-list li { margin: .25rem 0; font-size: .88rem; line-height: 1.4; }
 .geo-manual-helper { color: var(--muted, #b6bcc4); font-size: .78rem; margin: 0 0 .5rem; }
 .geo-manual-error  { color: var(--bad, #d97a6c); font-size: .82rem; margin: .5rem 0 0; }
+
+/* ── BaziPage ────────────────────────────────────────────────────────────── */
+.bazi-page { padding: 1rem 1.25rem; max-width: 980px; margin: 0 auto; }
+.bazi-page .page-head { margin: 1rem 0 2rem; }
+.bazi-page .page-eyebrow {
+  text-transform: uppercase; letter-spacing: 0.18em;
+  font-size: .72rem; color: var(--gold-light, #c9a35b); margin: 0 0 .5rem;
+}
+.bazi-page .page-title { margin: 0 0 .75rem; font-size: 1.6rem; }
+.bazi-page .page-intro { color: var(--muted, #b6bcc4); line-height: 1.55; max-width: 65ch; }
+.bazi-page .layer-eyebrow {
+  text-transform: uppercase; letter-spacing: 0.18em; font-size: .7rem;
+  color: var(--muted, #b6bcc4); margin: 0 0 .35rem;
+}
+.bazi-page .layer-hint { color: var(--muted, #b6bcc4); font-size: .85rem; margin: 0 0 .75rem; }
+
+.bazi-day-master { margin: 0 0 1.5rem; }
+.bazi-dm-tile {
+  display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center;
+  padding: 1.25rem 1.5rem; border: 1px solid var(--gold, #b48a4a);
+  border-radius: 12px; background: linear-gradient(180deg, rgba(60,46,22,.35), rgba(30,22,12,.45));
+}
+.bazi-dm-stem-block {
+  display: grid; place-items: center; padding: .75rem 1rem;
+  border: 1px solid var(--gold, #b48a4a); border-radius: 10px;
+  background: rgba(30,22,12,.5);
+}
+.bazi-dm-stemchar { font-size: 3.25rem; color: var(--gold-light, #d4b483); line-height: 1; }
+.bazi-dm-meta {
+  text-transform: uppercase; letter-spacing: 0.18em; font-size: .7rem;
+  color: var(--gold, #b48a4a); margin-top: .5rem;
+}
+.bazi-dm-label  { margin: 0 0 .5rem; color: var(--gold-light, #d4b483); font-size: 1.4rem; }
+.bazi-dm-ressource { margin: 0 0 .35rem; color: var(--fg, #e9ecef); line-height: 1.5; }
+.bazi-dm-shadow { margin: 0; color: var(--muted, #b6bcc4); font-size: .9rem; }
+
+.bazi-pillars { margin: 0 0 1.5rem; }
+.bazi-pillars-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.bazi-luck-pillar { margin: 0 0 1.5rem; }
+
+.bazi-page .page-actions {
+  display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem;
+  padding-top: 1.25rem; border-top: 1px solid var(--border, rgba(255,255,255,.10));
+}
+.bazi-page .cta-btn {
+  padding: .6rem 1.2rem; background: var(--accent, #d4b483); color: var(--bg, #0f1115);
+  border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+.bazi-page .cta-btn--ghost {
+  background: transparent; color: var(--gold-light, #d4b483);
+  border: 1px solid var(--border, rgba(255,255,255,.18));
+}

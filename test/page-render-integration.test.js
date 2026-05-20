@@ -67,6 +67,17 @@ test('FusionPage renders only API-derived data + passes noFakeDataGuard', async 
   assertAggregatePasses('FusionPage');
 });
 
+// ── BaziPage ─────────────────────────────────────────────────────────────────
+// First Sprint E vertical-slice page. Binds through baziPillarEnrichment.
+test('BaziPage renders only API-derived data + passes noFakeDataGuard', async () => {
+  const { BaziPage } = await import('../public/src/pages/BaziPage.js');
+  const app = freshApp();
+  assert.doesNotThrow(() => BaziPage(app, { profile: SYNTHETIC_PROFILE, onNavigate: () => {} }));
+  const agg = assertAggregatePasses('BaziPage');
+  // Must surface enriched pillars (stems Bing/Geng/Xin/Wu from synthetic profile).
+  assertContainsApiValues(agg, 'BaziPage', ['Bing', 'Geng', 'Xin']);
+});
+
 // ── DashboardPage ────────────────────────────────────────────────────────────
 test('DashboardPage renders only API-derived data + passes noFakeDataGuard', async () => {
   const { DashboardPage } = await import('../public/src/pages/DashboardPage.js');
