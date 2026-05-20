@@ -61,8 +61,12 @@ function mountWithProfile(pageFn, app, pageLabel) {
         sun:       identity.sun,
         coherence: expProfile?.fusion?.coherence,
       }));
-    } catch {
+    } catch (err) {
       // Bar is decorative — never block page render on a derivation failure.
+      // Still surface the cause for debugging instead of swallowing silently.
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('[mountWithProfile] SignatureBar derivation failed:', err);
+      }
     }
   }
 }

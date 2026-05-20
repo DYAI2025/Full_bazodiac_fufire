@@ -46,3 +46,36 @@ test('SecondaryNav renders one tab per ROUTES entry with label + lane attribute'
     assert.equal(laneAttr, ROUTES[i].lane, `child ${i} data-lane mismatch (got ${laneAttr})`);
   }
 });
+
+// ── Hardening fixes: I-3 + I-4 from /code-reviewer ──────────────────────────
+
+test('SecondaryNav: each tab carries data-path attribute (active-state-by-path, NOT positional index)', () => {
+  cap.reset();
+  const nav = SecondaryNav();
+  for (let i = 0; i < ROUTES.length; i++) {
+    const tab = nav._children[i];
+    assert.equal(tab._attrs['data-path'], ROUTES[i].path,
+      `tab ${i} must carry data-path="${ROUTES[i].path}" so active-state survives tab filtering/reordering`);
+  }
+});
+
+test('mountGlobalNav: clears existing host content before appending (re-init safe — duplicate-nav guard)', async () => {
+  const { mountGlobalNav } = await import('../public/src/components/SecondaryNav.js');
+  // Synthesize a host with an existing nav inside it — simulates hot-reload
+  // / re-import scenario where mountGlobalNav fires twice.
+  const host = global.document.createElement('div');
+  const ghost = global.document.createElement('nav');
+  ghost.className = 'secondary-nav';
+  host.appendChild(ghost);
+  assert.equal(host._children.length, 1, 'precondition: host has one ghost nav');
+
+  // Hook replaceChildren so the stub records the wipe — mimics real DOM API.
+  if (typeof host.replaceChildren !== 'function') {
+    host.replaceChildren = () => { host._children = []; };
+  }
+
+  mountGlobalNav(host);
+
+  const navs = host._children.filter((c) => c?.tag === 'nav');
+  assert.equal(navs.length, 1, `host must contain exactly 1 nav after re-init (got ${navs.length})`);
+});
