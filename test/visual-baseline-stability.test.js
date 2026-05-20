@@ -13,7 +13,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { statSync, existsSync } from 'node:fs';
+import { statSync, existsSync, openSync, readSync, closeSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -78,15 +78,38 @@ test('visual-baseline: desktop PNGs within ±5% of pinned size', () => {
   }
 });
 
-test('visual-baseline: mobile PNGs differ measurably from desktop', () => {
-  // Sprint-K mobile @media must actually take effect — assert that mobile
-  // PNGs are NOT identical to desktop captures (they should be visually
-  // distinct because of stacked grids + smaller fonts).
+// Read PNG IHDR width+height directly from bytes 16-23. PNG spec: after
+// the 8-byte signature comes a chunk with 4-byte length, 4-byte type
+// ("IHDR"), then width+height as big-endian uint32.
+function pngDimensions(path) {
+  const fd = openSync(path, 'r');
+  const buf = Buffer.alloc(24);
+  readSync(fd, buf, 0, 24, 0);
+  closeSync(fd);
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+test('visual-baseline: mobile PNGs render at 375×667 @ 2× DPR', () => {
+  // Sprint-K mobile @media must actually take effect — assert mobile
+  // captures landed at the emulated 750px width (375 logical × DPR=2)
+  // rather than picking up Chrome's natural viewport. This is the
+  // structural successor of the old byte-delta heuristic (I3): byte
+  // counts can converge by coincidence; PNG dimensions cannot.
+  const EXPECTED_MOBILE_W = 750; // 375 × 2 DPR
   for (const r of ROUTES) {
-    const desktopSize = statSync(join(ROOT, 'desktop', `${r}.png`)).size;
-    const mobileSize  = statSync(join(ROOT, 'mobile',  `${r}.png`)).size;
-    const deltaPct = Math.abs(desktopSize - mobileSize) / desktopSize * 100;
-    assert.ok(deltaPct >= 5,
-      `mobile/${r}.png is suspiciously similar to desktop (${deltaPct.toFixed(1)}% diff) — @media may not have applied`);
+    const { width } = pngDimensions(join(ROOT, 'mobile', `${r}.png`));
+    assert.equal(width, EXPECTED_MOBILE_W,
+      `mobile/${r}.png width=${width}, expected ${EXPECTED_MOBILE_W} (emulation may not have applied)`);
+  }
+});
+
+test('visual-baseline: desktop PNGs render at a different width than mobile', () => {
+  // Sharpens the "@media took effect" check: desktop captures must use
+  // a width that is NOT the mobile-emulation width.
+  const MOBILE_W = 750;
+  for (const r of ROUTES) {
+    const { width } = pngDimensions(join(ROOT, 'desktop', `${r}.png`));
+    assert.notEqual(width, MOBILE_W,
+      `desktop/${r}.png width=${width} matches mobile — desktop sweep may have run with viewport-emulation still active`);
   }
 });
