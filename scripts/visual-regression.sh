@@ -57,10 +57,13 @@ if ! curl -sf http://127.0.0.1:3000/health -o /dev/null; then
   exit 1
 fi
 
-# Translate viewport name → CDP setDeviceMetricsOverride args. Empty string
-# means clear the override (desktop default — uses Chrome's actual viewport).
+# Translate viewport name → CDP setDeviceMetricsOverride args. Sprint-L
+# made desktop deterministic too — earlier "clear" + natural-viewport
+# meant captures depended on whatever window-size Chrome happened to
+# have, breaking stability assertions between sweep sessions. 1440x900
+# is a stable mid-range desktop reference.
 case "$VIEWPORT" in
-  desktop) METRICS="clear" ;;
+  desktop) METRICS="1440x900-desktop" ;;
   tablet)  METRICS="768x1024" ;;
   mobile)  METRICS="375x667" ;;
 esac
@@ -77,7 +80,10 @@ import json, time, shutil
 with open('test/_fixtures/upstream-snapshots/profile.real.json') as f:
     profile = json.load(f)
 metrics = "${METRICS}"
-if metrics == "clear":
+if metrics.endswith("-desktop"):
+    w, h = metrics.replace("-desktop", "").split("x")
+    cdp("Emulation.setDeviceMetricsOverride", width=int(w), height=int(h), deviceScaleFactor=2, mobile=False)
+elif metrics == "clear":
     cdp("Emulation.clearDeviceMetricsOverride")
 else:
     w, h = metrics.split("x")
