@@ -16,7 +16,11 @@ import { ProfileMissingBanner } from './components/ProfileMissingBanner.js';
 import { PersistentSignatureBar } from './components/PersistentSignatureBar.js';
 import { mountGlobalNav } from './components/SecondaryNav.js';
 import { mountStarfield } from './components/Starfield.js';
+import { ThemeToggle, bootstrapTheme } from './components/ThemeToggle.js';
 import { buildExperienceProfile, buildCoreIdentity } from './domain/experienceCopy.js';
+
+// Sprint H5: apply persisted theme as early as possible to avoid flicker.
+bootstrapTheme();
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
 // Berechnetes Profil bleibt in sessionStorage erhalten (Back-Navigation, Reload).
@@ -112,7 +116,11 @@ router
 // Falls back silently when running headless / capture-DOM tests.
 if (typeof document !== 'undefined') {
   const navHost = document.getElementById?.('global-nav-host');
-  if (navHost) mountGlobalNav(navHost);
+  if (navHost) {
+    mountGlobalNav(navHost);
+    // Sprint H5: mount theme toggle alongside SecondaryNav.
+    navHost.appendChild(ThemeToggle());
+  }
   // Sprint H4: procedural starfield as global background layer (z-index 0).
   if (document.body) mountStarfield(document.body);
 }

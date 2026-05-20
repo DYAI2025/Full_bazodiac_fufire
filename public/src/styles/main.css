@@ -2237,3 +2237,41 @@ body > #app {
   position: relative;
   z-index: 1;
 }
+
+/* ── Sprint H5 — Theme-Toggle ───────────────────────────────────────────── */
+.theme-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-left: auto;
+  border: 1px solid var(--bz-border-1, rgba(212,175,55,.15));
+  border-radius: 999px;
+}
+.theme-toggle__btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--bz-fg-3, rgba(255,255,255,.5));
+  font-size: 14px;
+  line-height: 1;
+  transition: background var(--bz-dur-fast, .2s), color var(--bz-dur-fast, .2s);
+}
+.theme-toggle__btn:hover { color: var(--bz-gold-light, #d4b483); }
+.theme-toggle__btn[data-active="true"] {
+  color: var(--bz-gold, #d4af37);
+  background: rgba(212,175,55,.12);
+}
+/* Position theme-toggle inline with SecondaryNav inside #global-nav-host */
+#global-nav-host {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+}
+#global-nav-host .secondary-nav { flex: 1; }
