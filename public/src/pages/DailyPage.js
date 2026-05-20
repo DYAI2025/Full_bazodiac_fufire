@@ -22,6 +22,38 @@ import { buildDailyCompanionViewModel } from '../domain/dailyCompanion.js';
 import { buildDailyLearnImpulse } from '../domain/meanings.js';
 import { DailyLearnImpulseCard } from '../components/DailyLearnImpulseCard.js';
 
+// ── State-Machine (Sprint J) ────────────────────────────────────────────────
+// /daily's data-flow is driven by two parallel fetches: getDailyExperience
+// (primary) and the two transit calls (auxiliary, render-enhancing).
+// Primary signal decides the state; transit failures degrade gracefully.
+//
+// Transitions:
+//   IDLE → LOADING   on mount, after shell template applied
+//   LOADING → READY  daily-experience ok + data has at least one of
+//                    { western, eastern, fusion }
+//   LOADING → EMPTY  daily-experience ok but data is structurally empty
+//                    → explicit fallback copy is rendered, no half-cards
+//   LOADING → ERROR  daily-experience returns ok:false OR fetch envelope
+//                    surfaces an error (request() wraps thrown fetches)
+//
+// Each state writes `data-state="<state>"` on the `.daily-page` root so
+// tests + CSS can react to the transition.
+export const STATE_IDLE    = 'idle';
+export const STATE_LOADING = 'loading';
+export const STATE_READY   = 'ready';
+export const STATE_EMPTY   = 'empty';
+export const STATE_ERROR   = 'error';
+
+const EMPTY_COPY =
+  'Tagespuls heute noch nicht verfügbar. Versuch es in einigen Minuten erneut.';
+const ERROR_COPY =
+  'Wir konnten den Tagespuls nicht laden. Deine Eingaben sind nicht verloren — versuche es erneut, sobald du wieder online bist.';
+
+function hasDailyContent(data) {
+  if (!data || typeof data !== 'object') return false;
+  return !!(data.western || data.eastern || data.fusion);
+}
+
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -179,6 +211,19 @@ export function DailyPage(app, { profile = null } = {}) {
   const content = app.querySelector('.daily-content');
   const errorEl = app.querySelector('.daily-error');
 
+  // Sprint J: explicit state-machine. Initial state is LOADING — birth-input
+  // gate below transitions to ERROR if missing; the fetch chain then transitions
+  // to READY/EMPTY/ERROR. setState writes data-state on the .daily-page root.
+  let currentState = STATE_IDLE;
+  function setState(next) {
+    currentState = next;
+    const root = app.querySelector('.daily-page');
+    if (root && typeof root.setAttribute === 'function') {
+      root.setAttribute('data-state', next);
+    }
+  }
+  setState(STATE_LOADING);
+
   let birthInput = null;
   try {
     const stored = sessionStorage.getItem('azodiac_birth_input');
@@ -186,6 +231,7 @@ export function DailyPage(app, { profile = null } = {}) {
   } catch { /* ignore */ }
 
   if (!birthInput) {
+    setState(STATE_ERROR);
     loading.hidden = true;
     errorEl.textContent = 'Kein Geburts-Datensatz gefunden. ';
     const link = document.createElement('a');
@@ -417,15 +463,34 @@ export function DailyPage(app, { profile = null } = {}) {
     app.querySelector('.daily-three-doors-mount').replaceWith(ThreeDoors());
   }
 
-  // Single fallback path — invoked from `!res.ok` and `.catch` branches alike.
+  // Sprint J: ERROR state — single fallback path with explicit user-framing.
   function mountFallbackWithError(message) {
+    setState(STATE_ERROR);
     loading.hidden = true;
     mountFallbackFocus();
     mountExperiment();
     mountCheckin();
     mountThreeDoors();
-    errorEl.textContent = message;
+    errorEl.textContent = message
+      ? `${ERROR_COPY} (${message})`
+      : ERROR_COPY;
     errorEl.hidden = false;
+  }
+
+  // Sprint J: EMPTY state — fetch resolved ok but no usable payload.
+  // Render the framing copy so users see "noch nicht verfügbar" not blank cards.
+  function mountEmptyFallback() {
+    setState(STATE_EMPTY);
+    loading.hidden = true;
+    const note = document.createElement('p');
+    note.className = 'daily-empty-note';
+    note.setAttribute('role', 'status');
+    note.textContent = EMPTY_COPY;
+    content.appendChild(note);
+    content.hidden = false;
+    // Checkin + threedoors still useful — user can mark today even without API.
+    mountCheckin();
+    mountThreeDoors();
   }
 
   getDailyExperience(birthInput).then((res) => {
@@ -435,6 +500,13 @@ export function DailyPage(app, { profile = null } = {}) {
       mountFallbackWithError(res.error || 'Tagespuls konnte nicht geladen werden — Fallback aktiv.');
       return;
     }
+
+    if (!hasDailyContent(res.data)) {
+      mountEmptyFallback();
+      return;
+    }
+
+    setState(STATE_READY);
 
     const data = res.data;
     // Iteration 1A: VM-Cards (WesternImpulseCard/BaziImpulseCard/FusionSynthesisCard)

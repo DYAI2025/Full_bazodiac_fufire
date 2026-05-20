@@ -188,6 +188,32 @@ test('EMPTY emits explicit fallback copy in DOM aggregate', async () => {
   }
 });
 
+// ── Test 9: data-state attribute is the single state-truth ───────────────────
+test('data-state attribute matches currentState after each transition', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = makeFetchMock({
+    '/api/azodiac/daily':    fetchResponse({ western: { summary: 's' } }),
+    '/transit/now':          fetchResponse({}),
+    '/transit/timeline':     fetchResponse({}),
+  });
+  try {
+    const app = freshApp();
+    DailyPage(app, { profile: lina });
+    // Synchronous: LOADING is the state immediately after birth-input gate.
+    assert.equal(pageState(app), STATE_LOADING, 'sync state = LOADING');
+    await flushMicrotasks();
+    // Async: READY because daily-experience returned content.
+    assert.equal(pageState(app), STATE_READY, 'post-fetch state = READY');
+    // The data-state attribute is the only state-truth — no parallel
+    // hidden flag. Setting attribute is idempotent (no duplicate writes).
+    const root = app.querySelector('.daily-page');
+    assert.equal(root.getAttribute('data-state'), STATE_READY,
+      'data-state attribute must equal currentState');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('ERROR emits explicit fallback copy in DOM aggregate', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = makeFetchMock({
