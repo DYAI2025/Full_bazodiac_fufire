@@ -417,17 +417,22 @@ export function DailyPage(app, { profile = null } = {}) {
     app.querySelector('.daily-three-doors-mount').replaceWith(ThreeDoors());
   }
 
+  // Single fallback path — invoked from `!res.ok` and `.catch` branches alike.
+  function mountFallbackWithError(message) {
+    loading.hidden = true;
+    mountFallbackFocus();
+    mountExperiment();
+    mountCheckin();
+    mountThreeDoors();
+    errorEl.textContent = message;
+    errorEl.hidden = false;
+  }
+
   getDailyExperience(birthInput).then((res) => {
     loading.hidden = true;
 
     if (!res.ok) {
-      // Fallback path: synthetic focus + experiment + checkin still shown
-      mountFallbackFocus();
-      mountExperiment();
-      mountCheckin();
-      mountThreeDoors();
-      errorEl.textContent = res.error || 'Tagespuls konnte nicht geladen werden — Fallback aktiv.';
-      errorEl.hidden = false;
+      mountFallbackWithError(res.error || 'Tagespuls konnte nicht geladen werden — Fallback aktiv.');
       return;
     }
 
@@ -461,12 +466,6 @@ export function DailyPage(app, { profile = null } = {}) {
     mountThreeDoors();
     app.querySelector('.daily-focus-mount').remove();
   }).catch((err) => {
-    loading.hidden = true;
-    mountFallbackFocus();
-    mountExperiment();
-    mountCheckin();
-    mountThreeDoors();
-    errorEl.textContent = `Fehler: ${err.message} — Fallback aktiv.`;
-    errorEl.hidden = false;
+    mountFallbackWithError(`Fehler: ${err.message} — Fallback aktiv.`);
   });
 }
