@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sprint H7 — visual-regression sweep across all 10 design-mockup routes.
+# Sprint H7 / I — visual-regression sweep across all design-mockup routes.
 #
 # Drives browser-harness (CDP-attached Chrome) over every primary route,
 # captures a viewport screenshot, saves to test/_fixtures/visual-baseline/.
@@ -15,7 +15,7 @@
 #   redirect.
 #
 # Usage:
-#   ./scripts/visual-regression.sh                          # all 10 routes
+#   ./scripts/visual-regression.sh                          # all 11 routes
 #   ./scripts/visual-regression.sh /bazi /western           # subset
 #
 # Output:
@@ -30,7 +30,7 @@ OUT_DIR="test/_fixtures/visual-baseline"
 mkdir -p "$OUT_DIR"
 
 # Routes per ROUTES manifest (public/src/data/routes.js).
-ALL_ROUTES=(/ /overview /bazi /western /wuxing /fusion /daily /synastry /method /transit-calendar)
+ALL_ROUTES=(/ /overview /bazi /western /wuxing /fusion /daily /synastry /houses /method /transit-calendar)
 
 # Subset support.
 ROUTES=("${@:-${ALL_ROUTES[@]}}")
