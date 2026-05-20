@@ -117,6 +117,7 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
 
   app.innerHTML = `
     <main class="western-page system-layer system-layer--west">
+      <div class="sig-bar-mount"></div>
       <nav class="page-nav">
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>
       </nav>

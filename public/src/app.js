@@ -13,6 +13,8 @@ import { BaziPage }            from './pages/BaziPage.js';
 import { WesternPage }         from './pages/WesternPage.js';
 import { WuxingPage }          from './pages/WuxingPage.js';
 import { ProfileMissingBanner } from './components/ProfileMissingBanner.js';
+import { PersistentSignatureBar } from './components/PersistentSignatureBar.js';
+import { buildExperienceProfile, buildCoreIdentity } from './domain/experienceCopy.js';
 
 // ── Session-Persistenz ────────────────────────────────────────────────────────
 // Berechnetes Profil bleibt in sessionStorage erhalten (Back-Navigation, Reload).
@@ -44,6 +46,24 @@ function mountWithProfile(pageFn, app, pageLabel) {
     profile: currentProfile,
     onNavigate: (path) => router.navigate(path),
   });
+  // Layout-Slot: Pages opt-in by emitting `<div class="sig-bar-mount"></div>`
+  // in their innerHTML template. If absent (e.g. debug or input-only pages),
+  // no bar is mounted — pages that already mount the bar themselves leave
+  // the slot in place and stay unaffected when this loop finds nothing extra.
+  const slot = app.querySelector?.('.sig-bar-mount');
+  if (slot && typeof slot.replaceWith === 'function') {
+    try {
+      const expProfile = buildExperienceProfile(currentProfile);
+      const identity   = buildCoreIdentity(expProfile);
+      slot.replaceWith(PersistentSignatureBar({
+        dayMaster: identity.dayMaster,
+        sun:       identity.sun,
+        coherence: expProfile?.fusion?.coherence,
+      }));
+    } catch {
+      // Bar is decorative — never block page render on a derivation failure.
+    }
+  }
 }
 
 router

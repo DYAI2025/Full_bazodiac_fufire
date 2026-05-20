@@ -111,6 +111,7 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
 
   app.innerHTML = `
     <main class="wuxing-page system-layer system-layer--fusion">
+      <div class="sig-bar-mount"></div>
       <nav class="page-nav">
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>
       </nav>

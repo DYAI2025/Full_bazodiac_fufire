@@ -86,6 +86,7 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
 
   app.innerHTML = `
     <main class="bazi-page system-layer system-layer--bazi">
+      <div class="sig-bar-mount"></div>
       <nav class="page-nav">
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>
       </nav>
