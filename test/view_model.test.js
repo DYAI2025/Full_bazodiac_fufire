@@ -258,21 +258,20 @@ test('normalizeAzodiacResult attaches remediation field to fusion', () => {
   assert.equal(vm.fusion.remediation.dominant, 'Feuer');
 });
 
-test('normalizeAzodiacResult: body without any longitude field is excluded from ViewModel', () => {
-  // Upstream sometimes sends bodies without any longitude/lon/degree field.
-  // The normalizer must exclude such bodies entirely from the ViewModel rather
-  // than silently carrying a longitude: 0 default.
+// ── Pro Birthchart: Normalizer RED test (fails before TASK-004 impl) ─────────
+
+test('normalizeAzodiacResult: body without longitude is skipped, NOT normalized to 0', () => {
   const vm = normalizeAzodiacResult({
     western: {
       bodies: {
-        Sun:  { longitude: 45.0, zodiac_sign: 1, house: 2, is_retrograde: false },
-        Moon: { zodiac_sign: 4, house: 4, is_retrograde: false }, // no longitude field
+        Sun: { longitude: 45.0, sign: 'Taurus' },
+        Moon: { sign: 'Virgo' }, // deliberately missing longitude
       },
     },
     bazi: null, fusion: null, _meta: {},
   });
-  const moonEntry = vm.western.bodies.Moon;
-  assert.equal(moonEntry, undefined,
-    `Body with missing longitude must be absent from ViewModel; got: ${JSON.stringify(moonEntry)}`,
-  );
+  // Moon was present in input but had no longitude → must be absent from output
+  // (skipped), NOT present with longitude: 0 (the forbidden fake-Aries fallback).
+  assert.ok(!('Moon' in vm.western.bodies) || vm.western.bodies.Moon.longitude !== 0,
+    'Body with missing longitude must not appear with longitude: 0 in ViewModel');
 });

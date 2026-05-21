@@ -99,25 +99,25 @@ export function installCaptureDom() {
         if (sel.startsWith('#')) return makeNode();  // ID lookups → fresh stub
         return makeNode();
       },
-      // querySelectorAll: supports single-token [attr] and [attr="val"] patterns only.
-      // Compound selectors like [data-x][data-y] or .foo[data-x] return [].
-      // This matches the needs of rolling-text tests; extend if other tests need more.
-      querySelectorAll(sel) {
-        // Handle bare attribute presence selectors like [data-roll-char].
-        const attrPresenceMatch = sel && /^\[([^\]=]+)\]$/.exec(sel);
-        if (attrPresenceMatch) {
-          const attrName = attrPresenceMatch[1];
-          // Recursive DFS over _children.
-          const found = [];
-          function walk(node) {
-            if (!node || typeof node !== 'object') return;
+      querySelectorAll(sel = '') {
+        // Support [attr] and [attr="val"] selectors by scanning _children depth-first.
+        const attrMatch = sel.match(/^\[([^\]=]+)(?:="([^"]*)")?\]$/);
+        if (attrMatch) {
+          const [, attrName, attrVal] = attrMatch;
+          const results = [];
+          (function scan(node) {
             for (const child of (node._children || [])) {
-              if (child._attrs && attrName in child._attrs) found.push(child);
-              walk(child);
+              if (child && child._attrs && attrName in child._attrs) {
+                if (attrVal === undefined || child._attrs[attrName] === attrVal) results.push(child);
+              }
+              if (child) scan(child);
             }
-          }
-          walk(this);
-          return found;
+          })(this);
+          return results;
+        }
+        if (sel.startsWith('.')) {
+          const c = this._mountByClass[sel.slice(1)];
+          return c ? [c] : [];
         }
         return [];
       },

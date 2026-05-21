@@ -93,3 +93,43 @@ test('overviewModel: gracefully tolerates empty profile', () => {
   assert.equal(m.chartWheel.houses.length, 0);
   assert.equal(m.warnings.length >= 1, true, 'must warn on empty profile');
 });
+
+// ── Pro Birthchart contract (RED tests — fail before TASK-003/005 impl) ──────
+
+test('chartWheel.bodies: key + labelDE + planet-glyph + signGlyph', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  assert.ok(chartWheel.bodies.length > 0, 'need bodies');
+  const moon = chartWheel.bodies.find((b) => b.key === 'Moon');
+  assert.ok(moon, 'Moon must be findable via b.key');
+  assert.equal(typeof moon.labelDE, 'string', 'labelDE must be string');
+  assert.ok(moon.labelDE.length > 0 && !moon.labelDE.includes('☽'),
+    'labelDE must be label only (no glyph embedded)');
+  assert.equal(moon.glyph, '☽',
+    `moon.glyph must be planet glyph ☽, got: ${moon.glyph}`);
+  assert.ok(moon.signGlyph,
+    'signGlyph must be present');
+  assert.match(moon.signGlyph, /^[♈♉♊♋♌♍♎♏♐♑♒♓]$/,
+    `signGlyph must be zodiac glyph, got: ${moon.signGlyph}`);
+});
+
+test('chartWheel.aspects: sourceKey + targetKey + tone', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  if (chartWheel.aspects.length === 0) return;
+  const a = chartWheel.aspects[0];
+  assert.equal(typeof a.sourceKey, 'string', 'sourceKey must be string');
+  assert.equal(typeof a.targetKey, 'string', 'targetKey must be string');
+  assert.ok(['hard', 'soft', 'neutral'].includes(a.tone),
+    `tone must be hard|soft|neutral, got: ${a.tone}`);
+});
+
+test('chartWheel.angles: has asc, dsc, mc, ic — dsc = asc+180', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  assert.ok(chartWheel.angles, 'chartWheel.angles must exist');
+  assert.equal(typeof chartWheel.angles.asc, 'number', 'angles.asc must be number');
+  assert.equal(typeof chartWheel.angles.dsc, 'number', 'angles.dsc must be number');
+  assert.equal(typeof chartWheel.angles.mc,  'number', 'angles.mc must be number');
+  assert.equal(typeof chartWheel.angles.ic,  'number', 'angles.ic must be number');
+  const expectedDsc = (chartWheel.angles.asc + 180) % 360;
+  assert.ok(Math.abs(chartWheel.angles.dsc - expectedDsc) < 0.01,
+    `dsc must be asc+180 mod 360: expected ${expectedDsc}, got ${chartWheel.angles.dsc}`);
+});

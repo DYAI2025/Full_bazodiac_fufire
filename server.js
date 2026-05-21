@@ -375,11 +375,9 @@ export function normalizeAzodiacResult(raw) {
   // Western
   const bodies = {};
   for (const [name, body] of Object.entries(w.bodies || w.planets || {})) {
-    const rawLonValue = body.longitude ?? body.lon ?? body.degree;
-    // Skip bodies where no longitude source is present at all; including them
-    // with a silent 0 default would misplace them at 0° Aries in the ViewModel.
-    if (rawLonValue == null) continue;
-    const bodyLon = Number(rawLonValue);
+    const rawLon = body.longitude ?? body.lon ?? body.degree;
+    const bodyLon = Number(rawLon);
+    if (!Number.isFinite(bodyLon)) continue; // skip bodies without valid longitude
     // FuFirE may return zodiac_sign as a string name or as an integer index;
     // prefer the explicit 'sign' field, fall back to zodiac_sign if it is already
     // a human-readable string, and lastly derive from longitude.
