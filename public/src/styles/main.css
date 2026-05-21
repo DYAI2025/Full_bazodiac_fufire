@@ -2375,6 +2375,29 @@ h1.page-title, h2.layer-title {
 }
 .method-endpoint__desc { margin: .35rem 0 0; font-size: .8rem; color: var(--muted); }
 
+/* ── NatalChartWheel aspect tone colors ─────────────────────────────────── */
+.natal-aspect--hard   { stroke: var(--bz-fire,    #C53030) !important; opacity: 0.45 !important; }
+.natal-aspect--soft   { stroke: var(--bz-emerald, #10B981) !important; opacity: 0.40 !important; }
+.natal-aspect--neutral { stroke: currentColor; opacity: 0.30 !important; }
+
+/* ── RollingText split-flap component ───────────────────────────────────── */
+.rolling-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+.rolling-text [data-roll-char] {
+  display: inline-block;
+  min-width: 0.55ch;
+  text-align: center;
+  transition: opacity 80ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rolling-text [data-roll-char] {
+    transition: none;
+    animation: none;
+  }
+}
+
 /* ════════════════════════════════════════════════════════════════════════
    SPRINT K — RESPONSIVE COVERAGE
    Single consolidated section. Each rule is scoped to one selector +
