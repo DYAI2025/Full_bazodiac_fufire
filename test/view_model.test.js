@@ -258,11 +258,10 @@ test('normalizeAzodiacResult attaches remediation field to fusion', () => {
   assert.equal(vm.fusion.remediation.dominant, 'Feuer');
 });
 
-test('normalizeAzodiacResult: body without longitude is skipped or has non-zero longitude', () => {
+test('normalizeAzodiacResult: body without any longitude field is excluded from ViewModel', () => {
   // Upstream sometimes sends bodies without any longitude/lon/degree field.
-  // The normalizer falls back to 0 when all three are absent; the test pins
-  // that behaviour: Moon must either be absent entirely OR, if present, must
-  // not silently carry longitude: 0 from a missing-field default.
+  // The normalizer must exclude such bodies entirely from the ViewModel rather
+  // than silently carrying a longitude: 0 default.
   const vm = normalizeAzodiacResult({
     western: {
       bodies: {
@@ -273,8 +272,7 @@ test('normalizeAzodiacResult: body without longitude is skipped or has non-zero 
     bazi: null, fusion: null, _meta: {},
   });
   const moonEntry = vm.western.bodies.Moon;
-  assert.ok(
-    moonEntry === undefined || moonEntry.longitude !== 0,
-    `Body with missing longitude must be absent or not at 0°; got: ${JSON.stringify(moonEntry)}`,
+  assert.equal(moonEntry, undefined,
+    `Body with missing longitude must be absent from ViewModel; got: ${JSON.stringify(moonEntry)}`,
   );
 });
