@@ -99,6 +99,9 @@ export function installCaptureDom() {
         if (sel.startsWith('#')) return makeNode();  // ID lookups → fresh stub
         return makeNode();
       },
+      // querySelectorAll: supports single-token [attr] and [attr="val"] patterns only.
+      // Compound selectors like [data-x][data-y] or .foo[data-x] return [].
+      // This matches the needs of rolling-text tests; extend if other tests need more.
       querySelectorAll() { return []; },
       get firstChild() { return this._children[0] || null; },
       contains() { return true; },
