@@ -118,3 +118,51 @@ test('NatalChartWheel: tolerates entirely empty wheel-model (post-empty-profile 
   const s = serializeFakeTree(root);
   assert.ok(s.includes('Widder'), 'sign ring is the static fallback');
 });
+
+// ── Pro-Wheel RED tests (fail before TASK-006 impl) ──────────────────────────
+
+const WHEEL_MODEL_V2 = {
+  bodies: [
+    { key: 'Sun',     name: 'Sun',     longitude: 353.15, glyph: '☉', signGlyph: '♓', signDE: 'Fische',    labelDE: 'Sonne' },
+    { key: 'Moon',    name: 'Moon',    longitude: 158.23, glyph: '☽', signGlyph: '♍', signDE: 'Jungfrau',  labelDE: 'Mond',    degreeDisplay: "8°14'" },
+    { key: 'Neptune', name: 'Neptune', longitude: 278.60, glyph: '♆', signGlyph: '♑', signDE: 'Steinbock', labelDE: 'Neptun' },
+  ],
+  asc: 27.71, mc: 280.66,
+  angles: { asc: 27.71, dsc: 207.71, mc: 280.66, ic: 100.66 },
+  houses: [
+    { number: 1, cuspLongitude: 27.71 },
+    { number: 4, cuspLongitude: 100.0 },
+    { number: 7, cuspLongitude: 207.71 },
+    { number: 10, cuspLongitude: 280.66 },
+  ],
+  aspects: [
+    { sourceKey: 'Sun',  targetKey: 'Moon',    source: 'Sun',  target: 'Moon',    type: 'square', tone: 'hard', orb: 4.92 },
+    { sourceKey: 'Moon', targetKey: 'Neptune', source: 'Moon', target: 'Neptune', type: 'trine',  tone: 'soft', orb: 0.42 },
+  ],
+};
+
+test('NatalChartWheel Pro: body emits data-body-glyph attribute', () => {
+  cap.reset();
+  const root = NatalChartWheel({ wheel: WHEEL_MODEL_V2 });
+  const s = serializeFakeTree(root);
+  assert.ok(s.includes('data-body-glyph="☽"'),
+    'Moon must render with data-body-glyph="☽"');
+});
+
+test('NatalChartWheel Pro: aspect line carries tone class natal-aspect--hard/soft', () => {
+  cap.reset();
+  const root = NatalChartWheel({ wheel: WHEEL_MODEL_V2 });
+  const s = serializeFakeTree(root);
+  assert.ok(
+    s.includes('natal-aspect--hard') || s.includes('natal-aspect--soft'),
+    'at least one aspect must carry a tone class'
+  );
+});
+
+test('NatalChartWheel Pro: DSC and IC markers when angles.dsc/ic provided', () => {
+  cap.reset();
+  const root = NatalChartWheel({ wheel: WHEEL_MODEL_V2 });
+  const s = serializeFakeTree(root);
+  assert.ok(s.includes('data-marker="dsc"'), 'DSC marker must be present');
+  assert.ok(s.includes('data-marker="ic"'),  'IC marker must be present');
+});
