@@ -102,7 +102,25 @@ export function installCaptureDom() {
       // querySelectorAll: supports single-token [attr] and [attr="val"] patterns only.
       // Compound selectors like [data-x][data-y] or .foo[data-x] return [].
       // This matches the needs of rolling-text tests; extend if other tests need more.
-      querySelectorAll() { return []; },
+      querySelectorAll(sel) {
+        // Handle bare attribute presence selectors like [data-roll-char].
+        const attrPresenceMatch = sel && /^\[([^\]=]+)\]$/.exec(sel);
+        if (attrPresenceMatch) {
+          const attrName = attrPresenceMatch[1];
+          // Recursive DFS over _children.
+          const found = [];
+          function walk(node) {
+            if (!node || typeof node !== 'object') return;
+            for (const child of (node._children || [])) {
+              if (child._attrs && attrName in child._attrs) found.push(child);
+              walk(child);
+            }
+          }
+          walk(this);
+          return found;
+        }
+        return [];
+      },
       get firstChild() { return this._children[0] || null; },
       contains() { return true; },
       focus() {},

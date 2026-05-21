@@ -5,9 +5,43 @@
 
 const DEFAULT_POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ·0123456789';
 
+const SCRAMBLE_DURATION_MS = 380;
+
 function prefersReducedMotion() {
   if (typeof matchMedia !== 'function') return false;
   try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
+}
+
+function scheduleScramble(el, charPool) {
+  if (typeof requestAnimationFrame !== 'function') return;
+  const perf = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+    ? performance
+    : { now: () => Date.now() };
+
+  const spans = el.querySelectorAll('[data-roll-char]');
+  for (const span of spans) {
+    const finalChar = span.dataset?.rollFinal;
+    if (finalChar === undefined) continue;
+    const delay = Number(span.dataset?.rollDelay) || 0;
+    const startTime = perf.now();
+
+    function tick(ts) {
+      const elapsed = ts - startTime;
+      if (elapsed < delay) {
+        span.textContent = charPool[Math.floor(Math.random() * charPool.length)];
+        requestAnimationFrame(tick);
+        return;
+      }
+      const progress = (elapsed - delay) / SCRAMBLE_DURATION_MS;
+      if (progress < 1) {
+        span.textContent = charPool[Math.floor(Math.random() * charPool.length)];
+        requestAnimationFrame(tick);
+      } else {
+        span.textContent = finalChar === ' ' ? ' ' : finalChar;
+      }
+    }
+    requestAnimationFrame(tick);
+  }
 }
 
 export function RollingText({
@@ -46,12 +80,15 @@ export function RollingText({
     el.appendChild(span);
   }
 
+  if (!reduced) scheduleScramble(el, charPool);
+
   return el;
 }
 
 export function decorateRollingText(root, {
   selector = '[data-roll-text]',
   maxChars = 90,
+  charPool = DEFAULT_POOL,
 } = {}) {
   const nodes = root.querySelectorAll(selector);
   for (const node of nodes) {
@@ -76,5 +113,6 @@ export function decorateRollingText(root, {
       }
       node.appendChild(span);
     }
+    if (!reduced) scheduleScramble(node, charPool);
   }
 }
