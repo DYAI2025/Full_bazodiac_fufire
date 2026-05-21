@@ -160,34 +160,82 @@ export function NatalChartWheel({ wheel }) {
     }, 'MC'));
   }
 
-  // Aspect lines (major only). Render BEFORE body dots so dots overlay.
+  // DSC + IC markers from angles sub-object (Pro contract).
+  const angles = w.angles || {};
+  if (typeof angles.dsc === 'number') {
+    const p = lonToXY(angles.dsc, R_OUTER + 14);
+    root.appendChild(el('text', {
+      x: p.x, y: p.y,
+      'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
+      'data-marker': 'dsc',
+    }, 'DSC'));
+  }
+  if (typeof angles.ic === 'number') {
+    const p = lonToXY(angles.ic, R_OUTER + 14);
+    root.appendChild(el('text', {
+      x: p.x, y: p.y,
+      'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
+      'data-marker': 'ic',
+    }, 'IC'));
+  }
+
+  // Aspect lines (major only). Prefer sourceKey/targetKey; fall back to source/target.
   if (Array.isArray(w.aspects)) {
     for (const asp of w.aspects) {
       if (!MAJOR_ASPECTS.has(asp.type)) continue;
-      const src = w.bodies.find((b) => b.name === asp.source);
-      const tgt = w.bodies.find((b) => b.name === asp.target);
+      const srcKey = asp.sourceKey ?? asp.source;
+      const tgtKey = asp.targetKey ?? asp.target;
+      const src = w.bodies.find((b) => (b.key ?? b.name) === srcKey);
+      const tgt = w.bodies.find((b) => (b.key ?? b.name) === tgtKey);
       if (!src || !tgt) continue;
       if (typeof src.longitude !== 'number' || typeof tgt.longitude !== 'number') continue;
       const a = lonToXY(src.longitude, R_ASPECT);
       const b = lonToXY(tgt.longitude, R_ASPECT);
+      const tone = asp.tone ?? 'neutral';
       root.appendChild(el('line', {
         x1: a.x, y1: a.y, x2: b.x, y2: b.y,
         stroke: 'currentColor', 'stroke-width': 0.5, opacity: 0.35,
         'data-aspect': asp.type,
+        class: `natal-aspect natal-aspect--${tone}`,
       }));
     }
   }
 
-  // Bodies as dots.
+  // Bodies: dot + planet glyph (Pro) or fallback dot-only (legacy model).
   if (Array.isArray(w.bodies)) {
     for (const b of w.bodies) {
       if (typeof b.longitude !== 'number') continue;
+      const bodyKey = b.key ?? b.name;
       const pos = lonToXY(b.longitude, R_BODY);
       root.appendChild(el('circle', {
         cx: pos.x, cy: pos.y, r: 4,
         fill: 'currentColor',
-        'data-body': b.name,
+        'data-body': bodyKey,
       }));
+      // Planet glyph (Pro contract: b.glyph is planet glyph).
+      if (b.glyph) {
+        const glyphPos = lonToXY(b.longitude, R_BODY + 14);
+        root.appendChild(el('text', {
+          x: glyphPos.x, y: glyphPos.y,
+          'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          'font-size': 11, fill: 'currentColor',
+          'data-body-glyph': b.glyph,
+          'data-body-for': bodyKey,
+        }, b.glyph));
+      }
+      // Degree label.
+      if (b.degreeDisplay) {
+        const degPos = lonToXY(b.longitude, R_BODY + 26);
+        root.appendChild(el('text', {
+          x: degPos.x, y: degPos.y,
+          'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          'font-size': 8, fill: 'currentColor', opacity: 0.7,
+          'data-body-degree': b.degreeDisplay,
+          'data-body-for': bodyKey,
+        }, b.degreeDisplay));
+      }
     }
   }
 
