@@ -58,18 +58,26 @@ function setStateOn(app, next) {
   }
 }
 
+// Truthy-empty-object guard: upstream can return `{}` for a sub-section
+// when the calculation succeeded but produced no rows. `data.western = {}`
+// satisfies a bare truthy check but carries no usable content. Tighten to
+// "non-empty object" — Object.keys length > 0 rejects the empty case.
+function hasContentSection(section) {
+  return !!(section && typeof section === 'object' && Object.keys(section).length > 0);
+}
+
 function hasSynastryContent(data, expectPersonB) {
   if (!data || typeof data !== 'object') return false;
   // Full A+B mode requires both personA and personB to carry something.
   if (expectPersonB) {
     const a = data.personA;
     const b = data.personB;
-    const aHas = !!(a && (a.western || a.bazi || a.fusion));
-    const bHas = !!(b && (b.western || b.bazi || b.fusion));
+    const aHas = !!(a && (hasContentSection(a.western) || hasContentSection(a.bazi) || hasContentSection(a.fusion)));
+    const bHas = !!(b && (hasContentSection(b.western) || hasContentSection(b.bazi) || hasContentSection(b.fusion)));
     return aHas && bHas;
   }
   // Solo mode: calculateProfile returns the profile directly.
-  return !!(data.western || data.bazi || data.fusion);
+  return hasContentSection(data.western) || hasContentSection(data.bazi) || hasContentSection(data.fusion);
 }
 
 function mountFallback(app, copy) {
@@ -80,8 +88,22 @@ function mountFallback(app, copy) {
   }
 }
 
-// Module-level testable async path. Tests call this directly with synthetic
-// inputs; the click handler also calls it with form-derived inputs.
+/**
+ * Module-level testable async path. Tests call this directly with synthetic
+ * inputs; the click handler also calls it with form-derived inputs.
+ *
+ * Side-effects: writes data-state attribute on .synastry-page root via
+ * setStateOn; on non-READY terminal states, mounts fallback copy via
+ * mountFallback into .synastry-error.
+ *
+ * @param {Element} app - mounted app element containing .synastry-page
+ * @param {{inputA: object, inputB: object | null}} args
+ * @returns {Promise<{
+ *   state: 'ready' | 'empty' | 'error',
+ *   data?: object,
+ *   error?: string
+ * }>}
+ */
 export async function runSynastryCalculation(app, { inputA, inputB } = {}) {
   setStateOn(app, STATE_LOADING);
   try {
@@ -225,7 +247,11 @@ export function SynastryPage(app) {
   dateB.addEventListener('input', validate);
 
   calcBtn.addEventListener('click', async () => {
+    // Sprint-L-followup I2: hide stale result panel from a previous click so
+    // a second click that ends in ERROR/EMPTY doesn't render the new error
+    // copy above the prior success result. Matches errorEl-reset symmetry.
     errorEl.hidden = true;
+    resultEl.hidden = true;
     calcBtn.disabled = true;
 
     const inputA = {

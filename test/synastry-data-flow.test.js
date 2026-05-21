@@ -171,6 +171,36 @@ test('EMPTY state emits explicit fallback copy in DOM aggregate', async () => {
   }
 });
 
+// ── Test 9b (Sprint-L-followup I1): LOADING is observed mid-flight ──────────
+// Original tests only assert terminal state after `await ...` returns. By
+// then LOADING has already been overwritten. Spy on setAttribute so the
+// transition sequence is captured and asserted in order.
+test('runSynastryCalculation: LOADING is written before the terminal state', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = mockFetch({
+    '/api/azodiac/synastry': fetchResponse({
+      personA: { western: { bodies: { Sun: { sign: 'Pisces' } } } },
+      personB: { western: { bodies: { Sun: { sign: 'Aries'  } } } },
+    }),
+  });
+  try {
+    const app = freshApp();
+    SynastryPage(app);
+    const root = app.querySelector('.synastry-page');
+    const observed = [];
+    const origSetAttribute = root.setAttribute.bind(root);
+    root.setAttribute = (k, v) => {
+      if (k === 'data-state') observed.push(v);
+      origSetAttribute(k, v);
+    };
+    await runSynastryCalculation(app, { inputA: INPUT_A, inputB: INPUT_B });
+    assert.deepEqual(observed, [STATE_LOADING, STATE_READY],
+      `expected LOADING then READY, got ${JSON.stringify(observed)}`);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 // ── Test 9: data-state attribute is the single state-truth ───────────────────
 test('data-state attribute matches currentState after each transition', async () => {
   const originalFetch = globalThis.fetch;
