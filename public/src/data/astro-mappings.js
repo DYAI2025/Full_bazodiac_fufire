@@ -14,6 +14,19 @@ export const SIGN_GLYPH = {
   Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
 };
 
+// Variant API body-name spellings → canonical key.
+// Wire this into enrichWesternBodies so "North Node" (space-separated) is
+// treated the same as "NorthNode" (camelCase canonical).
+export const BODY_KEY_ALIASES = {
+  'North Node':        'NorthNode',
+  'NorthNode':         'NorthNode',
+  'True North Node':   'TrueNorthNode',
+  'TrueNorthNode':     'TrueNorthNode',
+  'Mean Node':         'NorthNode',
+  'True Node':         'TrueNorthNode',
+  'Black Moon Lilith': 'Lilith',
+};
+
 // Planet/body name → DE label + glyph (combined display string)
 export const PLANET_DE = {
   Sun:           'Sonne ☉',
