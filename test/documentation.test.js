@@ -167,3 +167,33 @@ test('README.md documents correct synastry response structure', () => {
     'README should document element_tension field'
   );
 });
+
+test('README.md documents the profile endpoint', () => {
+  const readme = readFileSync('./README.md', 'utf-8');
+
+  assert.match(readme, /\/api\/azodiac\/profile/, 'README should document the profile endpoint path');
+  assert.match(readme, /upstream_status/, 'README should document upstream_status in profile _meta');
+});
+
+test('README.md documents the daily endpoint', () => {
+  const readme = readFileSync('./README.md', 'utf-8');
+
+  assert.match(readme, /\/api\/azodiac\/daily/, 'README should document the daily endpoint path');
+  assert.match(readme, /bootstrap_profile/, 'README should document bootstrap_profile in daily _meta');
+  assert.match(readme, /target_date/, 'README should document the optional target_date field');
+});
+
+test('README.md documents the geocode endpoint', () => {
+  const readme = readFileSync('./README.md', 'utf-8');
+
+  assert.match(readme, /\/api\/geocode/, 'README should document the geocode endpoint path');
+  assert.match(readme, /q=/, 'README should document the q query parameter');
+});
+
+test('README.md endpoint catalog covers all primary endpoints', () => {
+  const readme = readFileSync('./README.md', 'utf-8');
+
+  for (const path of ['/health', '/api/config', '/api/azodiac/profile', '/api/azodiac/fusion', '/api/azodiac/synastry', '/api/azodiac/daily', '/api/geocode']) {
+    assert.match(readme, new RegExp(path.replace(/\//g, '\\/')), `README should list ${path} in endpoint catalog`);
+  }
+});

@@ -7,24 +7,93 @@ Railway-deployable FuFirE dashboard. The app serves a live browser UI and a smal
 - `server.js` starts an HTTP service on `PORT` (Railway injects this variable) and serves files from `public/`.
 - `public/index.html` is the live dashboard. It builds a JSON request, sends it to the local proxy, and visualizes real JSON responses from FuFirE.
 - `public/reference.html` keeps the original FuFirE calculation reference available as documentation.
-- v3-compatible explicit endpoints are exposed directly: `POST /chart`, `POST /calculate/western`, `POST /calculate/bazi`, `POST /calculate/fusion`, `POST /calculate/wuxing`, and `GET /info/wuxing`.
-- `/api/fufire/:endpoint` remains as a compatibility proxy for the same allowlisted upstream endpoints.
-- `/health` returns a no-cache JSON health check with the active upstream base URL and endpoint catalog.
 
-## FuFirE endpoint surface
+## Endpoint catalog
 
-| Method | Local endpoint | Upstream path | Purpose |
-| --- | --- | --- | --- |
-| `POST` | `/chart` | `/chart` | Full combined chart. |
-| `POST` | `/calculate/western` | `/calculate/western` | Western astrology calculation. |
-| `POST` | `/calculate/bazi` | `/calculate/bazi` | BaZi four pillars calculation. |
-| `POST` | `/calculate/fusion` | `/calculate/fusion` | WuXing fusion calculation. |
-| `POST` | `/calculate/wuxing` | `/calculate/wuxing` | WuXing vector from planet positions. |
-| `GET` | `/info/wuxing` | `/info/wuxing` | Planet-to-element reference. |
-
-The same endpoints are also available under `/api/fufire/...` for backward-compatible same-origin proxy calls.
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Service health + upstream config + endpoint catalog |
+| `GET` | `/api/config` | Config introspection (upstream URL, API key presence) |
+| `POST` | `/api/azodiac/profile` | Full birth profile: western + BaZi + fusion + WuXing + TST (parallel) |
+| `POST` | `/api/azodiac/fusion` | WuXing fusion for a single chart |
+| `POST` | `/api/azodiac/synastry` | Synastry analysis for two charts |
+| `POST` | `/api/azodiac/daily` | Daily experience (sequential: bootstrap → daily) |
+| `GET` | `/api/geocode?q=…` | Place search via Nominatim + timezone from timeapi.io |
+| `*` | `/api/fufire/:endpoint` | Compatibility proxy (allowlisted upstream endpoints) |
+| `POST` | `/chart` | Full combined chart (legacy shortcut, proxied server-side) |
 
 ## API endpoints
+
+### Profile endpoint
+
+**Path:** `POST /api/azodiac/profile`
+
+Full birth profile: western astrology, BaZi four pillars, WuXing fusion, and optional TST (Ten-Star Theory) — all fetched in parallel.
+
+**Request format:**
+```json
+{
+  "date": "1990-01-01",
+  "time": "12:00",
+  "tz": "Europe/Berlin",
+  "lat": 52.52,
+  "lon": 13.405
+}
+```
+
+Alternative field names are supported: `datetime`/`date`, `timezone`/`tz`, `latitude`/`lat`, `longitude`/`lon`.
+
+**Response format:**
+```json
+{
+  "western": {
+    "bodies": { "Sun": { "longitude": 280.5, "sign": "Capricorn", "house": 4 } },
+    "houses": [{ "number": 1, "sign": "Libra", "cusp": 198.3 }],
+    "aspects": [{ "body1": "Sun", "body2": "Moon", "type": "sextile", "orb": 1.2 }],
+    "ascendant": "Libra",
+    "angles": { "asc": 198.3, "mc": 108.1 }
+  },
+  "bazi": {
+    "pillars": {
+      "year":  { "stem": "庚", "branch": "午", "element": "Metall" },
+      "month": { "stem": "丁", "branch": "丑", "element": "Feuer" },
+      "day":   { "stem": "甲", "branch": "子", "element": "Holz" },
+      "hour":  { "stem": "壬", "branch": "午", "element": "Wasser" }
+    },
+    "day_master": { "element": "Holz", "strength": "weak" }
+  },
+  "fusion": {
+    "wu_xing_vectors": {
+      "western_planets": { "Holz": 0.2, "Feuer": 0.3, "Erde": 0.15, "Metall": 0.2, "Wasser": 0.15 },
+      "bazi_pillars":    { "Holz": 0.25, "Feuer": 0.25, "Erde": 0.15, "Metall": 0.2, "Wasser": 0.15 },
+      "fusion":          { "Holz": 0.225, "Feuer": 0.275, "Erde": 0.15, "Metall": 0.2, "Wasser": 0.15 }
+    },
+    "coherence_index": 0.73,
+    "fusion_interpretation": "Harmonische Balance der Elemente...",
+    "remediation": {
+      "distribution": { "Holz": 0.225, "Feuer": 0.275, "Erde": 0.15, "Metall": 0.2, "Wasser": 0.15 },
+      "dominant": null,
+      "deficient": null,
+      "actions": [],
+      "summary": "Deine Element-Signatur ist ausgewogen."
+    }
+  },
+  "_meta": {
+    "view_model_version": "2",
+    "fetched_at": "2025-01-15T10:30:00.000Z",
+    "endpoint": "/api/azodiac/profile",
+    "input": { "date": "1990-01-01T12:00:00", "tz": "Europe/Berlin", "lat": 52.52, "lon": 13.405 },
+    "upstream_status": {
+      "western": 200,
+      "bazi": 200,
+      "fusion": 200,
+      "wuxing": 200,
+      "tst": "n/a",
+      "wuxing_info": 200
+    }
+  }
+}
+```
 
 ### Fusion endpoint
 
@@ -92,7 +161,7 @@ Alternative field names are also supported:
   },
   "_meta": {
     "view_model_version": "2",
-    "fetched_at": "2024-01-15T10:30:00.000Z",
+    "fetched_at": "2025-01-15T10:30:00.000Z",
     "endpoint": "/api/azodiac/fusion",
     "input": {
       "date": "1990-01-01T12:00:00",
@@ -172,7 +241,7 @@ curl -X POST "http://127.0.0.1:3000/api/azodiac/synastry?includeFusion=false" \
     },
     "_meta": {
       "view_model_version": "2",
-      "fetched_at": "2024-01-15T10:30:00.000Z",
+      "fetched_at": "2025-01-15T10:30:00.000Z",
       "input": { ... }
     }
   },
@@ -200,9 +269,61 @@ curl -X POST "http://127.0.0.1:3000/api/azodiac/synastry?includeFusion=false" \
       "fusion_a": 200,
       "fusion_b": 200
     },
-    "computed_at": "2024-01-15T10:30:00.000Z"
+    "computed_at": "2025-01-15T10:30:00.000Z"
   }
 }
+```
+
+### Daily endpoint
+
+**Path:** `POST /api/azodiac/daily`
+
+Sequential two-step aggregator: calls `experience/bootstrap` first (derives soulprint sectors from the birth chart), then calls `experience/daily` with today's date and the bootstrap result.
+
+**Request format:**
+```json
+{
+  "date": "1990-01-01",
+  "time": "12:00",
+  "tz": "Europe/Berlin",
+  "lat": 52.52,
+  "lon": 13.405
+}
+```
+
+Optional field: `target_date` (ISO date string, e.g. `"2025-06-15"`) — defaults to today.
+
+**Response format:**
+```json
+{
+  "date": "2025-01-15",
+  "western": { ... },
+  "eastern": { ... },
+  "fusion":  { ... },
+  "_meta": {
+    "bootstrap_profile": { ... },
+    "computed_at": "2025-01-15T10:30:00.000Z"
+  }
+}
+```
+
+### Geocode endpoint
+
+**Path:** `GET /api/geocode?q=Berlin`
+
+Place search backed by Nominatim (OpenStreetMap) with timezone lookup via timeapi.io. Results cached 24 h in-memory (max 200 entries). Rate-limited to 10 requests/minute per IP.
+
+**Response format:**
+```json
+[
+  {
+    "display": "Berlin, Deutschland",
+    "lat": 52.5170365,
+    "lon": 13.3888599,
+    "tz": "Europe/Berlin",
+    "type": "city"
+  }
+]
 ```
 
 ### Error responses
@@ -262,6 +383,8 @@ Optional:
 
 ```bash
 API_TIMEOUT_MS=20000
+FUFIRE_API_KEY=
+FUFIRE_ALLOWED_ORIGINS=https://yourapp.example.com
 ```
 
 ## Local development
@@ -279,34 +402,12 @@ npm test
 curl -fsS http://127.0.0.1:3000/health
 ```
 
-## Deployment
+Run a single test file:
 
-Railway/Railpack now detects this repository as a Node.js app because `package.json` exists and contains a `start` script. `railway.json` pins the deploy start command to `npm start` and configures `/health` as the health check. The deployed service keeps the v3 public FuFirE surface while adding v4 operational hardening: explicit allowlist, method checks, request-size guard, timeout/abort handling, health/config introspection, and static-file path safety.
-
-## Root cause analysis: Railpack failure
-
-Error excerpt:
-
-```text
-⚠ Script start.sh not found
-✖ Railpack could not determine how to build the app.
-The app contents that Railpack analyzed contains:
-./
-├── FuFirE-Reference.html
-└── README.md
+```bash
+node --test test/view_model.test.js
 ```
 
-### 5 WHY
+## Deployment
 
-1. **Why did Railway fail?** Railpack could not determine a supported app type or build plan.
-2. **Why could Railpack not determine a build plan?** The repository only contained `FuFirE-Reference.html` and `README.md`, so there was no language manifest such as `package.json`, no static-site config, and no executable start command.
-3. **Why did it mention `start.sh`?** A start command or inferred process expected a shell entrypoint named `start.sh`, but that file did not exist in the uploaded snapshot.
-4. **Why was there no deployable entrypoint?** The repository was a reference document, not a runnable web application. It described FuFirE endpoints but did not include a server, proxy, health check, or deploy metadata.
-5. **Why did this block real results?** A static reference file cannot safely call the FuFirE backend from Railway with a controlled base URL, timeout, error reporting, health check, or same-origin browser path.
-
-## Thesis check and final fix thesis
-
-- **Thesis 1:** The failure is primarily a missing Railway/Railpack entrypoint problem. Adding a supported manifest and start command should make the app deployable.
-- **Counter-thesis 2:** Even if deployment starts, the result is incomplete if the page remains a static reference and never calls `FUFIRE_BASE_URL`; deployability alone does not produce or visualize real FuFirE results.
-- **Overlapping truth:** The repository needs both a detectable runtime contract and a real runtime integration path to the FuFirE API.
-- **Final thesis 3:** Convert the reference-only repository into a minimal Node.js web service: `package.json` + `server.js` + Railway config for deployability, preserve the v3 explicit FuFirE endpoints (`/chart`, `/calculate/*`, `/info/wuxing`), and harden them with the v4 runtime contract so Railway can deploy, health-check, proxy to `https://bafe-production.up.railway.app/`, and visualize returned calculation JSON.
+Railway/Railpack detects this as a Node.js app via `package.json`. `railway.json` pins the start command to `npm start` and configures `/health` as the health check path.
