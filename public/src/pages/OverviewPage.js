@@ -1,6 +1,7 @@
 import { generateCoreStatement }    from '../domain/coreStatement.js';
 import { profileToOverviewModel }   from '../domain/overviewModel.js';
 import { NatalChartWheel }          from '../components/NatalChartWheel.js';
+import { decorateRollingText }      from '../components/RollingText.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
 import { ExplainableCard }       from '../components/ExplainableCard.js';
 import { WuXingEducationGrid }   from '../components/WuXingEducationGrid.js';
@@ -429,14 +430,14 @@ export function OverviewPage(app, { profile, onNavigate }) {
       <section class="natal-wheel-section" aria-label="Geburtsrad">
         <header class="layer-header layer-header--west">
           <span class="layer-header__glyph">☉</span>
-          <span class="layer-header__title">Geburtsrad</span>
+          <span class="layer-header__title" data-roll-text>Geburtsrad</span>
           <span class="layer-header__sub">Tierkreis · Häuser · Aszendent · Planeten</span>
         </header>
         <div class="natal-wheel-mount"></div>
         <ul class="natal-wheel-warnings" aria-live="polite"></ul>
       </section>
       <section class="bazi-section" aria-label="BaZi Vier Säulen">
-        <h2>BaZi — Vier Säulen</h2>
+        <h2 data-roll-text>BaZi — Vier Säulen</h2>
         <p class="section-intro">Klick auf eine Säule öffnet die Erklärung: Säulenrolle, Stamm, Zweig/Tier, Element, Ressource, Schatten, Praxisimpuls.</p>
         <div class="bazi-explainable-grid"></div>
         <div class="bazi-pillars-wrapper"></div>
@@ -669,4 +670,7 @@ export function OverviewPage(app, { profile, onNavigate }) {
   });
 
   app.querySelector('.new-calc-btn').addEventListener('click', () => onNavigate?.('/'));
+
+  // RollingText: decorate selected short headings marked with data-roll-text.
+  decorateRollingText(app, { selector: '[data-roll-text]', maxChars: 30 });
 }

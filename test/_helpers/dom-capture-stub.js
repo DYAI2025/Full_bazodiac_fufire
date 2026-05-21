@@ -99,7 +99,28 @@ export function installCaptureDom() {
         if (sel.startsWith('#')) return makeNode();  // ID lookups → fresh stub
         return makeNode();
       },
-      querySelectorAll() { return []; },
+      querySelectorAll(sel = '') {
+        // Support [attr] and [attr="val"] selectors by scanning _children depth-first.
+        const attrMatch = sel.match(/^\[([^\]=]+)(?:="([^"]*)")?\]$/);
+        if (attrMatch) {
+          const [, attrName, attrVal] = attrMatch;
+          const results = [];
+          (function scan(node) {
+            for (const child of (node._children || [])) {
+              if (child && child._attrs && attrName in child._attrs) {
+                if (attrVal === undefined || child._attrs[attrName] === attrVal) results.push(child);
+              }
+              if (child) scan(child);
+            }
+          })(this);
+          return results;
+        }
+        if (sel.startsWith('.')) {
+          const c = this._mountByClass[sel.slice(1)];
+          return c ? [c] : [];
+        }
+        return [];
+      },
       get firstChild() { return this._children[0] || null; },
       contains() { return true; },
       focus() {},

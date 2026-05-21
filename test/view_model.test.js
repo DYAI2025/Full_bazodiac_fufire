@@ -257,3 +257,21 @@ test('normalizeAzodiacResult attaches remediation field to fusion', () => {
   assert.ok(vm.fusion.remediation);
   assert.equal(vm.fusion.remediation.dominant, 'Feuer');
 });
+
+// ── Pro Birthchart: Normalizer RED test (fails before TASK-004 impl) ─────────
+
+test('normalizeAzodiacResult: body without longitude is skipped, NOT normalized to 0', () => {
+  const vm = normalizeAzodiacResult({
+    western: {
+      bodies: {
+        Sun: { longitude: 45.0, sign: 'Taurus' },
+        Moon: { sign: 'Virgo' }, // deliberately missing longitude
+      },
+    },
+    bazi: null, fusion: null, _meta: {},
+  });
+  // Moon was present in input but had no longitude → must be absent from output
+  // (skipped), NOT present with longitude: 0 (the forbidden fake-Aries fallback).
+  assert.ok(!('Moon' in vm.western.bodies) || vm.western.bodies.Moon.longitude !== 0,
+    'Body with missing longitude must not appear with longitude: 0 in ViewModel');
+});
