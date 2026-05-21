@@ -257,3 +257,24 @@ test('normalizeAzodiacResult attaches remediation field to fusion', () => {
   assert.ok(vm.fusion.remediation);
   assert.equal(vm.fusion.remediation.dominant, 'Feuer');
 });
+
+test('normalizeAzodiacResult: body without longitude is skipped or has non-zero longitude', () => {
+  // Upstream sometimes sends bodies without any longitude/lon/degree field.
+  // The normalizer falls back to 0 when all three are absent; the test pins
+  // that behaviour: Moon must either be absent entirely OR, if present, must
+  // not silently carry longitude: 0 from a missing-field default.
+  const vm = normalizeAzodiacResult({
+    western: {
+      bodies: {
+        Sun:  { longitude: 45.0, zodiac_sign: 1, house: 2, is_retrograde: false },
+        Moon: { zodiac_sign: 4, house: 4, is_retrograde: false }, // no longitude field
+      },
+    },
+    bazi: null, fusion: null, _meta: {},
+  });
+  const moonEntry = vm.western.bodies.Moon;
+  assert.ok(
+    moonEntry === undefined || moonEntry.longitude !== 0,
+    `Body with missing longitude must be absent or not at 0°; got: ${JSON.stringify(moonEntry)}`,
+  );
+});
