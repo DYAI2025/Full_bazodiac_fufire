@@ -17,7 +17,7 @@
 // mapping. We compute it frontend-side via Placidus-style cusp lookup
 // (matches `western.house_quality.system: "placidus"` from upstream).
 
-import { signToElement, SIGN_DE, SIGN_GLYPH, PLANET_DE } from '../data/astro-mappings.js';
+import { signToElement, SIGN_DE, SIGN_GLYPH, PLANET_DE, BODY_KEY_ALIASES } from '../data/astro-mappings.js';
 import { WESTERN_SIGN_MEANINGS } from './meanings.js';
 
 // ── formatDegMinutes ────────────────────────────────────────────────────────
@@ -120,7 +120,8 @@ export function enrichWesternBodies(rawWestern) {
   if (!bodies || typeof bodies !== 'object') return {};
   const cusps = rawWestern.houses || {};
   const out = {};
-  for (const [bodyKey, raw] of Object.entries(bodies)) {
+  for (const [rawKey, raw] of Object.entries(bodies)) {
+    const bodyKey = BODY_KEY_ALIASES[rawKey] ?? rawKey;  // normalize variant spellings
     const enriched = enrichBody(bodyKey, raw, cusps);
     if (enriched) out[bodyKey] = enriched;
   }

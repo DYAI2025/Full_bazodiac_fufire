@@ -211,3 +211,22 @@ test('enrichWesternBodies: passes noFakeDataGuard on rendered aggregate strings 
     );
   }
 });
+
+// ── BODY_KEY_ALIASES wiring ──────────────────────────────────────────────────
+
+test('enrichWesternBodies: normalizes variant body key spellings via BODY_KEY_ALIASES', () => {
+  // API sometimes returns "North Node" (space, not camelCase).
+  const raw = {
+    bodies: {
+      'North Node': { longitude: 45.0, sign: 'Taurus', retrograde: false },
+      Sun:          { longitude: 10.0, sign: 'Aries',  retrograde: false },
+    },
+    houses: {},
+  };
+  const result = enrichWesternBodies(raw);
+  // "North Node" must be normalized to "NorthNode" (canonical key).
+  assert.ok('NorthNode' in result,
+    `Expected canonical key "NorthNode" in result, got keys: ${Object.keys(result).join(', ')}`);
+  assert.ok(!('North Node' in result),
+    'Variant key "North Node" must not persist — must be normalized');
+});
