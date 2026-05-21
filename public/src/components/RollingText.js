@@ -53,6 +53,7 @@ export function RollingText({
   perChar = 34,
   charPool = DEFAULT_POOL,
 } = {}) {
+  if (typeof document === 'undefined') return null;  // SSR / no-DOM guard
   const el = document.createElement(tagName);
   el.classList.add('rolling-text');
   if (className) {
@@ -89,6 +90,7 @@ export function decorateRollingText(root, {
   maxChars = 90,
   charPool = DEFAULT_POOL,
 } = {}) {
+  if (typeof document === 'undefined') return;  // SSR / no-DOM guard
   const nodes = root.querySelectorAll(selector);
   for (const node of nodes) {
     const originalText = (node.textContent || '').trim();

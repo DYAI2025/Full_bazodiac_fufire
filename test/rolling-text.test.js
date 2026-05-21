@@ -133,3 +133,16 @@ test('RollingText: chars settle to data-roll-final value when RAF ticks complete
     delete global.performance;
   }
 });
+
+// ── Test 11: graceful null return when document absent ───────────────────────
+test('RollingText: returns null gracefully when document is not available', () => {
+  const savedDoc = global.document;
+  delete global.document;
+  try {
+    const result = RollingText({ text: 'Test', tagName: 'span' });
+    assert.equal(result, null,
+      'Must return null when document is absent (SSR / no-DOM context)');
+  } finally {
+    global.document = savedDoc;
+  }
+});
