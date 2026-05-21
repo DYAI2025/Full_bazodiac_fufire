@@ -14,6 +14,37 @@ export const SIGN_GLYPH = {
   Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
 };
 
+// Planet/body name → Unicode glyph (planet only — separate from sign glyphs).
+export const PLANET_GLYPH = {
+  Sun:           '☉',
+  Moon:          '☽',
+  Mercury:       '☿',
+  Venus:         '♀',
+  Mars:          '♂',
+  Jupiter:       '♃',
+  Saturn:        '♄',
+  Uranus:        '♅',
+  Neptune:       '♆',
+  Pluto:         '♇',
+  Chiron:        '⚷',
+  Lilith:        '⚸',
+  NorthNode:     '☊',
+  TrueNorthNode: '☊',
+  Ascendant:     '↑',
+  MC:            '⊥',
+};
+
+// Variant API body-name spellings → canonical key.
+export const BODY_KEY_ALIASES = {
+  'North Node':       'NorthNode',
+  'NorthNode':        'NorthNode',
+  'True North Node':  'TrueNorthNode',
+  'TrueNorthNode':    'TrueNorthNode',
+  'Mean Node':        'NorthNode',
+  'True Node':        'TrueNorthNode',
+  'Black Moon Lilith':'Lilith',
+};
+
 // Planet/body name → DE label + glyph (combined display string)
 export const PLANET_DE = {
   Sun:           'Sonne ☉',

@@ -14,9 +14,25 @@
 import { enrichWesternBodies } from './westernBodyEnrichment.js';
 import { selectSalientAspects } from './aspectEnrichment.js';
 import { enrichWuxing } from './wuxingEnrichment.js';
+import {
+  PLANET_GLYPH, SIGN_GLYPH, PLANET_DE_CLEAN, ASPECT_DE,
+} from '../data/astro-mappings.js';
 
 function num(x) {
   return typeof x === 'number' && Number.isFinite(x) ? x : null;
+}
+
+const HARD_ASPECTS  = new Set(['square', 'opposition', 'semi-square', 'sesquiquadrate']);
+const SOFT_ASPECTS  = new Set(['trine', 'sextile', 'semi-sextile']);
+
+function aspectTone(type) {
+  if (HARD_ASPECTS.has(type))  return 'hard';
+  if (SOFT_ASPECTS.has(type))  return 'soft';
+  return 'neutral';
+}
+
+function normalizeLon(deg) {
+  return ((deg % 360) + 360) % 360;
 }
 
 // ── chartWheel sub-builder ──────────────────────────────────────────────────
@@ -24,16 +40,27 @@ function num(x) {
 // to array with normalized fields the wheel expects.
 function buildChartWheel(rawWestern) {
   const enrichedBodies = enrichWesternBodies(rawWestern || {});
-  const bodies = Object.entries(enrichedBodies).map(([key, b]) => ({
-    name:       key,
-    longitude:  b.longitude,
-    signDE:     b.signDE,
-    glyph:      b.glyph,
-    retrograde: b.retrograde,
+  const bodies = Object.entries(enrichedBodies).map(([bodyKey, b]) => ({
+    // New contract fields
+    key:          bodyKey,
+    labelDE:      PLANET_DE_CLEAN[bodyKey] ?? bodyKey,
+    glyph:        PLANET_GLYPH[bodyKey] ?? null,
+    signGlyph:    (b.sign && SIGN_GLYPH[b.sign]) ?? null,
+    degreeDisplay: b.degDisplay ?? null,
+    house:        b.house ?? null,
+    // Backcompat fields (existing tests use b.name)
+    name:         bodyKey,
+    longitude:    b.longitude,
+    signDE:       b.signDE,
+    retrograde:   b.retrograde,
   })).filter((b) => typeof b.longitude === 'number');
 
-  const asc = num(rawWestern?.angles?.Ascendant);
-  const mc  = num(rawWestern?.angles?.MC);
+  const ascLon = num(rawWestern?.angles?.Ascendant);
+  const mcLon  = num(rawWestern?.angles?.MC);
+
+  // Derive DSC and IC from ASC and MC.
+  const dscLon = ascLon != null ? normalizeLon(ascLon + 180) : null;
+  const icLon  = mcLon  != null ? normalizeLon(mcLon  + 180) : null;
 
   // Houses: raw shape is `{ "1": { longitude, sign }, ... }`. Normalize.
   const rawHouses = rawWestern?.houses || {};
@@ -46,16 +73,31 @@ function buildChartWheel(rawWestern) {
     .filter((h) => Number.isFinite(h.number) && typeof h.cuspLongitude === 'number')
     .sort((a, b) => a.number - b.number);
 
-  // Aspects: raw uses planet1/planet2; normalize to source/target.
+  // Aspects: raw uses planet1/planet2; normalize to source/target + new contract.
   const enrichedAspects = selectSalientAspects(rawWestern?.aspects || [], 12);
   const aspects = enrichedAspects.map((a) => ({
-    source: a.planet1,
-    target: a.planet2,
-    type:   a.type,
-    orb:    a.orb,
+    // New contract fields
+    sourceKey:    a.planet1,
+    targetKey:    a.planet2,
+    typeDE:       ASPECT_DE[a.type] ?? a.type,
+    tone:         aspectTone(a.type),
+    // Backcompat fields (existing tests use a.source/a.target)
+    source:       a.planet1,
+    target:       a.planet2,
+    type:         a.type,
+    orb:          a.orb,
   }));
 
-  return { bodies, asc, mc, houses, aspects };
+  return {
+    bodies,
+    // New angles sub-object
+    angles:  { asc: ascLon, dsc: dscLon, mc: mcLon, ic: icLon },
+    // Backcompat top-level (existing tests check chartWheel.asc/mc directly)
+    asc:     ascLon,
+    mc:      mcLon,
+    houses,
+    aspects,
+  };
 }
 
 // ── topFacts sub-builder ────────────────────────────────────────────────────
