@@ -118,3 +118,14 @@ test('NatalChartWheel: tolerates entirely empty wheel-model (post-empty-profile 
   const s = serializeFakeTree(root);
   assert.ok(s.includes('Widder'), 'sign ring is the static fallback');
 });
+
+test('NatalChartWheel: house lines match provided cusps only — no equal-house fallback', () => {
+  cap.reset();
+  const root = NatalChartWheel({ wheel: WHEEL_MODEL });
+  const s = serializeFakeTree(root);
+  // WHEEL_MODEL provides exactly 4 cusps (houses 1,4,7,10).
+  // If the wheel falls back to equal-house it would produce 12 lines.
+  const houseLineMatches = [...s.matchAll(/data-house="/g)];
+  assert.equal(houseLineMatches.length, 4,
+    `Expected 4 house lines (one per provided cusp), got ${houseLineMatches.length}`);
+});
