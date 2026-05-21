@@ -14,9 +14,8 @@ function prefersReducedMotion() {
 
 function scheduleScramble(el, charPool) {
   if (typeof requestAnimationFrame !== 'function') return;
-  const perf = (typeof performance !== 'undefined' && typeof performance.now === 'function')
-    ? performance
-    : { now: () => Date.now() };
+  if (typeof performance === 'undefined' || typeof performance.now !== 'function') return;
+  const perf = performance;
 
   const spans = el.querySelectorAll('[data-roll-char]');
   for (const span of spans) {
