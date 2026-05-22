@@ -41,18 +41,26 @@ Result: 4/4 pass, 5.5s.
 
 ### Parallel subagent gate
 
-- **Tester (Playwright/screenshot integrity):** _pending_
-- **Reviewer (code review):** _pending_
-- **Acceptance reviewer (superpowers:code-reviewer):** _pending_
+- **Tester (Playwright/screenshot integrity):** **GREEN.** 4/4 Playwright pass, no silent skip (fallback screenshots `overview-no-hero.png` absent), screenshots in window. 749 tests / 737 pass / 0 fail / 12 skipped.
+- **Reviewer (code review):** **GREEN.** No Critical/Major. 3 nits documented (todayLever placeholder, carries fallback degraded-state, signatureHero hyphen on multi-word stems) — tracked for OV-I2/OV-I3.
+- **Acceptance reviewer (1st pass):** **RED.** Critical: lowercase raw `vm.elementEconomy` keys leaked via CSS `text-transform: capitalize`; original regression test was a false negative; `elementSummary` built but never wired.
+- **Acceptance reviewer (2nd pass after fix b6eaa0e):** **GREEN.** REQ-F-OV-001, REQ-F-OV-003, REQ-F-OV-004, REQ-D-003 all PASS.
 
 ### Findings & fixes
 
-_(populated after gate completes)_
+| # | Sev | Finding | Fix commit |
+|---|---|---|---|
+| 1 | Critical | `OverviewPage.renderElementEconomy` iterated `vm.elementEconomy` and emitted lowercase keys → CSS capitalized them to banned labels (Distribution / Dominant / Deficient / Plan / Properties / TodayLever) | `b6eaa0e` — replaced with `vm.elementSummary` (sentence + dt/dd + lever + /wuxing CTA, all German UI strings) |
+| 2 | Critical | Regression test in `page-render-integration.test.js` was a false negative (whole-word capitalized only) | `b6eaa0e` — added `>\s*key\s*<` exact-text-content rejection for all six lowercase raw keys; whole-word capitalized check kept for `Distribution / Deficient / TodayLever` |
+| 3 | Critical | `elementSummary` built but never wired into the page | `b6eaa0e` — wired |
+| 4 | Nit | `meaningBridge.todayLever.body` is a hardcoded constant identical per profile | tracked for OV-I2 |
+| 5 | Nit | `meaningBridge.carries` fallback ignores partial Sun-or-DM availability | tracked for OV-I2 |
+| 6 | Nit | `signatureHero.essence` hyphen on multi-word stems ("Yang Holz-Kern") | tracked for OV-I2 |
 
 ### Verdict
 
-_(GREEN / RED — populated after fixes)_
+**GREEN.** No Critical/Major outstanding. Nits scheduled for OV-I2.
 
 ### Push
 
-_(pending verdict)_
+`git push -u origin feat/overview-signature-experience` — pending execution.
