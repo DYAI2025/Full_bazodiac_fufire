@@ -36,11 +36,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm start',
+    command: `PORT=${PORT} npm start`,
     url: BASE_URL,
     reuseExistingServer: true,
     timeout: 30_000,
     stdout: 'pipe',
     stderr: 'pipe',
+    env: { PORT: String(PORT) },
   },
 });

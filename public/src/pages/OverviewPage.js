@@ -16,6 +16,8 @@ import { ScoreBandCard }         from '../components/ScoreBandCard.js';
 import { CoherenceLensCard }     from '../components/CoherenceLensCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
 import { ThreeDoors }            from '../components/ThreeDoors.js';
+import { SectionHeader }         from '../components/SectionHeader.js';
+import { LuxuryCard }            from '../components/LuxuryCard.js';
 import {
   buildFusionSignatureTitle,
   buildDominantTension,
@@ -634,6 +636,19 @@ export function OverviewPage(app, { profile, onNavigate }) {
   // Westliche Häuser (Top 3 nach Planetenaktivierung aufgeklappt)
   const housesPlaceholder = app.querySelector('.western-houses-placeholder');
   housesPlaceholder.replaceWith(renderWesternHouses(profile, computeTopHouses(profile, 3)));
+
+  // I1 pilot: SectionHeader + LuxuryCard for Technische Basis
+  const sigSection = app.querySelector('.signature-cards-section');
+  if (sigSection) {
+    const oldH2 = sigSection.querySelector('h2');
+    if (oldH2) oldH2.replaceWith(SectionHeader({ eyebrow: 'Signatur', headline: 'Technische Basis', anchor: 'technische-basis', lane: 'west' }));
+    const cardsGrid = sigSection.querySelector('.cards-grid');
+    if (cardsGrid) {
+      const card = LuxuryCard({ lane: 'west' });
+      cardsGrid.replaceWith(card);
+      card.body.appendChild(cardsGrid);
+    }
+  }
 
   // Technische Basis (Signatur-Karten)
   const grid = app.querySelector('.cards-grid');

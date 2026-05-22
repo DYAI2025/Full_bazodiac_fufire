@@ -71,6 +71,8 @@ function extractClassSelectors(css) {
 // they live inside template-literal innerHTML strings or are CSS-only.
 const ALLOW_KNOWN_TEMPLATE = new Set([
   // Add here if any selector is provably-used-via-innerHTML-template.
+  // BEM modifiers set via dynamic template strings (not literal className =):
+  'luxury-card--hero',  // LuxuryCard.js: `'luxury-card' + (variant ? \` luxury-card--${variant}\` : '')`
 ]);
 
 test('Sprint-K @media selectors all exist as className assignments in public/src/', () => {

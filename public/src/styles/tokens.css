@@ -110,6 +110,9 @@
   --bz-space-7:       48px;
   --bz-space-8:       64px;
   --bz-space-section: 80px;
+  --bz-space-sm:      0.5rem;    /* 8px — tight gaps */
+  --bz-space-md:      1rem;      /* 16px — standard gaps */
+  --bz-space-lg:      2rem;      /* 32px — section gaps */
 
   /* ── RADII ────────────────────────────────────────────────────────── */
   --bz-radius-sm:     4px;      /* stele cards (BaZi pillars) */
