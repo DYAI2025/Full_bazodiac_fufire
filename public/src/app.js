@@ -48,9 +48,10 @@ function mountWithProfile(pageFn, app, pageLabel) {
       pageLabel,
       onOpenInput: () => router.navigate('/'),
     }));
-    return;
+    return null;
   }
-  pageFn(app, {
+  // I7: capture page cleanup so router can invoke it on next navigation.
+  const cleanup = pageFn(app, {
     profile: currentProfile,
     onNavigate: (path) => router.navigate(path),
   });
@@ -76,6 +77,7 @@ function mountWithProfile(pageFn, app, pageLabel) {
       }
     }
   }
+  return typeof cleanup === 'function' ? cleanup : null;
 }
 
 router
@@ -89,15 +91,15 @@ router
     });
   })
   .register('/overview', (app) => mountWithProfile(OverviewPage, app, 'deine Signatur'))
-  .register('/love', (app) => mountWithProfile(LovePage, app, 'die Beziehungs-Ansicht'))
+  .register('/love',           (app) => mountWithProfile(LovePage,        app, 'die Beziehungs-Ansicht'))
   .register('/career-finance', (app) => mountWithProfile(CareerFinancePage, app, 'Arbeit & Ressourcen'))
-  .register('/personality', (app) => mountWithProfile(PersonalityPage, app, 'die Persönlichkeits-Schichten'))
-  .register('/dashboard', (app) => mountWithProfile(DashboardPage, app, 'das Dashboard'))
-  .register('/fusion', (app) => mountWithProfile(FusionPage, app, 'die Fusion-Synthese'))
-  .register('/bazi',    (app) => mountWithProfile(BaziPage,    app, 'deine vier Säulen'))
-  .register('/western', (app) => mountWithProfile(WesternPage, app, 'die westliche Karte'))
-  .register('/wuxing',  (app) => mountWithProfile(WuxingPage,  app, 'deine Element-Ökonomie'))
-  .register('/houses',  (app) => mountWithProfile(HousesPage,  app, 'deine 12 Häuser'))
+  .register('/personality',    (app) => mountWithProfile(PersonalityPage, app, 'die Persönlichkeits-Schichten'))
+  .register('/dashboard',      (app) => mountWithProfile(DashboardPage,   app, 'das Dashboard'))
+  .register('/fusion',         (app) => mountWithProfile(FusionPage,      app, 'die Fusion-Synthese'))
+  .register('/bazi',           (app) => mountWithProfile(BaziPage,        app, 'deine vier Säulen'))
+  .register('/western',        (app) => mountWithProfile(WesternPage,     app, 'die westliche Karte'))
+  .register('/wuxing',         (app) => mountWithProfile(WuxingPage,      app, 'deine Element-Ökonomie'))
+  .register('/houses',         (app) => mountWithProfile(HousesPage,      app, 'deine 12 Häuser'))
   .register('/method',  (app) => MethodPage(app, { profile: currentProfile }))
   .register('/daily', (app) => {
     // Daily zeigt eigenes Onboarding bei fehlendem Profil — kein zusätzlicher Banner.

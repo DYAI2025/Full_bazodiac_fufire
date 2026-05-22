@@ -158,7 +158,7 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  wireHeroRolling(app);
+  const heroCleanup = wireHeroRolling(app);
 
   // ── Cores: Sun, Moon, Asc, MC ──────────────────────────────────────────
   const coreGrid = app.querySelector('.western-cores-grid');
@@ -188,4 +188,6 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
   // ── Navigation ──────────────────────────────────────────────────────────
   app.querySelector('.nav-houses')?.addEventListener('click', () => onNavigate?.('/overview'));
   app.querySelector('.nav-fusion')?.addEventListener('click', () => onNavigate?.('/fusion'));
+
+  return heroCleanup;
 }

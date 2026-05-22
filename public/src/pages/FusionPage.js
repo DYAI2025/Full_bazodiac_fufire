@@ -270,5 +270,5 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
     });
   }
 
-  wireHeroRolling(app);
+  return wireHeroRolling(app);
 }

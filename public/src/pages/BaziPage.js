@@ -126,7 +126,7 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  wireHeroRolling(app);
+  const heroCleanup = wireHeroRolling(app);
 
   // ── Day Master tile ──────────────────────────────────────────────────────
   const dmMount = app.querySelector('.bazi-dm-mount');
@@ -180,4 +180,6 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
   // ── Navigation ───────────────────────────────────────────────────────────
   app.querySelector('.nav-wuxing')?.addEventListener('click', () => onNavigate?.('/fusion'));
   app.querySelector('.nav-fusion')?.addEventListener('click', () => onNavigate?.('/fusion'));
+
+  return heroCleanup;
 }

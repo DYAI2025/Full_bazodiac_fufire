@@ -196,7 +196,7 @@ export function DailyPage(app, { profile = null } = {}) {
     </main>
   `;
 
-  wireHeroRolling(app);
+  const heroCleanup = wireHeroRolling(app);
 
   if (expProfile) {
     app.querySelector('.sig-bar-mount').replaceWith(
@@ -543,4 +543,6 @@ export function DailyPage(app, { profile = null } = {}) {
   }).catch((err) => {
     mountFallbackWithError(`Fehler: ${err.message} — Fallback aktiv.`);
   });
+
+  return heroCleanup;
 }
