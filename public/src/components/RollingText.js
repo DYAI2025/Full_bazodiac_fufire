@@ -95,6 +95,12 @@ export function RollingText({
     const startedAt = now();
 
     function tick(t) {
+      // I6-fix: self-cancel when element is detached from DOM (router unmount).
+      if (el.isConnected === false) {
+        rafId = 0;
+        el.classList.remove('rolling-text--rolling');
+        return;
+      }
       let allDone = true;
       for (const entry of charSpans) {
         if (entry.done) continue;
@@ -192,6 +198,12 @@ export function decorateRollingText(root, {
       const startedAt = now();
 
       function tick(t) {
+        // I6-fix: self-cancel when element is detached from DOM (router unmount).
+        if (node.isConnected === false) {
+          rafId = 0;
+          node.classList.remove('rolling-text--rolling');
+          return;
+        }
         let allDone = true;
         for (const entry of charSpans) {
           if (entry.done) continue;
