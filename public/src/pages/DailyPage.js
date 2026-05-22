@@ -112,9 +112,9 @@ export function DailyPage(app, { profile = null } = {}) {
   app.innerHTML = `
     <main class="daily-page">
       <div class="sig-bar-mount"></div>
-      <header class="daily-header">
+      <header class="daily-header" data-section="hero">
         <a href="#/" class="daily-back-link">← Zurück</a>
-        <h1 class="daily-title">Tagespuls</h1>
+        <h1 class="daily-title bz-h1" data-page-title>Tagespuls</h1>
         <p class="daily-date">${today}</p>
       </header>
       <p class="trust-microcopy" role="note">Der Tagespuls ist kein Urteil. Er ist ein Beobachtungsrahmen für 24 Stunden.</p>
@@ -196,11 +196,12 @@ export function DailyPage(app, { profile = null } = {}) {
     </main>
   `;
 
-  // I2: wire hero title as RollingText.
+  // I2 + I6: wire hero title as RollingText with bz-h1 design-token class.
   const dailyH1 = app.querySelector('.daily-title');
   if (dailyH1) {
-    const heroRoll = RollingText({ text: 'Tagespuls', tagName: 'h1', className: 'daily-title' });
+    const heroRoll = RollingText({ text: 'Tagespuls', tagName: 'h1', className: 'daily-title bz-h1' });
     heroRoll.setAttribute('data-rolling-text', 'hero');
+    heroRoll.setAttribute('data-page-title', '');
     dailyH1.replaceWith(heroRoll);
     if (typeof requestAnimationFrame === 'function') {
       requestAnimationFrame(() => heroRoll.startRolling());

@@ -19,6 +19,7 @@ import { enrichWesternAspects }            from '../domain/aspectEnrichment.js';
 import { signFromLongitude }               from '../data/astro-mappings.js';
 import { ExplainableCard }                 from '../components/ExplainableCard.js';
 import { UnavailableCard }                 from '../components/UnavailableCard.js';
+import { RollingText }                     from '../components/RollingText.js';
 
 const CORE_ROLE_LABEL = {
   Sun:       'Sonne · Identität',
@@ -122,9 +123,9 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>
       </nav>
 
-      <header class="page-head">
+      <header class="page-head" data-section="hero">
         <p class="page-eyebrow">Westliche Astrologie</p>
-        <h1 class="page-title">Faktoren, Zeichen, Häuser</h1>
+        <h1 class="page-title bz-h1" data-page-title>Faktoren, Zeichen, Häuser</h1>
         <p class="page-intro">
           Ein westliches Geburtshoroskop ordnet jedem Planeten ein Zeichen und ein Haus zu.
           <strong>Planet</strong> = was zieht (Funktion). <strong>Zeichen</strong> = wie es sich zeigt (Stil).
@@ -132,21 +133,21 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
         </p>
       </header>
 
-      <section class="western-cores" aria-label="Kernfaktoren">
+      <section class="western-cores" aria-label="Kernfaktoren" data-section="cores">
         <p class="layer-eyebrow">Kernkarten</p>
-        <h2 class="layer-title">Sonne, Mond, Aszendent, MC</h2>
+        <h2 class="layer-title bz-h2">Sonne, Mond, Aszendent, MC</h2>
         <div class="western-cores-grid"></div>
       </section>
 
-      <section class="western-planets" aria-label="Weitere Planeten">
+      <section class="western-planets" aria-label="Weitere Planeten" data-section="planets">
         <p class="layer-eyebrow">Weitere Faktoren</p>
-        <h2 class="layer-title">Wie sie ergänzen</h2>
+        <h2 class="layer-title bz-h2">Wie sie ergänzen</h2>
         <div class="western-planets-grid"></div>
       </section>
 
-      <section class="western-activations" aria-label="Aktivierungen">
+      <section class="western-activations" aria-label="Aktivierungen" data-section="activations">
         <p class="layer-eyebrow">Lese-Schlüssel · Aktivierungen</p>
-        <h2 class="layer-title">Drei sprechende Bewegungen</h2>
+        <h2 class="layer-title bz-h2">Drei sprechende Bewegungen</h2>
         <div class="western-activations-list"></div>
       </section>
 
@@ -156,6 +157,20 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
       </footer>
     </main>
   `;
+
+  // I6: wire hero title as RollingText.
+  const westH1 = app.querySelector('[data-page-title]');
+  if (westH1) {
+    const heroRoll = RollingText({ text: 'Faktoren, Zeichen, Häuser', tagName: 'h1', className: 'page-title bz-h1' });
+    heroRoll.setAttribute('data-rolling-text', 'hero');
+    heroRoll.setAttribute('data-page-title', '');
+    westH1.replaceWith(heroRoll);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => heroRoll.startRolling?.());
+    } else {
+      heroRoll.startRolling?.();
+    }
+  }
 
   // ── Cores: Sun, Moon, Asc, MC ──────────────────────────────────────────
   const coreGrid = app.querySelector('.western-cores-grid');

@@ -139,8 +139,8 @@ export function SynastryPage(app) {
         <a href="#/overview" class="nav-link">← Übersicht</a>
       </nav>
 
-      <header class="page-header">
-        <h1>Synastrie</h1>
+      <header class="page-header" data-section="hero">
+        <h1 class="bz-h1">Synastrie</h1>
         <p class="page-subtitle">Zwei Energien im Vergleich</p>
       </header>
 

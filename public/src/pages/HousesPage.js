@@ -9,6 +9,7 @@ import { computeBodyHouse } from '../domain/westernBodyEnrichment.js';
 import { HOUSE_MEANINGS } from '../domain/meanings.js';
 import { SIGN_DE } from '../data/astro-mappings.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
+import { RollingText } from '../components/RollingText.js';
 
 function bodiesPerHouse(bodies, houseCusps) {
   const out = Array.from({ length: 13 }, () => []);
@@ -74,9 +75,9 @@ export function HousesPage(app, { profile, onNavigate } = {}) {
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>
       </nav>
 
-      <header class="page-head">
+      <header class="page-head" data-section="hero">
         <p class="page-eyebrow">Häuser · Lebensbereiche</p>
-        <h1 class="page-title">Wo deine Energien wirken</h1>
+        <h1 class="page-title bz-h1" data-page-title>Wo deine Energien wirken</h1>
         <p class="page-intro">
           Die 12 Häuser eines Geburtshoroskops sind keine Schubladen, sondern Bühnen.
           Jedes Haus ist ein Lebensbereich — der erste das Selbst, der zehnte das Werk,
@@ -85,7 +86,7 @@ export function HousesPage(app, { profile, onNavigate } = {}) {
         </p>
       </header>
 
-      <section class="houses-grid-section" aria-label="12 Häuser">
+      <section class="houses-grid-section" aria-label="12 Häuser" data-section="content">
         <div class="houses-grid"></div>
       </section>
 
@@ -95,6 +96,20 @@ export function HousesPage(app, { profile, onNavigate } = {}) {
       </footer>
     </main>
   `;
+
+  // I6: wire hero title as RollingText for visual consistency across subpages.
+  const houseH1 = app.querySelector('[data-page-title]');
+  if (houseH1) {
+    const heroRoll = RollingText({ text: 'Wo deine Energien wirken', tagName: 'h1', className: 'page-title bz-h1' });
+    heroRoll.setAttribute('data-rolling-text', 'hero');
+    heroRoll.setAttribute('data-page-title', '');
+    houseH1.replaceWith(heroRoll);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => heroRoll.startRolling?.());
+    } else {
+      heroRoll.startRolling?.();
+    }
+  }
 
   const grid = app.querySelector('.houses-grid');
   if (!houses) {

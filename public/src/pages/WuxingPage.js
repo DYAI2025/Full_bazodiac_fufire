@@ -14,6 +14,7 @@
 import { enrichWuxing } from '../domain/wuxingEnrichment.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
 import { WuxingRadar } from '../components/WuxingRadar.js';
+import { RollingText } from '../components/RollingText.js';
 
 function elementBar(entry) {
   const row = document.createElement('article');
@@ -117,9 +118,9 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>
       </nav>
 
-      <header class="page-head">
+      <header class="page-head" data-section="hero">
         <p class="page-eyebrow">Wu-Xing · Element-Ökonomie</p>
-        <h1 class="page-title">Was zirkuliert, was staut</h1>
+        <h1 class="page-title bz-h1" data-page-title>Was zirkuliert, was staut</h1>
         <p class="page-intro">
           Wu-Xing zeigt fünf Bewegungsformen — Holz wächst, Feuer strahlt, Erde sammelt,
           Metall klärt, Wasser fließt. Die Prozente sind <strong>Intensitäten im System</strong>,
@@ -128,23 +129,23 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
         </p>
       </header>
 
-      <section class="wuxing-distribution" aria-label="Element-Verteilung">
+      <section class="wuxing-distribution" aria-label="Element-Verteilung" data-section="distribution">
         <p class="layer-eyebrow">Verteilung</p>
-        <h2 class="layer-title wuxing-headline"></h2>
+        <h2 class="layer-title bz-h2 wuxing-headline"></h2>
         <div class="wuxing-radar-mount"></div>
         <div class="wuxing-bars"></div>
         <p class="wuxing-today-lever"></p>
       </section>
 
-      <section class="wuxing-properties" aria-label="Element-Eigenschaften">
+      <section class="wuxing-properties" aria-label="Element-Eigenschaften" data-section="properties">
         <p class="layer-eyebrow">Fünf Bewegungsformen</p>
-        <h2 class="layer-title">Was jedes Element trägt</h2>
+        <h2 class="layer-title bz-h2">Was jedes Element trägt</h2>
         <div class="wuxing-prop-grid"></div>
       </section>
 
-      <section class="wuxing-plan" aria-label="Drei-Stufen-Plan">
+      <section class="wuxing-plan" aria-label="Drei-Stufen-Plan" data-section="plan">
         <p class="layer-eyebrow">Drei-Stufen-Plan</p>
-        <h2 class="layer-title">Heute · diese Woche · 30 Tage</h2>
+        <h2 class="layer-title bz-h2">Heute · diese Woche · 30 Tage</h2>
         <div class="wuxing-plan-grid"></div>
       </section>
 
@@ -154,6 +155,20 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
       </footer>
     </main>
   `;
+
+  // I6: wire hero title as RollingText.
+  const wuxH1 = app.querySelector('[data-page-title]');
+  if (wuxH1) {
+    const heroRoll = RollingText({ text: 'Was zirkuliert, was staut', tagName: 'h1', className: 'page-title bz-h1' });
+    heroRoll.setAttribute('data-rolling-text', 'hero');
+    heroRoll.setAttribute('data-page-title', '');
+    wuxH1.replaceWith(heroRoll);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => heroRoll.startRolling?.());
+    } else {
+      heroRoll.startRolling?.();
+    }
+  }
 
   // Empty state: no fusion section at all
   if (!vm || vm.distribution.length === 0) {
