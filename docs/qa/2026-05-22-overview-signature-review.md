@@ -182,4 +182,103 @@ Playwright `test/e2e/overview-hero.spec.js`: 4/4 pass.
 
 ### Push
 
+`feat/overview-signature-experience` → pushed (`6b2130a..20d3e2c`).
+
+---
+
+## Iteration OV-I4 — TopMovements + AuditTabs + GuidedDeepDive + final gate
+
+**Sprintziel.** Die Overview wird leichter konsumierbar. Detaildaten bleiben vorhanden, aber in Top-3, Tabs und Accordions organisiert.
+
+### Commits
+
+| SHA | Task | Title |
+|---|---|---|
+| `bd5eaa3` | OV-I4-T10 | feat(overview): TopMovements with default top-3 and details accordion |
+| `3f17fe0` | OV-I4-T11 | feat(overview): NatalChartAuditTabs full Top3/Planets/Houses/Aspects |
+| `2cfa7dc` | OV-I4-T12 | feat(overview): GuidedDeepDive 4 intent-driven CTAs |
+| `d05475e` | e2e+model | test(overview): OV-I4 e2e specs + viewmodel topMovements pass-through |
+| `c242e4e` | screenshots | docs(qa): final 7 OV gate screenshots |
+| `8988a59` | final-fix | fix(e2e): i3-wheel selector — li[data-audit-row], attached not visible |
+
+### Tests
+
+| Metric | Before OV-I4 | After OV-I4 + fix | Delta |
+|---|---|---|---|
+| tests | 764 | 781 | +17 |
+| pass | 752 | 769 | +17 |
+| fail | 0 | 0 | — |
+| skipped | 12 | 12 | — |
+
+Playwright full suite: **56/56 pass**.
+
+### Final 7 Pflicht-Screenshots (`docs/qa/screenshots/overview-signature/`)
+
+- `overview-desktop.png` (285 KB)
+- `overview-mobile.png` (254 KB)
+- `wheel-closeup.png` (35 KB)
+- `wheel-hover-sun.png` (309 KB)
+- `wheel-hover-ac.png` (310 KB)
+- `aspects-collapsed.png` (360 KB)
+- `aspects-expanded.png` (376 KB)
+
+### Parallel subagent gate
+
+- **Tester:** GREEN. 9/9 new e2e pass (top-movements + guided-deep-dive + wheel-interaction + hero), no silent skip, all 7 Pflicht-Files in window. DOM probe: top-movements section, max 3 visible movements, details progressive, 4 audit tabs labeled "Top 3 / Planeten / Häuser / Aspekte", default active "top3", guided-deep-dive with 4 intent anchors.
+- **Reviewer:** GREEN. 5 Minor/Nit (Top3 panel cross-link suggestion, wheel-hover landing on hidden Planets row, wireTabSwitching re-mount safety, comment claim about "salient" selector, waitForTimeout flakiness). Banned-strings invariant clean. Scope clean. CSS allow-list reasonable.
+- **Acceptance reviewer (1st pass):** **RED.** 1 blocker: `test/e2e/i3-wheel.spec.js:93` used stale `[data-audit-row]` (resolves to SVG metadata since OV-I3 fix 227424b). Plus visibility assertion incompatible with OV-I4 tab panels.
+- **Acceptance reviewer (2nd pass after fix 8988a59):** **SHIPPABLE.** All REQs + PO checklist PASS. REQ-D-002 coverage intact via natal-chart-audit-tabs.test.js + overview-wheel-interaction.spec.js.
+
+### Findings & fixes
+
+| # | Sev | Finding | Fix |
+|---|---|---|---|
+| 1 | Critical | `test/e2e/i3-wheel.spec.js:93` selector `[data-audit-row]` resolved to SVG `<metadata>` (aria-hidden), assertion `toBeVisible()` failed | `8988a59` — selector `li[data-audit-row]`, assertion `toBeAttached()` |
+| 2 | Minor | Wheel hover targets Sun row in hidden Planets tab — data-active set but invisible until user switches tab | tracked, non-blocking |
+| 3 | Minor | `wireTabSwitching` could double-bind if same node re-wired (caller-side) | tracked |
+| 4 | Minor | Top3 tab in AuditTabs duplicates TopMovements section content | tracked, PO question |
+| 5 | Nit | "salient" claim in overviewModel comment without selectSalientAspects call | tracked |
+
+### Per-REQ verdict
+
+| REQ | Verdict | Justification |
+|---|---|---|
+| REQ-F-OV-001 | PASS | SignatureHero → MeaningBridge → TopMovements → AuditTabs → GuidedDeepDive flow visible top-to-bottom in overview-desktop.png |
+| REQ-F-OV-005 | PASS | aspects-collapsed.png shows exactly 3 Bewegungen grouped Spannung/Harmonie/Neutral |
+| REQ-F-OV-006 | PASS | aspects-expanded.png shows full grouped list after `<details>` click |
+| REQ-D-002 | PASS | AuditTabs Planets panel renders glyph + labelDE + signGlyph + degreeDisplay + house + source; missing rows marked "Daten fehlen" |
+
+### PO checklist
+
+1. Signature on first screen — PASS.
+2. Wheel = identity object — PASS.
+3. Data/meaning separated but linked — PASS.
+4. Engaging without overload — PASS.
+5. No internal field names — PASS.
+6. Audit on demand — PASS.
+7. Desktop + mobile — PASS.
+
+### Verdict
+
+**OV-I4: GREEN.** **Whole plan OV-I1..OV-I4: SHIPPABLE.**
+
+---
+
+## Final summary
+
+| Iteration | Commits | Pass delta | Verdict |
+|---|---|---|---|
+| OV-I1 | 4 (incl. 1 fix) | +9 | GREEN |
+| OV-I2 | 4 (incl. 1 fix) | +8 | GREEN |
+| OV-I3 | 5 (incl. 1 fix) | +7 | GREEN |
+| OV-I4 | 6 (incl. 1 fix) | +17 | SHIPPABLE |
+| **Total** | **19 (+ plan + 4 QA-doc commits)** | **+41 pass / 0 fail** | **SHIPPABLE** |
+
+Final unit tests: 781 total / 769 pass / 0 fail / 12 skipped.
+Final Playwright: 56/56 pass.
+
+Branch ready for PR against `main`.
+
+### Push
+
 `git push origin feat/overview-signature-experience` — pending execution.
