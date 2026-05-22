@@ -162,19 +162,19 @@ input:focus { border-color: var(--accent); }
 .ep-dot { font-size: 1rem; }
 .ep-ok .ep-dot { color: var(--ok); }
 .ep-missing .ep-dot { color: var(--border); }
-.ep-route { font-size: .78rem; font-family: 'Space Mono', ui-monospace, monospace; }
+.ep-route { font-size: .78rem; font-family: var(--bz-font-mono); }
 .ep-status { font-size: .72rem; color: var(--muted); }
 .ep-ok .ep-status { color: var(--ok); }
 
 .json-viewer { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .json-viewer summary { padding: 10px 16px; cursor: pointer; font-size: .8rem; font-weight: 600; color: var(--muted); }
 .json-viewer summary:hover { color: var(--text); }
-.json-pre { padding: 16px; font-size: .72rem; font-family: 'Space Mono', ui-monospace, monospace; white-space: pre-wrap; word-break: break-word; overflow-x: auto; max-height: 60vh; overflow-y: auto; color: var(--text); line-height: 1.5; }
+.json-pre { padding: 16px; font-size: .72rem; font-family: var(--bz-font-mono); white-space: pre-wrap; word-break: break-word; overflow-x: auto; max-height: 60vh; overflow-y: auto; color: var(--text); line-height: 1.5; }
 
 .planned-list { display: flex; flex-direction: column; gap: 8px; }
 .planned-item { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 4px 12px; align-items: center; }
 .planned-label { font-weight: 700; font-size: .9rem; }
-.planned-route { font-size: .72rem; font-family: 'Space Mono', ui-monospace, monospace; color: var(--muted); }
+.planned-route { font-size: .72rem; font-family: var(--bz-font-mono); color: var(--muted); }
 .planned-badge { background: var(--warn)22; color: var(--warn); border: 1px solid var(--warn)44; font-size: .65rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; white-space: nowrap; grid-row: 1; }
 .planned-note { font-size: .75rem; color: var(--muted); grid-column: 1 / -1; }
 
@@ -2401,7 +2401,7 @@ h1.page-title, h2.layer-title {
 .page-eyebrow, .layer-eyebrow,
 .factor-label, .source-pill, .wuxing-row__role,
 .secondary-nav__tab {
-  font-family: var(--bz-font-ui, "Inter", system-ui, sans-serif);
+  font-family: var(--bz-font-ui, "Sora", system-ui, sans-serif);
   letter-spacing: var(--bz-ls-overline, 0.2em);
   text-transform: uppercase;
 }
@@ -2412,7 +2412,7 @@ h1.page-title, h2.layer-title {
   font-family: var(--bz-font-cjk, "Noto Sans SC", ui-sans-serif, sans-serif);
 }
 
-/* Tabular numerics (longitudes, degrees, percentages) → JetBrains Mono */
+/* Tabular numerics (longitudes, degrees, percentages) → monospace */
 .bz-data, .wuxing-row__pct, .western-aspect-row__orb,
 .confidence-pct, .factor-value {
   font-variant-numeric: tabular-nums;
@@ -3094,7 +3094,7 @@ details[data-progressive] > summary {
 
 .bz-movement-group__label {
   margin: 0;
-  font-family: var(--bz-font-ui, 'Inter', sans-serif);
+  font-family: var(--bz-font-ui, 'Sora', sans-serif);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -3137,7 +3137,7 @@ details[data-progressive] > summary {
 
 .bz-movement__meta {
   margin: 0;
-  font-family: var(--bz-font-ui, 'Inter', sans-serif);
+  font-family: var(--bz-font-ui, 'Sora', sans-serif);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   color: rgba(255, 255, 255, 0.6);
@@ -3157,7 +3157,7 @@ details[data-progressive] > summary {
 
 .bz-top-movements__summary {
   cursor: pointer;
-  font-family: var(--bz-font-ui, 'Inter', sans-serif);
+  font-family: var(--bz-font-ui, 'Sora', sans-serif);
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--bz-gold-light, #d4af7a);
@@ -3188,7 +3188,7 @@ details[data-progressive] > summary {
   border: 1px solid color-mix(in srgb, var(--bz-gold, #b8945e) 20%, transparent);
   border-radius: var(--bz-radius-sm, 0.375rem);
   color: rgba(255, 255, 255, 0.78);
-  font-family: var(--bz-font-ui, 'Inter', sans-serif);
+  font-family: var(--bz-font-ui, 'Sora', sans-serif);
   font-size: 0.85rem;
   padding: 0.35rem 0.75rem;
   cursor: pointer;
@@ -3229,7 +3229,7 @@ details[data-progressive] > summary {
 
 .bz-audit-tabs__subhead {
   margin: 0.6rem 0 0.3rem;
-  font-family: var(--bz-font-ui, 'Inter', sans-serif);
+  font-family: var(--bz-font-ui, 'Sora', sans-serif);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -3257,7 +3257,7 @@ details[data-progressive] > summary {
   padding: 0.4rem 0.5rem;
   border-radius: var(--bz-radius-sm, 0.375rem);
   background: color-mix(in srgb, var(--bz-obsidian, #00050A) 55%, transparent);
-  font-family: var(--bz-font-ui, 'Inter', sans-serif);
+  font-family: var(--bz-font-ui, 'Sora', sans-serif);
   font-size: 0.88rem;
   color: rgba(255, 255, 255, 0.92);
 }

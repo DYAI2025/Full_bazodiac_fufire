@@ -80,8 +80,15 @@ test('B3 headings use Cormorant Garamond as primary serif', async ({ page }) => 
   await setTheme(page, 'planetarium');
   await page.goto('/#/overview', { waitUntil: 'load' });
   await page.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
-  const h = await page.locator('#app h1, #app h2, #app .bz-h1, #app .bz-h2').first().evaluate(el =>
-    getComputedStyle(el).fontFamily);
+  // Inject profile so page-title / layer-title elements are rendered
+  await page.evaluate((p) => sessionStorage.setItem('azodiac_profile', JSON.stringify(p)), PROFILE);
+  await page.reload({ waitUntil: 'load' });
+  await page.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
+  await page.waitForTimeout(300);
+  // Target elements that main.css binds --bz-font-serif to
+  const h = await page.locator(
+    '#app .page-title, #app .layer-title, #app .bz-display, #app .bz-h1, #app .bz-h2, #app .bz-h3'
+  ).first().evaluate(el => getComputedStyle(el).fontFamily);
   expect(h).toContain(CHOSEN_SERIF);
 });
 
