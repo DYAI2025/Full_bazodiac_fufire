@@ -2502,6 +2502,19 @@ h1.page-title, h2.layer-title {
   outline: none;
   filter: drop-shadow(0 0 4px var(--bz-elem-fire, currentColor));
 }
+/* Glyphs + degree text are decorative; they must not intercept pointer
+   events so the interactive circle / axis below receives hover. */
+.natal-chart-wheel text[data-body-glyph],
+.natal-chart-wheel text[data-body-degree],
+.natal-chart-wheel [data-leader-line] {
+  pointer-events: none;
+}
+
+/* OV-I3-T09: audit-row active state — visible flag for QA + screenshots. */
+[data-audit-row][data-active="true"] {
+  background: rgba(212, 175, 55, 0.12);
+  outline: 1px solid var(--bz-gold, #d4af37);
+}
 
 .natal-chart-wheel [data-angle] {
   paint-order: stroke;

@@ -74,6 +74,33 @@ function lonToXYAsc(lonDeg, radius, ascDeg) {
   return chartAngleToXY(longitudeToChartAngle(lonDeg, ascDeg), radius);
 }
 
+// OV-I3-T09: attach hover/focus listeners that emit a custom event the
+// OverviewPage listens for to flip data-active on the matching audit row.
+// In the stub-DOM no-op test environment node.addEventListener is missing —
+// guarded with typeof.
+function wireInteractiveNode(node, { kind, key }) {
+  if (!node || typeof node.addEventListener !== 'function') return;
+  if (typeof CustomEvent !== 'function') return;
+  const fire = (active) => {
+    const evt = new CustomEvent('wheel:body:active', {
+      bubbles: true,
+      detail: { kind, key, active },
+    });
+    node.dispatchEvent(evt);
+  };
+  node.addEventListener('mouseenter', () => fire(true));
+  node.addEventListener('mouseleave', () => fire(false));
+  node.addEventListener('focus',      () => fire(true));
+  node.addEventListener('blur',       () => fire(false));
+  node.addEventListener('click',      () => fire(true));
+  node.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fire(true);
+    }
+  });
+}
+
 // Cross-environment element factory.
 function el(tag, attrs = {}, textContent = null, children = []) {
   let node;
@@ -141,7 +168,7 @@ function renderBodies(root, bodies, ascDeg, { R_BODY }) {
     const offsetRadius = R_BODY + lane * LANE_RADIAL_STEP;
 
     const truePos = lonToXYAsc(b.longitude, R_BODY, ascDeg);
-    root.appendChild(el('circle', {
+    const bodyNode = el('circle', {
       cx: truePos.x, cy: truePos.y, r: 3,
       fill: 'currentColor',
       'data-body': bodyKey,
@@ -149,7 +176,11 @@ function renderBodies(root, bodies, ascDeg, { R_BODY }) {
       'data-pos': formatNum(b.longitude),
       'data-lane-offset': String(lane),
       tabindex: '0',
-    }));
+      role: 'button',
+      'aria-label': `${bodyKey} — Planet aktivieren`,
+    });
+    wireInteractiveNode(bodyNode, { kind: 'body', key: bodyKey });
+    root.appendChild(bodyNode);
 
     const glyph = b.glyph ?? PLANET_GLYPHS[bodyKey] ?? '·';
     const glyphPos = lonToXYAsc(b.longitude, offsetRadius + 8, ascDeg);
@@ -343,7 +374,7 @@ export function NatalChartWheel({ wheel }) {
   function renderAngleMarker(lon, label, position) {
     if (typeof lon !== 'number') return;
     const p = lonToXYAsc(lon, R_OUTER + 14, ascDeg);
-    layerHouses.appendChild(el('text', {
+    const axisNode = el('text', {
       x: p.x, y: p.y,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
       'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
@@ -353,7 +384,11 @@ export function NatalChartWheel({ wheel }) {
       // OV-I3-T09: axis nodes are focusable + tagged for hover/click linking.
       'data-axis-key': label,
       tabindex: '0',
-    }, label));
+      role: 'button',
+      'aria-label': `${label} — Achse aktivieren`,
+    }, label);
+    wireInteractiveNode(axisNode, { kind: 'axis', key: label });
+    layerHouses.appendChild(axisNode);
   }
   const angles = w.angles || {};
   renderAngleMarker(ascRaw, 'ASC', 'left');

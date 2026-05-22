@@ -11,6 +11,7 @@
 import { profileToOverviewModel }                  from '../domain/overviewModel.js';
 import { NatalChartWheel }                          from '../components/NatalChartWheel.js';
 import { NatalChartAudit }                          from '../components/NatalChartAudit.js';
+import { NatalChartAuditTabs }                      from '../components/NatalChartAuditTabs.js';
 import { SectionHeader }                            from '../components/SectionHeader.js';
 import { LuxuryCard }                               from '../components/LuxuryCard.js';
 import { renderSignatureHero }                      from '../components/SignatureHero.js';
@@ -22,6 +23,9 @@ export function OverviewPage(root, input) {
   // Normalise input to a hero viewModel.
   const vm = resolveViewModel(input);
   root.replaceChildren(renderPage(vm));
+  // OV-I3-T09: wire wheel:body:active → data-active on matching audit rows.
+  // Idempotent — adding the same listener twice is a no-op.
+  installWheelAuditLink(root);
 }
 
 // ── Input normalisation ──────────────────────────────────────────────────────
@@ -193,9 +197,33 @@ function renderBirthchartWheelDetail(vm) {
   section.dataset.section = 'birthchart-wheel';
   section.className = 'overview-section overview-section--birthchart-wheel';
   if (vm.wheel) {
+    // OV-I3-T09: AuditTabs skeleton — emits [data-audit-row="<key>"] targets
+    // for every body + every axis so the wheel's hover/click linking has a
+    // landing spot. Sits above the legacy NatalChartAudit which is kept for
+    // backwards-compatible smoke tests.
+    section.append(NatalChartAuditTabs({ wheel: vm.wheel }));
     section.append(NatalChartAudit({ wheel: vm.wheel }));
   }
   return section;
+}
+
+// OV-I3-T09: page-level event listener. The wheel dispatches
+// `wheel:body:active` { kind, key, active } on planet circles + axis
+// markers; we mirror it onto the matching [data-audit-row] node.
+function installWheelAuditLink(root) {
+  if (!root || typeof root.addEventListener !== 'function') return;
+  if (root.__wheelAuditLinkInstalled) return;
+  root.__wheelAuditLinkInstalled = true;
+  root.addEventListener('wheel:body:active', (e) => {
+    const detail = e && e.detail;
+    if (!detail || !detail.key) return;
+    // Clear any previously active row for the same kind first.
+    const previouslyActive = root.querySelectorAll('[data-audit-row][data-active="true"]');
+    for (const node of previouslyActive) node.removeAttribute('data-active');
+    if (detail.active === false) return;
+    const target = root.querySelector(`[data-audit-row="${detail.key}"]`);
+    if (target) target.setAttribute('data-active', 'true');
+  });
 }
 
 // ── Key facts strip (data-section="key-facts") ──────────────────────────────
