@@ -1945,31 +1945,83 @@ input:focus { border-color: var(--accent); }
 .bazi-dm-ressource { margin: 0 0 .35rem; color: var(--fg, #e9ecef); line-height: 1.5; }
 .bazi-dm-shadow { margin: 0; color: var(--muted, #b6bcc4); font-size: .9rem; }
 
+/* B2: Pillar list — 4 equal-height cards in one row at desktop */
 .bazi-pillars { margin: 0 0 1.5rem; }
-.bazi-pillars-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+.bazi-pillars-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: stretch;
 }
-@media (max-width: 720px) {
-  .bazi-pillars-grid { grid-template-columns: 1fr; }
+.bazi-pillar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
 }
-
-.bazi-pillar-card { position: relative; }
-.bazi-pillar-stem-char {
-  font-family: 'Noto Serif CJK SC', serif;
-  font-size: 3.5rem;
+.bazi-pillar-card--active,
+.bazi-pillar-card:hover {
+  border-color: var(--accent, #d4b483);
+}
+.bazi-pillar-stemchar {
+  font-family: 'Noto Serif CJK SC', 'Noto Sans CJK SC', serif;
+  font-size: 2.25rem;
   color: var(--gold-light, #d4b483);
   line-height: 1;
-  text-align: center;
-  margin-bottom: .75rem;
-  opacity: .9;
 }
-.bazi-pillar-card--day-master .bazi-pillar-stem-char {
-  font-size: 4.5rem;
-  text-shadow: 0 0 30px rgba(212, 175, 55, .3);
+.bazi-pillar-card--day-master .bazi-pillar-stemchar {
+  font-size: 2.75rem;
+  text-shadow: 0 0 20px rgba(212, 175, 55, .3);
+}
+.bazi-pillar-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.bazi-pillar-value { font-size: 0.95rem; font-weight: 600; }
+.bazi-pillar-animal { font-size: 0.8rem; color: var(--muted); }
+.bazi-pillar-hs-source {
+  font-size: 0.65rem; color: var(--muted); margin-top: auto; padding-top: 4px;
+  border-top: 1px solid var(--border);
 }
 
+/* B2: Shared detail panel */
+.bazi-shared-detail-mount { margin-top: 8px; }
+.bazi-shared-detail {
+  padding: 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.bazi-shared-detail[hidden] { display: none; }
+.bazi-detail-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+.bazi-detail-age,
+.bazi-detail-elements,
+.bazi-detail-prov { font-size: 0.85rem; color: var(--muted); margin: 4px 0; }
+.bazi-detail-hs { margin-top: 12px; font-size: 0.85rem; }
+.bazi-detail-hs-list { margin: 6px 0 0 16px; font-size: 0.8rem; }
+.bazi-detail-narrative { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+.bazi-detail-narrative-label {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin-bottom: 8px;
+}
+.bazi-detail-narrative-item { font-size: 0.85rem; margin: 6px 0; }
+
 .bazi-luck-pillar { margin: 0 0 1.5rem; }
+.bazi-luck-note { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+
+/* B2: Mobile — stack to 2 columns below 720px, 1 column below 480px */
+@media (max-width: 720px) {
+  .bazi-pillars-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .bazi-pillars-list { grid-template-columns: 1fr 1fr; }
+}
 
 .bazi-page .page-actions {
   display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem;
