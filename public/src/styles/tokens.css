@@ -33,6 +33,11 @@
   --bz-parchment:     #faf8f3;   /* card morning bg */
   --bz-ink:           #1E293B;   /* primary text on light */
   --bz-ink-60:        rgba(30, 41, 59, 0.60);
+  --bz-ink-06:        rgba(30, 41, 59, 0.06);
+  --bz-ink-08:        rgba(30, 41, 59, 0.08);
+  --bz-ink-10:        rgba(30, 41, 59, 0.10);
+  --bz-ink-15:        rgba(30, 41, 59, 0.15);
+  --bz-ink-18:        rgba(30, 41, 59, 0.18);
 
   /* Information / semantics */
   --bz-saphir:        #3b82f6;   /* myzel filaments, data, links */
@@ -304,6 +309,22 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════════
+   B1: Morning-mode lane-bg overrides — must be more specific than
+   [data-lane] alone so element-scope custom property declarations are
+   overridden correctly in morning theme.
+   ════════════════════════════════════════════════════════════════════════ */
+:root[data-theme="morning"] [data-lane="bazi"],
+:root[data-theme="morning"] [data-lane="west"],
+:root[data-theme="morning"] [data-lane="fusion"],
+:root[data-theme="morning"] [data-lane="wuxing"] {
+  --lane-bg:     var(--bz-parchment);
+  --lane-border: rgba(30, 41, 59, 0.15);
+  --lane-fg:     var(--bz-ink);
+  --lane-fg-2:   var(--bz-ink-60);
+  --lane-glow:   none;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
    SPRINT H5 — THEME RECIPES (planetarium dark / morning light)
    Activated via <html data-theme="planetarium"|"morning">. data-theme is
    set by ThemeToggle bootstrapTheme() before any page mounts.
@@ -330,17 +351,15 @@
   color-scheme: light;
   /* B1: Surface tokens not previously overridden in morning recipe */
   --panel:            var(--bz-parchment);
-  --panel2:           rgba(30, 41, 59, 0.06);
-  --card:             rgba(30, 41, 59, 0.08);
-  --border:           rgba(30, 41, 59, 0.18);
+  --panel2:           var(--bz-ink-06);
+  --card:             var(--bz-ink-08);
+  --border:           var(--bz-ink-18);
   --text:             var(--bz-ink);
   --text-muted:       var(--bz-ink-60);
   --text-strong:      var(--bz-ink);
-  --surface-elevated: rgba(30, 41, 59, 0.06);
-  --border-subtle:    rgba(30, 41, 59, 0.10);
+  --surface-elevated: var(--bz-ink-06);
+  --border-subtle:    var(--bz-ink-10);
   --muted:            var(--bz-fg-3);
-  /* B1: Lane bg tokens — replace dark gradients with light-mode surfaces */
-  --lane-bg:          rgba(30, 41, 59, 0.06);
 }
 
 /* ════════════════════════════════════════════════════════════════════════

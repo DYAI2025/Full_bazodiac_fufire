@@ -106,6 +106,37 @@ async function findContrastOffenders(page) {
   });
 }
 
+// Check lane containers for dark gradient backgrounds in morning mode.
+// getComputedStyle().backgroundColor returns transparent on gradient elements,
+// so we check for backgroundImage containing 'gradient' as a proxy.
+async function findDarkGradientLanes(page) {
+  return page.evaluate(() => {
+    const out = [];
+    for (const el of document.querySelectorAll('[data-lane]')) {
+      const cs = getComputedStyle(el);
+      const bg = cs.backgroundImage || '';
+      if (!bg.includes('gradient')) continue;
+      // Extract rgba colors from the gradient and check if any are dark.
+      const matches = bg.match(/rgba?\([^)]+\)/g) || [];
+      for (const color of matches) {
+        const parts = color.match(/[\d.]+/g) || [];
+        if (parts.length < 3) continue;
+        const [r, g, b] = parts.slice(0, 3).map(Number);
+        const bright = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+        if (bright < 0.35) {
+          out.push({
+            lane: el.getAttribute('data-lane'),
+            gradient: bg.slice(0, 80),
+            bright: Math.round(bright * 100) / 100,
+          });
+          break; // one offender per lane container is enough
+        }
+      }
+    }
+    return out;
+  });
+}
+
 for (const pg of PAGES) {
   test(`B1 morning-mode contrast: ${pg.label}`, async ({ browser }) => {
     const ctx = await browser.newContext();
@@ -115,11 +146,16 @@ for (const pg of PAGES) {
     await p.locator('#app > *').first().waitFor({ state: 'attached', timeout: 10_000 });
 
     const offenders = await findContrastOffenders(p);
+    const laneOffenders = await findDarkGradientLanes(p);
     await ctx.close();
 
     expect(
       offenders,
       `${pg.label} has dark-on-dark text in morning mode:\n${JSON.stringify(offenders, null, 2)}`
+    ).toEqual([]);
+    expect(
+      laneOffenders,
+      `${pg.label} has dark gradient lane containers in morning mode:\n${JSON.stringify(laneOffenders, null, 2)}`
     ).toEqual([]);
   });
 }

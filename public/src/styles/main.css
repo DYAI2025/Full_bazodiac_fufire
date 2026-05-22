@@ -2429,6 +2429,7 @@ h1.page-title, h2.layer-title {
 .raw-data pre { margin: .5rem 0 0; background: rgba(0,0,0,.35); border: 1px solid var(--border, rgba(255,255,255,.10)); border-radius: 8px; padding: 1rem; overflow: auto; max-height: 400px; font-family: var(--bz-font-mono, ui-monospace, monospace); font-size: .78rem; white-space: pre-wrap; }
 /* B1: morning override for hardcoded dark bg */
 [data-theme="morning"] .raw-data pre { background: rgba(30, 41, 59, 0.06); border-color: rgba(30, 41, 59, 0.18); }
+[data-theme="morning"] .method-pre { background: rgba(30, 41, 59, 0.06); border-color: rgba(30, 41, 59, 0.18); }
 
 /* ── NatalChartWheel aspect tone colors ─────────────────────────────────── */
 .natal-aspect--hard   { stroke: var(--bz-fire,    #C53030) !important; opacity: 0.45 !important; }
