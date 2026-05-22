@@ -90,7 +90,12 @@ test.describe('I3: Birthchart Wheel — professional wheel rendering', () => {
 
     // Audit panel must be present.
     await expect(page.locator('[data-component="natal-chart-audit"]')).toBeVisible();
-    await expect(page.locator('[data-audit-row]').first()).toBeVisible();
+    // OV-I3 fix 227424b: scope to <li> rather than the SVG <metadata data-audit-row>
+    // emitted for screen-reader audit (which is `aria-hidden` and therefore not visible).
+    // OV-I4 NatalChartAuditTabs places planets in a hidden tab panel by default;
+    // we only need the audit row to be attached, not visible (REQ-D-002 covers
+    // visibility through the user-controlled tab switch).
+    await expect(page.locator('li[data-audit-row]').first()).toBeAttached();
 
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'overview-audit.png'), fullPage: true });
   });

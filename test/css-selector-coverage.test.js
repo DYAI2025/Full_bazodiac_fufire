@@ -92,6 +92,27 @@ const ALLOW_KNOWN_TEMPLATE = new Set([
   'audit-bucket--hard',
   'audit-bucket--soft',
   'audit-bucket--neutral',
+  // OV-I4-T10: TopMovements tone BEM modifiers (template: `bz-movement-group--${tone}`)
+  'bz-movement-group--hard',
+  'bz-movement-group--soft',
+  'bz-movement-group--neutral',
+  // OV-I4-T10: TopMovements movement tone BEM modifiers (template: `bz-movement--${tone}`)
+  'bz-movement--hard',
+  'bz-movement--soft',
+  'bz-movement--neutral',
+  // OV-I4-T11: NatalChartAuditTabs static class roots (passed through mkSection/mkLi/mkButton helpers)
+  'bz-audit-tabs',
+  'bz-audit-tabs__tab',
+  'bz-audit-tabs__panel',
+  'bz-audit-planet',
+  'bz-audit-axis',
+  'bz-audit-house',
+  'bz-audit-aspect',
+  // OV-I4-T11: NatalChartAuditTabs BEM modifiers via template strings
+  'bz-audit-planet__source--missing',
+  'bz-audit-aspect__tone--hard',
+  'bz-audit-aspect__tone--soft',
+  'bz-audit-aspect__tone--neutral',
 ]);
 
 test('Sprint-K @media selectors all exist as className assignments in public/src/', () => {

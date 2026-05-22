@@ -99,3 +99,24 @@ No bundler. Browsers load modules directly. `public/reference.html` is the stati
 ## Deployment
 
 Railway picks this up as a Node.js app via `package.json`. `railway.json` pins the start command and registers `/health` as the health-check path. No Docker image, no build step — Railpack runs `npm start` directly.
+
+## Multi-iteration TDD gate pattern
+
+Per-iteration gate that has shipped multiple sprints cleanly in this repo (Overview Signature Experience, 2026-05-22):
+1. Forge sprint goal (`/goal-forge` with verbatim Sprintziel).
+2. Failing test committed first.
+3. Minimal implementation.
+4. Focused tests green (`node --test <focused file>`).
+5. Full suite green (`npm test`).
+6. Server up on `PORT=4100`; live Playwright run with `APP_BASE_URL=http://127.0.0.1:4100`.
+7. Screenshots persisted under `docs/qa/screenshots/<feature>/<iter>/`.
+8. **Three parallel subagents in a single message**: `tester` (Playwright integrity + screenshot file+size+mtime + silent-skip detection), `reviewer` (line-level diff), `superpowers:code-reviewer` (acceptance vs REQ table + PO checklist using screenshots).
+9. Fix every Critical/Major; re-run from step 4 until clean.
+10. Update `docs/qa/<date>-<feature>-review.md`, commit, push.
+
+Never push before the gate is green.
+
+## DOM gotchas in this codebase
+
+- **`querySelector('[data-X]')` may pick an inline SVG `<metadata>` element** before the visible `<li>` because metadata DOM-order precedes the audit list. Scope to the concrete tag (`li[data-X]`) when wiring interaction listeners. Same trap caught us twice — once in `installWheelAuditLink`, once in `test/e2e/i3-wheel.spec.js`.
+- `NatalChartAuditTabs` renders planet rows inside a hidden tab panel by default. Tests asserting visibility (`toBeVisible()`) on those rows will fail; use `toBeAttached()` unless the test simulates the tab click.

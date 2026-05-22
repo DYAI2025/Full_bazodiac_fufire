@@ -123,6 +123,17 @@
   --color-ok:             #4a9b6f;
   --color-info:           #6f8fb9;
 
+  /* ── OV-I3-T08: Wheel element + aspect palette ──────────────────────── */
+  /* Element sectors on the natal wheel — low-opacity fills. */
+  --bz-elem-fire:         #c2733b;
+  --bz-elem-earth:        #b48a3e;
+  --bz-elem-air:          #6b6db3;
+  --bz-elem-water:        #2f6f86;
+  /* Aspect tones — full-opacity strokes. */
+  --bz-aspect-hard:       #c44b3b;
+  --bz-aspect-soft:       #4e9a73;
+  --bz-aspect-neutral:    #a39059;
+
   /* ── RADII ────────────────────────────────────────────────────────── */
   --bz-radius-sm:     4px;      /* stele cards (BaZi pillars) */
   --bz-radius-md:     12px;     /* default cards */

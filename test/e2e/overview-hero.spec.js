@@ -52,42 +52,42 @@ test.describe('I4 Overview Hero', () => {
     expect(errors.filter((e) => !/fetch|network|CORS/i.test(e))).toHaveLength(0);
   });
 
-  test('desktop hero renders wheel-left / narrative-right', async ({ page }) => {
+  test('desktop signature-hero renders wheel-anchor + fusion-signature-panel', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/#/overview');
     await injectProfile(page);
 
-    const heroExists = await page.locator('[data-section="hero"]').count();
+    const heroExists = await page.locator('[data-section="signature-hero"]').count();
     if (!heroExists) {
       await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'overview-no-hero.png'), fullPage: true });
       return;
     }
 
     const heroSlots = await page.$$eval(
-      '[data-section="hero"] [data-hero-slot]',
+      '[data-section="signature-hero"] > [data-hero-slot]',
       (els) => els.map((e) => e.getAttribute('data-hero-slot')),
     );
-    expect(heroSlots).toEqual(['wheel', 'narrative']);
+    expect(heroSlots).toEqual(['wheel-anchor', 'fusion-signature-panel']);
 
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'overview-desktop.png'), fullPage: true });
-    await page.locator('[data-section="hero"]').screenshot({
+    await page.locator('[data-section="signature-hero"]').screenshot({
       path: path.join(SCREENSHOT_DIR, 'hero-closeup.png'),
     });
   });
 
-  test('mobile (390x844) stacks wheel above narrative', async ({ page }) => {
+  test('mobile (390x844) stacks wheel-anchor above fusion-signature-panel', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/#/overview');
     await injectProfile(page);
 
-    const heroExists = await page.locator('[data-section="hero"]').count();
+    const heroExists = await page.locator('[data-section="signature-hero"]').count();
     if (!heroExists) {
       await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'overview-mobile-no-hero.png'), fullPage: true });
       return;
     }
 
-    await expect(page.locator('[data-hero-slot="wheel"]')).toBeVisible();
-    await expect(page.locator('[data-hero-slot="narrative"]')).toBeVisible();
+    await expect(page.locator('[data-hero-slot="wheel-anchor"]')).toBeVisible();
+    await expect(page.locator('[data-hero-slot="fusion-signature-panel"]')).toBeVisible();
 
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'overview-mobile.png'), fullPage: true });
   });
