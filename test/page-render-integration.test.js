@@ -49,18 +49,32 @@ function assertContainsApiValues(agg, label, expected = EXPECTED_API_STRINGS) {
 // ── OverviewPage ─────────────────────────────────────────────────────────────
 
 // OV-I1-T02: REQ-F-OV-004 / REQ-D-003 — Element-Oekonomie summary must never
-// leak internal ViewModel field names (raw capitalized keys from enrichWuxing
-// such as Distribution / Dominant / Deficient / Plan / Properties / TodayLever)
-// into rendered HTML. Whole-word match: "Planeten" must NOT trigger "Plan".
+// leak internal ViewModel field names (Distribution/Dominant/Deficient/Plan/
+// Properties/TodayLever) into rendered HTML. The page must NOT emit them in
+// any case, because CSS `text-transform: capitalize` on `.element-bar-label`
+// turns lowercase keys back into the banned visible labels.
+// Whole-word + case-insensitive match: "Planeten" must NOT trigger "Plan".
 test('OV-I1: OverviewPage rendered DOM does not contain internal element field names', async () => {
   const { OverviewPage } = await import('../public/src/pages/OverviewPage.js');
   const app = freshApp();
   OverviewPage(app, { profile: SYNTHETIC_PROFILE, onNavigate: () => {} });
   const agg = cap.aggregate();
-  for (const banned of ['Distribution', 'Dominant', 'Deficient', 'Plan', 'Properties', 'TodayLever']) {
+  // 1) Reject capitalized whole-word literals — direct leak of CamelCase field
+  //    names. Whole-word boundary so "Planeten" cannot trigger "Plan".
+  for (const banned of ['Distribution', 'Deficient', 'TodayLever']) {
     const re = new RegExp(`\\b${banned}\\b`);
     assert.ok(!re.test(agg),
-      `forbidden ViewModel field name "${banned}" surfaced in rendered DOM (whole-word match)`);
+      `forbidden ViewModel field name "${banned}" surfaced in rendered DOM (whole-word)`);
+  }
+  // 2) Reject lowercase raw keys when rendered as **exact text content** of an
+  //    element (`>distribution<`, `>plan<`, …) — the path that previously
+  //    leaked because `text-transform: capitalize` displays them as banned
+  //    labels. Substring text inside a sentence ("aktuell dominant" in the
+  //    education grid) is intentional UI prose and not forbidden.
+  for (const raw of ['distribution', 'dominant', 'deficient', 'plan', 'properties', 'todayLever']) {
+    const re = new RegExp(`>\\s*${raw}\\s*<`, 'i');
+    assert.ok(!re.test(agg),
+      `raw lowercase key "${raw}" rendered as element text content (would CSS-capitalize to banned label)`);
   }
 });
 

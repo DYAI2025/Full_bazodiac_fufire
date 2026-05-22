@@ -263,23 +263,47 @@ function renderElementEconomy(vm) {
   section.className = 'overview-section';
   section.append(SectionHeader({ eyebrow: 'Holz · Feuer · Erde · Metall · Wasser', headline: 'Element-Ökonomie', anchor: 'element-economy', lane: 'fusion' }));
 
-  const bars = document.createElement('div');
-  bars.className = 'element-bars';
-  if (vm.elementEconomy) {
-    for (const [key, value] of Object.entries(vm.elementEconomy)) {
-      const row = document.createElement('div');
-      row.className = 'element-bar-row';
-      const label = document.createElement('span');
-      label.className = 'element-bar-label';
-      label.textContent = key;
-      const bar = document.createElement('span');
-      bar.className = 'element-bar-fill';
-      bar.style.width = `${Math.round((value ?? 0) * 100)}%`;
-      row.append(label, bar);
-      bars.append(row);
+  const summary = vm.elementSummary;
+  if (summary) {
+    const wrap = document.createElement('div');
+    wrap.className = 'element-summary';
+
+    const sentence = document.createElement('p');
+    sentence.className = 'element-summary-sentence';
+    sentence.textContent = summary.sentence;
+    wrap.append(sentence);
+
+    if (summary.dominantElement || summary.underrepresentedElement) {
+      const facts = document.createElement('dl');
+      facts.className = 'element-summary-facts';
+      if (summary.dominantElement) {
+        const dt = document.createElement('dt'); dt.textContent = 'Tragendes Element';
+        const dd = document.createElement('dd'); dd.textContent = summary.dominantElement;
+        facts.append(dt, dd);
+      }
+      if (summary.underrepresentedElement) {
+        const dt = document.createElement('dt'); dt.textContent = 'Unterrepräsentiert';
+        const dd = document.createElement('dd'); dd.textContent = summary.underrepresentedElement;
+        facts.append(dt, dd);
+      }
+      wrap.append(facts);
     }
+
+    if (summary.leverToday) {
+      const lever = document.createElement('p');
+      lever.className = 'element-summary-lever';
+      lever.textContent = `Heute: ${summary.leverToday}`;
+      wrap.append(lever);
+    }
+
+    const cta = document.createElement('a');
+    cta.className = 'element-summary-cta';
+    cta.href = `#${summary.ctaRoute || '/wuxing'}`;
+    cta.textContent = 'Wu-Xing vertiefen';
+    wrap.append(cta);
+
+    section.append(wrap);
   }
-  section.append(bars);
   return section;
 }
 
