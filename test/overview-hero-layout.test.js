@@ -83,7 +83,12 @@ test('OverviewPage renders all hero sections in correct order', () => {
   const sections = Array.from(root.querySelectorAll('[data-section]'));
   const ids = sections.map((el) => el.getAttribute('data-section'));
 
+  // OV-I2: SignatureHero wraps the legacy hero structure as the first section.
+  // The legacy data-section anchors (hero, key-facts, birthchart-wheel,
+  // fusion-narrative) remain inside the new signature-hero for backward
+  // compatibility with the I4 e2e spec and audit tooling.
   assert.deepEqual(ids, [
+    'signature-hero',
     'hero',
     'key-facts',
     'birthchart-wheel',

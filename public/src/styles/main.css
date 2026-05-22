@@ -2836,3 +2836,76 @@ details[data-progressive] > summary {
   padding-top: var(--bz-space-sm, 0.5rem);
   border-top: 1px solid var(--border);
 }
+
+/* ── OV-I2: Signature Hero + Fusion Signature Panel ──────────────────────── */
+.bz-signature-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--bz-space-6, 1.5rem);
+  align-items: start;
+  margin-block: var(--bz-space-lg, 1.5rem);
+}
+.bz-signature-hero .bz-hero__wheel  { min-width: 0; }
+.bz-signature-hero .bz-hero__panel  { min-width: 0; display: flex; flex-direction: column; gap: var(--bz-space-md, 1rem); }
+.bz-hero__essence {
+  font-family: var(--bz-font-serif);
+  font-size: var(--bz-h3, 1.5rem);
+  line-height: 1.35;
+  color: var(--bz-gold-light, #d4af7a);
+  margin: 0;
+}
+.bz-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bz-space-3, 0.75rem);
+}
+.bz-evidence-card {
+  background: color-mix(in srgb, var(--panel, #1a1a1a) 90%, var(--bz-gold, #b8945e) 10%);
+  border: 1px solid color-mix(in srgb, var(--bz-gold, #b8945e) 40%, transparent);
+  border-radius: var(--bz-radius-md, 0.5rem);
+  padding: var(--bz-space-sm, 0.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.bz-evidence-card h4 {
+  margin: 0;
+  font-family: var(--bz-font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted, #888);
+}
+.bz-evidence-card p { margin: 0; font-size: 0.95rem; line-height: 1.4; }
+.bz-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bz-space-sm, 0.75rem);
+}
+.bz-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--bz-radius-md, 0.5rem);
+  border: 1px solid var(--bz-gold, #b8945e);
+  background: color-mix(in srgb, var(--bz-gold, #b8945e) 12%, transparent);
+  color: var(--bz-gold-light, #d4af7a);
+  text-decoration: none;
+  font-family: var(--bz-font-ui);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 150ms ease, color 150ms ease;
+}
+.bz-cta:hover {
+  background: color-mix(in srgb, var(--bz-gold, #b8945e) 22%, transparent);
+  color: var(--fg, #f5f5f5);
+}
+@media (max-width: 900px) {
+  .bz-signature-hero { grid-template-columns: 1fr; }
+  .bz-signature-hero .bz-hero__wheel  { order: 1; }
+  .bz-signature-hero .bz-hero__panel  { order: 2; }
+}
+@media (max-width: 600px) {
+  .bz-evidence-grid { grid-template-columns: 1fr; }
+}

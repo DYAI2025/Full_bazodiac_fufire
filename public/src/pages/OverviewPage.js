@@ -14,6 +14,7 @@ import { NatalChartAudit }                          from '../components/NatalCha
 import { RollingText }                              from '../components/RollingText.js';
 import { SectionHeader }                            from '../components/SectionHeader.js';
 import { LuxuryCard }                               from '../components/LuxuryCard.js';
+import { renderSignatureHero }                      from '../components/SignatureHero.js';
 
 // ── Public export ────────────────────────────────────────────────────────────
 
@@ -28,10 +29,46 @@ export function OverviewPage(root, input) {
 function resolveViewModel(input) {
   if (!input) return buildHeroViewModel(null);
   // Already a viewModel — has keyFacts property.
-  if (input.keyFacts) return input;
+  if (input.keyFacts) return withSignatureHeroFallback(input);
   // Legacy mountWithProfile format: { profile, onNavigate, … }
   const raw = input.profile !== undefined ? input.profile : input;
   return buildHeroViewModel(raw);
+}
+
+// OV-I2: pre-mapped fixtures (test inputs) may not carry signatureHero /
+// evidenceCards / meaningBridge. Provide sensible fallbacks derived from the
+// fixture's own fusionNarrative + keyFacts so the SignatureHero can still render.
+function withSignatureHeroFallback(vm) {
+  const out = { ...vm };
+  if (!out.signatureHero) {
+    out.signatureHero = {
+      essence: vm?.fusionNarrative?.headline || 'Signatur noch nicht vollständig geliefert.',
+      ctas: [
+        { label: 'Heute anwenden',   route: '/daily' },
+        { label: 'In Beziehung sehen', route: '/synastry' },
+      ],
+    };
+  }
+  if (!out.evidenceCards) {
+    const ev = Array.isArray(vm?.fusionNarrative?.evidence) ? vm.fusionNarrative.evidence : [];
+    const find = (title) => ev.find((e) => (e?.title || '').toLowerCase().includes(title));
+    const west   = find('west');
+    const bazi   = find('bazi');
+    const fusion = find('resonanz') || find('fusion');
+    out.evidenceCards = {
+      western: { title: 'Westliches Chart', body: west?.body   || 'Westliches Chart noch nicht geliefert.' },
+      bazi:    { title: 'BaZi',             body: bazi?.body   || 'BaZi noch nicht geliefert.' },
+      fusion:  { title: 'Fusion',           body: fusion?.body || 'Fusion-Layer noch nicht geliefert.' },
+    };
+  }
+  if (!out.meaningBridge) {
+    out.meaningBridge = {
+      carries:    { title: 'Was dich trägt',   body: 'Tragende Achse wird angezeigt, sobald Sonne und Day Master geliefert sind.', source: 'fallback' },
+      friction:   { title: 'Was reibt',        body: 'Reibungsachse wird angezeigt, sobald der Mond geliefert ist.',               source: 'fallback' },
+      todayLever: { title: 'Was heute hilft',  body: 'Beginne den Tag mit einer kurzen, fokussierten Handlung statt mit Recherche.', source: 'fallback' },
+    };
+  }
+  return out;
 }
 
 // Maps a raw API profile to the hero viewModel shape.
@@ -92,6 +129,11 @@ function buildHeroViewModel(profile) {
       rotations: [],
       evidence:  evidence.slice(0, 3),
     },
+    // OV-I2: SignatureHero + MeaningBridge inputs from the ViewModel.
+    signatureHero: existing.signatureHero,
+    evidenceCards: existing.evidenceCards,
+    meaningBridge: existing.meaningBridge,
+    elementSummary: existing.elementSummary,
     baziPillars:      existing.baziPillars,
     westernCore:      { bodies: existing.westernFactors },
     fusionCoherence:  existing.fusionSummary,
@@ -113,8 +155,13 @@ function renderPage(vm) {
   const wrap = document.createElement('div');
   wrap.className = 'overview-page';
 
+  // OV-I2: SignatureHero is the FIRST data-section. It composes the wheel (left)
+  // and the fusion-signature panel (right). The legacy hero (key-facts strip +
+  // wheel/narrative slots) is mounted INSIDE the SignatureHero's wheel-anchor so
+  // backwards-compatible selectors (data-section="hero", data-section="key-facts",
+  // data-section="birthchart-wheel", data-section="fusion-narrative") still exist.
   wrap.append(
-    renderHero(vm),
+    renderSignatureHeroWithLegacyHero(vm),
     renderBaziPillars(vm),
     renderWesternCore(vm),
     renderFusionCoherence(vm),
@@ -122,6 +169,17 @@ function renderPage(vm) {
     renderDeepDive(vm),
   );
   return wrap;
+}
+
+// OV-I2: wraps the existing renderHero output inside a SignatureHero section so
+// that:
+//   1. data-section="signature-hero" is the first section on the page.
+//   2. The existing data-section="hero" / "key-facts" / "birthchart-wheel" /
+//      "fusion-narrative" anchors are preserved (mounted inside wheel-anchor).
+function renderSignatureHeroWithLegacyHero(vm) {
+  const legacyHero = renderHero(vm);
+  const signatureHero = renderSignatureHero(vm, { wheelNode: legacyHero });
+  return signatureHero;
 }
 
 // ── Hero section (data-section="hero")
