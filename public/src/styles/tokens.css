@@ -220,6 +220,17 @@
   --border:       var(--bz-border-1);
   --accent:       var(--bz-gold);
   --accent2:      var(--bz-ember);
+  /* I4: spacing + typography aliases */
+  --space-md:     var(--bz-space-md);
+  --space-lg:     var(--bz-space-lg);
+  --space-xl:     3rem;
+  --font-display: var(--bz-font-display);
+  --radius-lg:    var(--bz-radius-lg);
+  /* I4: surface + text aliases */
+  --surface-elevated: rgba(255,255,255,0.06);
+  --border-subtle:    rgba(255,255,255,0.08);
+  --text-muted:       rgba(255,255,255,0.6);
+  --text-strong:      #fff;
   --gold:         var(--bz-gold);
   --gold-light:   var(--bz-gold-light);
   --ok:           var(--bz-emerald);

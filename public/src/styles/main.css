@@ -2471,6 +2471,131 @@ h1.page-title, h2.layer-title {
 }
 @media (max-width: 720px) { .audit-legend { grid-template-columns: 1fr; } }
 
+/* ============================================================
+ * Overview Premium-Hero (I4)
+ * ============================================================ */
+
+.overview-page { max-width: 1200px; margin-inline: auto; padding: 1rem; }
+
+.overview-hero { margin-block: 1.5rem; }
+
+.overview-hero__grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-xl, 2rem);
+  align-items: start;
+}
+
+.overview-hero__wheel { min-width: 0; }
+.overview-hero__wheel svg,
+.overview-hero__wheel canvas { width: 100%; height: auto; max-width: 640px; }
+
+.overview-hero__narrative {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg, 1.5rem);
+  min-width: 0;
+}
+
+.overview-hero__headline {
+  font-family: var(--font-display, "Playfair Display", serif);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.overview-hero__evidence {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md, 1rem);
+}
+
+.key-facts-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.75rem 1.25rem;
+}
+
+.key-fact-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: var(--surface-elevated, rgba(255,255,255,0.06));
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  font-size: 0.85rem;
+}
+
+.key-fact-pill__label {
+  color: var(--text-muted, rgba(255,255,255,0.6));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.7rem;
+}
+
+.key-fact-pill__value {
+  color: var(--text-strong, #fff);
+  font-weight: 600;
+}
+
+.overview-section { margin-top: var(--space-xl, 2rem); }
+
+details[data-progressive] {
+  margin-top: var(--space-md, 1rem);
+  border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  padding-top: 0.5rem;
+}
+
+details[data-progressive] > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.9rem;
+  color: var(--text-muted, rgba(255,255,255,0.65));
+  padding: 0.5rem 0;
+}
+
+.deep-dive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md, 1rem);
+  margin-top: var(--space-md, 1rem);
+}
+
+.deep-dive-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md, 1rem);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface-elevated, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.deep-dive-tile:hover,
+.deep-dive-tile:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--accent, rgba(255,200,120,0.5));
+}
+
+.deep-dive-tile__title { font-weight: 600; }
+.deep-dive-tile__arrow { opacity: 0.6; }
+
+.element-bars { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.element-bar-row { display: flex; align-items: center; gap: 0.75rem; }
+.element-bar-label { min-width: 5rem; font-size: 0.875rem; text-transform: capitalize; }
+.element-bar-fill { height: 8px; border-radius: 4px; background: var(--accent, rgba(255,200,120,0.7)); }
+
+@media (max-width: 900px) {
+  .overview-hero__grid { grid-template-columns: 1fr; }
+  .overview-hero__wheel { order: 1; }
+  .overview-hero__narrative { order: 2; }
+}
+
 /* ════════════════════════════════════════════════════════════════════════
    SPRINT K — RESPONSIVE COVERAGE
    Single consolidated section. Each rule is scoped to one selector +
@@ -2490,13 +2615,12 @@ h1.page-title, h2.layer-title {
     gap: 0.5rem;
     font-size: 0.85rem;
   }
-  /* Overview Wheel: cap width so it doesn't push the page wider */
-  .natal-wheel-section svg.natal-chart-wheel { max-width: 420px; }
   /* BaZi pillar grid: 2x2 already fits tablet — explicit lock */
-  .bazi-pillars,
-  .bazi-explainable-grid { grid-template-columns: repeat(2, 1fr); }
-  /* Western core grid: 4 cards become 2x2 */
-  .western-education-grid { grid-template-columns: repeat(2, 1fr); }
+  .bazi-pillars { grid-template-columns: repeat(2, 1fr); }
+  /* Overview Hero: collapse to single column on tablet */
+  .overview-hero__grid { grid-template-columns: 1fr; }
+  .overview-hero__wheel { order: 1; }
+  .overview-hero__narrative { order: 2; }
   /* Houses 12-grid: 3x4 fits but tighter padding */
   .houses-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
   /* Daily steps: keep one-column flow */
@@ -2522,14 +2646,12 @@ h1.page-title, h2.layer-title {
     text-align: center;
     padding: 0.5rem 0.4rem;
   }
-  /* Overview Wheel: scale to fit narrow viewport */
-  .natal-wheel-section svg.natal-chart-wheel { max-width: 320px; }
-  .natal-wheel-section { padding-inline: 0.5rem; }
   /* BaZi pillar grid: 4 cards stack vertically */
-  .bazi-pillars,
-  .bazi-explainable-grid { grid-template-columns: 1fr; }
-  /* Western: stack 4 cores */
-  .western-education-grid { grid-template-columns: 1fr; }
+  .bazi-pillars { grid-template-columns: 1fr; }
+  /* Overview Hero: single column on mobile, wheel above narrative */
+  .overview-hero__grid { grid-template-columns: 1fr; }
+  .key-facts-strip { gap: 0.35rem; }
+  .deep-dive-grid { grid-template-columns: 1fr; }
   /* WuXing radar: shrink so labels stay readable */
   .wuxing-radar svg,
   .wuxing-radar { max-width: 280px; margin-inline: auto; }
