@@ -365,30 +365,60 @@ function renderElementEconomy(vm) {
   return section;
 }
 
-// ── Deep Dive ────────────────────────────────────────────────────────────────
+// ── Guided Deep Dive (OV-I4-T12) ─────────────────────────────────────────────
+//
+// Four intent-driven cards built from vm.guidedDeepDives. Each carries a
+// user-language intent ("Ich will …") instead of an internal page name, plus
+// an internal hash route (#/personality, #/daily, …). The legacy
+// data-deep-dive-tile attribute is preserved so existing layout tests that
+// look for tile anchors keep working.
 
 function renderDeepDive(vm) {
   const section = document.createElement('section');
-  section.dataset.section = 'deep-dive';
-  section.className = 'overview-section';
-  section.append(SectionHeader({ eyebrow: 'Wo geht es weiter?', headline: 'Vertiefung', anchor: 'deep-dive', lane: 'west' }));
+  section.dataset.section = 'guided-deep-dive';
+  section.className = 'overview-section bz-guided-deep-dive';
+  section.append(SectionHeader({
+    eyebrow:  'Wo geht es weiter?',
+    headline: 'Geführte Vertiefung',
+    anchor:   'guided-deep-dive',
+    lane:     'west',
+  }));
 
   const grid = document.createElement('div');
-  grid.className = 'deep-dive-grid';
+  // Keep legacy `deep-dive-grid` class for backwards-compat with the
+  // Sprint-K responsive CSS block, alongside the new BEM root.
+  grid.className = 'bz-guided-deep-dive__grid deep-dive-grid';
 
-  for (const tile of vm.deepDive) {
+  const intents = Array.isArray(vm.guidedDeepDives) && vm.guidedDeepDives.length
+    ? vm.guidedDeepDives
+    : [
+        { intent: 'Ich will mich verstehen',         route: '/personality' },
+        { intent: 'Ich will es heute anwenden',      route: '/daily'       },
+        { intent: 'Ich will Beziehungsmuster sehen', route: '/synastry'    },
+        { intent: 'Ich will die Berechnung prüfen',  route: '/method'      },
+      ];
+
+  for (const dd of intents) {
+    const route = (dd.route || '').startsWith('/') ? dd.route : `/${dd.route || ''}`;
     const a = document.createElement('a');
-    a.dataset.deepDiveTile = tile.id;
-    a.className = 'deep-dive-tile';
-    a.href = tile.href;
-    const title = document.createElement('span');
-    title.className = 'deep-dive-tile__title';
-    title.textContent = tile.title;
+    a.className = 'bz-deep-dive-card deep-dive-tile';
+    a.href = `#${route}`;
+    // Backcompat: layout tests look for data-deep-dive-tile anchors.
+    a.dataset.deepDiveTile = (route.replace(/^\//, '') || dd.intent.slice(0, 16))
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-');
+
+    const heading = document.createElement('h4');
+    heading.className = 'bz-deep-dive-card__intent';
+    heading.textContent = dd.intent;
+    a.append(heading);
+
     const arrow = document.createElement('span');
-    arrow.className = 'deep-dive-tile__arrow';
+    arrow.className = 'bz-deep-dive-card__arrow';
     arrow.setAttribute('aria-hidden', 'true');
     arrow.textContent = '→';
-    a.append(title, arrow);
+    a.append(arrow);
+
     grid.append(a);
   }
   section.append(grid);

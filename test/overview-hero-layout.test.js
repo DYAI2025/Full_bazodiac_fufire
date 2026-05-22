@@ -97,7 +97,7 @@ test('OverviewPage renders all hero sections in correct order', () => {
     'western-core',
     'fusion-coherence',
     'element-economy',
-    'deep-dive',
+    'guided-deep-dive',
   ], `Section order mismatch. Got: ${ids.join(', ')}`);
 });
 
@@ -139,8 +139,9 @@ test('Key Facts strip renders as compact pills above hero content', () => {
 
 test('Deep-Dive section renders tiles that link to detail routes', () => {
   const root = mountPage(FIXTURE);
-  const deep = root.querySelector('[data-section="deep-dive"]');
-  assert.ok(deep, 'deep-dive section missing');
+  // OV-I4-T12: deep-dive section renamed to guided-deep-dive.
+  const deep = root.querySelector('[data-section="guided-deep-dive"]');
+  assert.ok(deep, 'guided-deep-dive section missing');
 
   const tiles = Array.from(deep.querySelectorAll('a[data-deep-dive-tile]'));
   assert.ok(tiles.length >= 3, `expected >= 3 deep-dive tiles, got ${tiles.length}`);
@@ -201,4 +202,31 @@ test('OV-I2: signature-hero is the first data-section in the page', () => {
     'signature-hero',
     `signature-hero must be first data-section; got: ${sections[0]}`,
   );
+});
+
+// ── OV-I4-T12: GuidedDeepDive 4 intent-driven CTAs ──────────────────────────
+
+test('OV-I4-T12: page renders all 4 guided-deep-dive intent strings', () => {
+  const root = mountPage(FIXTURE);
+  const text = root.textContent || '';
+  for (const intent of [
+    'Ich will mich verstehen',
+    'Ich will es heute anwenden',
+    'Ich will Beziehungsmuster sehen',
+    'Ich will die Berechnung prüfen',
+  ]) {
+    assert.ok(text.includes(intent), `intent string missing: "${intent}"`);
+  }
+});
+
+test('OV-I4-T12: guided-deep-dive section contains 4 internal hash anchors', () => {
+  const root = mountPage(FIXTURE);
+  const section = root.querySelector('[data-section="guided-deep-dive"]');
+  assert.ok(section, 'guided-deep-dive section missing');
+  const anchors = Array.from(section.querySelectorAll('a[href]'));
+  assert.ok(anchors.length >= 4, `expected >=4 anchors, got ${anchors.length}`);
+  for (const a of anchors) {
+    const href = a.getAttribute('href') || '';
+    assert.ok(href.startsWith('#/'), `anchor href must start with "#/", got: ${href}`);
+  }
 });
