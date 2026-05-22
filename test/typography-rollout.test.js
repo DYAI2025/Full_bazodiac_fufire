@@ -18,10 +18,10 @@ test('tokens.css declares all 5 font-family tokens (--bz-font-{serif,sans,ui,mon
   }
 });
 
-test('tokens.css @imports Cormorant Garamond + Manrope + Inter + JetBrains Mono + Noto Sans SC from Google Fonts', () => {
-  // Per user-decision 5 + target spec, all 5 families load via Google Fonts.
-  // Escape '+' (URL-encoded space in Google Fonts family= queries) for regex.
-  for (const fam of ['Cormorant\\+Garamond', 'Manrope', 'Inter', 'JetBrains\\+Mono', 'Noto\\+Sans\\+SC']) {
+test('tokens.css @imports Playfair Display + DM Serif Display + Inter + Plus Jakarta Sans + JetBrains Mono + Noto Sans SC from Google Fonts (I1)', () => {
+  // I1 replaced Cormorant Garamond + Manrope with Playfair Display + DM Serif Display
+  // + Plus Jakarta Sans for a premium editorial feel.
+  for (const fam of ['Playfair\\+Display', 'DM\\+Serif\\+Display', 'Inter', 'Plus\\+Jakarta\\+Sans', 'JetBrains\\+Mono', 'Noto\\+Sans\\+SC']) {
     assert.match(TOKENS_CSS, new RegExp(fam), `tokens.css must @import ${fam.replace(/\\\+/g, '+')}`);
   }
 });

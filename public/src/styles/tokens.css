@@ -4,7 +4,7 @@
    Source: Astro-Noctum repo (src/index.css) + BRAND_VOICE.md
    ════════════════════════════════════════════════════════════════════════ */
 
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Manrope:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap");
 
 :root {
   /* ── CORE PALETTE ─────────────────────────────────────────────────── */
@@ -20,6 +20,12 @@
   --bz-gold-antique:  #A77D38;   /* borders, patina */
   --bz-gold-muted:    rgba(212, 175, 55, 0.5);
   --bz-gold-glow:     rgba(212, 175, 55, 0.4);
+
+  /* I1 — Premium Accent (warm gold/ember replaces legacy blue/lila) */
+  --bz-ember:         #E8893D;
+  --bz-ember-light:   #FFB070;
+  --bz-ember-deep:    #8B4513;
+  --bz-amber:         #F0B860;
 
   /* Morning (Light) */
   --bz-dawn:          #F8FAFC;   /* light bg */
@@ -58,13 +64,16 @@
   --bz-fg-3:          rgba(255, 255, 255, 0.50);
   --bz-border-1:      rgba(212, 175, 55, 0.15);
   --bz-border-2:      rgba(212, 175, 55, 0.30);
-  --bz-accent:        var(--bz-gold);
+  --bz-accent:        var(--bz-gold);              /* primary accent — gold */
+  --bz-accent-warm:   var(--bz-ember);             /* warm secondary accent */
+  --bz-accent-soft:   var(--bz-amber);             /* soft tertiary accent */
   --bz-link:          var(--bz-gold);
 
-  /* ── TYPOGRAPHY ───────────────────────────────────────────────────── */
-  --bz-font-serif:    "Cormorant Garamond", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --bz-font-sans:     "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --bz-font-ui:       "Inter", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  /* ── TYPOGRAPHY (I1: serif → Playfair / DM Serif Display, UI → Inter / Plus Jakarta) */
+  --bz-font-serif:    "Playfair Display", "DM Serif Display", ui-serif, Georgia, "Times New Roman", serif;
+  --bz-font-display:  "DM Serif Display", "Playfair Display", ui-serif, Georgia, serif;
+  --bz-font-sans:     "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bz-font-ui:       "Inter", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --bz-font-mono:     "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --bz-font-cjk:      "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
 
@@ -198,7 +207,7 @@
   --card:         rgba(26, 28, 30, 0.55);
   --border:       var(--bz-border-1);
   --accent:       var(--bz-gold);
-  --accent2:      var(--bz-saphir);
+  --accent2:      var(--bz-ember);
   --gold:         var(--bz-gold);
   --gold-light:   var(--bz-gold-light);
   --ok:           var(--bz-emerald);

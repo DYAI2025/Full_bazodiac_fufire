@@ -1,17 +1,9 @@
+/* I1: main.css no longer ships its own palette literals. Every legacy
+   var falls back through tokens.css legacy-alias bridge. */
 :root {
   color-scheme: dark;
-  --bg:        #08090d;
-  --panel:     #0f111a;
-  --panel2:    #161923;
-  --border:    #222840;
-  --text:      #e8ecff;
-  --muted:     #7a85a8;
-  --accent:    #7c8cff;
-  --accent2:   #a78bfa;
-  --ok:        #34d399;
-  --warn:      #fbbf24;
-  --bad:       #f87171;
-  --radius:    8px;
+  /* --bg, --panel, --text, --accent etc. are inherited from
+     tokens.css legacy-alias bridge. Do not redeclare with literals. */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,8 +11,12 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.6 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--bz-font-ui);
+  font-size: var(--bz-body);
+  line-height: var(--bz-lh-body);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #app { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; }
@@ -29,7 +25,14 @@ body {
 .input-page { display: flex; flex-direction: column; gap: 32px; }
 
 .input-header { text-align: center; }
-.app-title { font-size: 2rem; font-weight: 800; letter-spacing: -.03em; color: var(--accent); }
+.app-title {
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-h1);
+  font-weight: 600;
+  letter-spacing: var(--bz-ls-display);
+  color: var(--bz-gold-light);
+  line-height: var(--bz-lh-display);
+}
 .app-subtitle { color: var(--muted); font-size: .85rem; margin-top: 4px; }
 
 .birth-form { display: flex; flex-direction: column; gap: 20px; }
@@ -56,18 +59,22 @@ input:focus { border-color: var(--accent); }
 .time-certainty label { display: flex; align-items: center; gap: 6px; font-size: .85rem; cursor: pointer; }
 
 .cta-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: 700;
+  background: linear-gradient(135deg, var(--bz-gold) 0%, var(--bz-ember) 100%);
+  color: var(--bz-obsidian);
+  border: 1px solid var(--bz-gold-antique);
+  border-radius: var(--bz-radius-full);
+  padding: 12px 28px;
+  font-family: var(--bz-font-ui);
+  font-size: var(--bz-body);
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: opacity .15s;
+  transition: transform var(--bz-dur-fast) var(--bz-ease-out),
+              box-shadow var(--bz-dur-fast) var(--bz-ease-out);
+  box-shadow: var(--bz-shadow-tile);
 }
 .cta-btn:disabled { opacity: .4; cursor: not-allowed; }
-.cta-btn:not(:disabled):hover { opacity: .85; }
+.cta-btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: var(--bz-glow-hover); }
 
 .form-error { color: var(--bad); font-size: .9rem; padding: 8px 0; }
 
