@@ -137,7 +137,7 @@ Screenshot-Matrix erstellt unter `docs/qa/screenshots/b1-light-mode-contrast/`:
 
 Visueller Review aller 8 Hauptseiten in dark (planetarium) und light (morning) Mode.
 
-**Dark Mode (planetarium):** Vollstaendig erhalten — tiefer schwarzer Hintergrund, weisser/goldener Text, Sternchenpartikel auf allen 8 Seiten. Kein Regression. ✓
+**Dark Mode (planetarium):** Vollstaendig erhalten — tiefer schwarzer Hintergrund, weisser/goldener Text, Sternchenpartikel auf allen 8 Seiten. Keine Regression. ✓
 
 **Light Mode (morning):**
 - Alle 8 Seiten zeigen saubere weisse/Pergament-Panel-Hintergruende mit dunkel lesbarem Text. ✓
