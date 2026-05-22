@@ -212,11 +212,12 @@ function renderBirthchartWheelDetail(vm) {
   section.dataset.section = 'birthchart-wheel';
   section.className = 'overview-section overview-section--birthchart-wheel';
   if (vm.wheel) {
-    // OV-I3-T09: AuditTabs skeleton — emits [data-audit-row="<key>"] targets
-    // for every body + every axis so the wheel's hover/click linking has a
-    // landing spot. Sits above the legacy NatalChartAudit which is kept for
+    // OV-I3-T09 / OV-I4-T11: AuditTabs with 4 tabs (Top 3 / Planeten /
+    // Häuser / Aspekte) — emits [data-audit-row="<key>"] targets for every
+    // body + every axis so the wheel's hover/click linking has a landing
+    // spot. Sits above the legacy NatalChartAudit which is kept for
     // backwards-compatible smoke tests.
-    section.append(NatalChartAuditTabs({ wheel: vm.wheel }));
+    section.append(NatalChartAuditTabs({ wheel: vm.wheel, topMovements: vm.topMovements }));
     section.append(NatalChartAudit({ wheel: vm.wheel }));
   }
   return section;
