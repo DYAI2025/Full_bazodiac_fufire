@@ -1,5 +1,6 @@
 // public/src/pages/DailyPage.js
 import { getDailyExperience, getTransitNow, getTransitTimeline } from '../api/client.js';
+import { RollingText } from '../components/RollingText.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
@@ -194,6 +195,19 @@ export function DailyPage(app, { profile = null } = {}) {
       <div class="daily-three-doors-mount"></div>
     </main>
   `;
+
+  // I2: wire hero title as RollingText.
+  const dailyH1 = app.querySelector('.daily-title');
+  if (dailyH1) {
+    const heroRoll = RollingText({ text: 'Tagespuls', tagName: 'h1', className: 'daily-title' });
+    heroRoll.setAttribute('data-rolling-text', 'hero');
+    dailyH1.replaceWith(heroRoll);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => heroRoll.startRolling());
+    } else {
+      heroRoll.startRolling();
+    }
+  }
 
   if (expProfile) {
     app.querySelector('.sig-bar-mount').replaceWith(

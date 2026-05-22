@@ -59,10 +59,10 @@ export function RollingText({
     const span = document.createElement('span');
     span.setAttribute('data-roll-char', '');
     span.setAttribute('aria-hidden', 'true');
-    span.textContent = char === ' ' ? ' ' : char;
+    span.textContent = char === ' ' ? ' ' : char;
 
     if (animatable) {
-      span.dataset.rollFinal = char === ' ' ? ' ' : char;
+      span.dataset.rollFinal = char === ' ' ? ' ' : char;
       span.dataset.rollDelay = String(baseDelay + i * perChar);
     }
 
@@ -165,9 +165,9 @@ export function decorateRollingText(root, {
       const span = document.createElement('span');
       span.setAttribute('data-roll-char', '');
       span.setAttribute('aria-hidden', 'true');
-      span.textContent = char === ' ' ? ' ' : char;
+      span.textContent = char === ' ' ? ' ' : char;
       if (animatable) {
-        span.dataset.rollFinal = char === ' ' ? ' ' : char;
+        span.dataset.rollFinal = char === ' ' ? ' ' : char;
       }
       node.appendChild(span);
       charSpans.push({ span, finalChar: char, delay: 120 + i * 34 });

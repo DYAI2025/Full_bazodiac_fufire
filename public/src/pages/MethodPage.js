@@ -14,6 +14,7 @@ import { UnavailableCard } from '../components/UnavailableCard.js';
 import { PageShell }      from '../components/PageShell.js';
 import { SectionHeader }  from '../components/SectionHeader.js';
 import { LuxuryCard }     from '../components/LuxuryCard.js';
+import { RollingText }    from '../components/RollingText.js';
 
 function fmtJSON(obj, max = 800) {
   try {
@@ -69,6 +70,19 @@ export function MethodPage(app, { profile = null } = {}) {
     subline: 'Diese Seite ist die einzige Stelle der App, die rohe API-Antworten, Endpunkt-Pfade und Berechnungs-Provenienz zeigt. Alles andere ist aufbereitet — hier siehst du, was die FuFire-Engine zurückgibt.',
   });
   shell.setAttribute('data-lane', 'fusion');
+
+  // I2: replace static h1 with RollingText hero title.
+  const staticH1 = shell.querySelector('[data-page-title]');
+  if (staticH1) {
+    const heroRoll = RollingText({ text: 'Was hier passiert', tagName: 'h1', className: 'bz-h1 page-title' });
+    heroRoll.setAttribute('data-rolling-text', 'hero');
+    staticH1.replaceWith(heroRoll);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => heroRoll.startRolling());
+    } else {
+      heroRoll.startRolling();
+    }
+  }
 
   // Endpoint catalog section
   const catalogSection = document.createElement('section');

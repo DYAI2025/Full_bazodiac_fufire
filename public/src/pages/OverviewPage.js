@@ -1,7 +1,7 @@
 import { generateCoreStatement }    from '../domain/coreStatement.js';
 import { profileToOverviewModel }   from '../domain/overviewModel.js';
 import { NatalChartWheel }          from '../components/NatalChartWheel.js';
-import { decorateRollingText }      from '../components/RollingText.js';
+import { RollingText, decorateRollingText } from '../components/RollingText.js';
 import { renderBaziPillars }     from '../domain/baziRenderer.js';
 import { ExplainableCard }       from '../components/ExplainableCard.js';
 import { WuXingEducationGrid }   from '../components/WuXingEducationGrid.js';
@@ -688,4 +688,18 @@ export function OverviewPage(app, { profile, onNavigate }) {
 
   // RollingText: decorate selected short headings marked with data-roll-text.
   decorateRollingText(app, { selector: '[data-roll-text]', maxChars: 30 });
+
+  // I2: wire hero title in InsightHero as RollingText.
+  const heroH1 = app.querySelector('.insight-hero__title');
+  if (heroH1) {
+    const heroText = heroH1.textContent.trim();
+    const heroRoll = RollingText({ text: heroText, tagName: 'h1', className: 'insight-hero__title' });
+    heroRoll.setAttribute('data-rolling-text', 'hero');
+    heroH1.replaceWith(heroRoll);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => heroRoll.startRolling());
+    } else {
+      heroRoll.startRolling();
+    }
+  }
 }
