@@ -2497,6 +2497,21 @@ h1.page-title, h2.layer-title {
   body, #app { overflow-x: clip; }
 }
 
+/* ── I2: RollingText scramble engine hooks ─────────────────────────────────── */
+/* Visual is intentionally minimal — the typographic motion comes from
+   per-char textContent swaps. */
+.rolling-text { display: inline-block; }
+.rolling-text [data-roll-char] {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+.rolling-text--rolling [data-roll-char] { opacity: 0.92; }
+.rolling-text--settled [data-roll-char] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .rolling-text--rolling [data-roll-char],
+  .rolling-text--settled [data-roll-char] { opacity: 1; }
+}
+
 /* ── I1: Layout primitives ─────────────────────────────────────────────── */
 
 /* PageShell — outer page wrapper */

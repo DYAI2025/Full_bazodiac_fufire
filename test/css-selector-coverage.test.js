@@ -72,7 +72,10 @@ function extractClassSelectors(css) {
 const ALLOW_KNOWN_TEMPLATE = new Set([
   // Add here if any selector is provably-used-via-innerHTML-template.
   // BEM modifiers set via dynamic template strings (not literal className =):
-  'luxury-card--hero',  // LuxuryCard.js: `'luxury-card' + (variant ? \` luxury-card--${variant}\` : '')`
+  'luxury-card--hero',      // LuxuryCard.js: dynamic BEM modifier via template string
+  'rolling-text',           // RollingText.js: el.classList.add('rolling-text')
+  'rolling-text--rolling',  // RollingText.js: el.classList.add('rolling-text--rolling') in engine
+  'rolling-text--settled',  // RollingText.js: el.classList.add('rolling-text--settled') on completion
 ]);
 
 test('Sprint-K @media selectors all exist as className assignments in public/src/', () => {
