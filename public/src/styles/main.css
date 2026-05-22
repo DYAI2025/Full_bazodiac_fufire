@@ -2185,6 +2185,48 @@ input:focus { border-color: var(--accent); }
 .secondary-nav__tab[data-lane="west"][data-active="true"]   { color: var(--accent, #6f8af5); }
 .secondary-nav__tab[data-lane="fusion"][data-active="true"] { color: var(--gold-light, #d4b483); }
 
+/* I7: Karten-Dropdown — 5 chart-lane routes consolidated under <details> */
+.secondary-nav__group { position: relative; display: inline-block; }
+.secondary-nav__group-summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.secondary-nav__group-summary::-webkit-details-marker { display: none; }
+.secondary-nav__group-summary::after {
+  content: '▾';
+  font-size: 0.7rem;
+  opacity: 0.6;
+  transition: transform 0.18s ease;
+}
+.secondary-nav__group[open] > .secondary-nav__group-summary::after {
+  transform: rotate(180deg);
+}
+.secondary-nav__group[open] {
+  background: var(--surface-elevated, rgba(255,255,255,.04));
+  border-radius: 6px;
+}
+.secondary-nav__group .secondary-nav__tab--nested {
+  display: block;
+  position: absolute;
+  z-index: 50;
+}
+.secondary-nav__group[open] .secondary-nav__tab--nested {
+  position: relative;
+}
+.secondary-nav__group:not([open]) .secondary-nav__tab--nested { display: none; }
+.secondary-nav__group[open] {
+  display: inline-flex;
+  flex-direction: column;
+  background: var(--surface-elevated, rgba(20,20,30,.95));
+  border: 1px solid var(--border-subtle, rgba(255,255,255,.08));
+  border-radius: 8px;
+  padding: 0.25rem;
+  min-width: 9rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,.4);
+}
+
 /* ── Sprint H2 — data-lane-driven visual identity ────────────────────────
    Every page that sets `data-lane` on its <main> gets per-lane chrome.
    Body chrome tokens (`--lane-*`) cascade down via tokens.css recipes.

@@ -11,17 +11,23 @@
 // deep-link routes — they intentionally do not appear in SecondaryNav.
 
 export const ROUTES = [
-  { path: '/overview', label: 'Übersicht',  lane: 'fusion',  needsProfile: true  },
-  { path: '/bazi',     label: 'BaZi',       lane: 'bazi',    needsProfile: true  },
-  { path: '/western',  label: 'Western',    lane: 'west',    needsProfile: true  },
-  { path: '/wuxing',   label: 'Wu-Xing',    lane: 'wuxing',  needsProfile: true  },
-  { path: '/fusion',   label: 'Fusion',     lane: 'fusion',  needsProfile: true  },
-  { path: '/daily',    label: 'Tagespuls',  lane: 'daily',   needsProfile: false },
-  { path: '/houses',   label: 'Häuser',     lane: 'fusion',  needsProfile: true  },
-  { path: '/synastry', label: 'Beziehung',  lane: 'rel',     needsProfile: false },
-  { path: '/',         label: 'Daten',      lane: 'intake',  needsProfile: false },
-  { path: '/method',   label: 'Methode',    lane: 'method',  needsProfile: false },
+  { path: '/overview', label: 'Übersicht',  lane: 'fusion',  needsProfile: true                   },
+  { path: '/bazi',     label: 'BaZi',       lane: 'bazi',    needsProfile: true, group: 'cards'  },
+  { path: '/western',  label: 'Western',    lane: 'west',    needsProfile: true, group: 'cards'  },
+  { path: '/wuxing',   label: 'Wu-Xing',    lane: 'wuxing',  needsProfile: true, group: 'cards'  },
+  { path: '/fusion',   label: 'Fusion',     lane: 'fusion',  needsProfile: true, group: 'cards'  },
+  { path: '/houses',   label: 'Häuser',     lane: 'fusion',  needsProfile: true, group: 'cards'  },
+  { path: '/daily',    label: 'Tagespuls',  lane: 'daily',   needsProfile: false                  },
+  { path: '/synastry', label: 'Beziehung',  lane: 'rel',     needsProfile: false                  },
+  { path: '/',         label: 'Daten',      lane: 'intake',  needsProfile: false                  },
+  { path: '/method',   label: 'Methode',    lane: 'method',  needsProfile: false                  },
 ];
+
+// Group metadata — drives SecondaryNav dropdown rendering.
+// I7: 5 chart-lane routes consolidated under "Karten" to reduce tab overload.
+export const ROUTE_GROUPS = {
+  cards: { label: 'Karten', lane: 'fusion' },
+};
 
 // Helper: find a ROUTES entry by current location.hash (handles "#/x" + "/x").
 export function currentRoute() {
