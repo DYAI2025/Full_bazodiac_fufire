@@ -355,3 +355,28 @@ test('OV-I3: DSC and IC derived consistently from ASC and MC (asc=27.71, mc=280.
   assert.match(s, /data-angle-dsc="207\.71"/, 'DSC = (asc+180) mod 360 = 207.71');
   assert.match(s, /data-angle-ic="100\.66"/,  'IC  = (mc +180) mod 360 = 100.66');
 });
+
+// ── OV-I3-T07 RED tests — three SVG layers ──────────────────────────────────
+
+test('OV-I3: wheel has four named SVG layers in order', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [{ key: 'Sun', name: 'Sun', longitude: 12.0, glyph: '☉', source: 'api' }],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  for (const layer of ['zodiac-ring', 'houses-axes', 'bodies-aspects', 'labels']) {
+    assert.match(s, new RegExp(`data-layer="${layer}"`), `layer ${layer} missing`);
+  }
+  // Order check: zodiac-ring before houses-axes before bodies-aspects before labels.
+  const idxZodiac = s.indexOf('data-layer="zodiac-ring"');
+  const idxHouses = s.indexOf('data-layer="houses-axes"');
+  const idxBodies = s.indexOf('data-layer="bodies-aspects"');
+  const idxLabels = s.indexOf('data-layer="labels"');
+  assert.ok(idxZodiac < idxHouses, 'zodiac-ring must precede houses-axes');
+  assert.ok(idxHouses < idxBodies, 'houses-axes must precede bodies-aspects');
+  assert.ok(idxBodies < idxLabels, 'bodies-aspects must precede labels');
+});

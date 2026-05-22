@@ -12,6 +12,10 @@ const SIGNS_DE = [
   'Waage','Skorpion','Schütze','Steinbock','Wassermann','Fische',
 ];
 
+// OV-I3-T08: zodiac element cycle. Aries=fire, Taurus=earth, Gemini=air,
+// Cancer=water — pattern repeats every 4 signs.
+const ZODIAC_ELEMENT = ['fire', 'earth', 'air', 'water'];
+
 const MAJOR_ASPECTS = new Set([
   'conjunction','sextile','square','trine','opposition',
 ]);
@@ -229,42 +233,91 @@ export function NatalChartWheel({ wheel }) {
   };
   const root = el('svg', rootAttrs);
 
-  // Outer + inner rings.
-  root.appendChild(el('circle', {
+  // OV-I3-T07: <defs> with reusable gradient + filter ids. Even when the
+  // stub-environment can't realise SVG painting, downstream CSS/HTML
+  // consumers (browser) get the materiality.
+  const defs = el('defs', {});
+  defs.appendChild(el('radialGradient', { id: 'bz-wheel-disc', cx: '50%', cy: '50%', r: '50%' }));
+  defs.appendChild(el('filter', { id: 'bz-wheel-glow' }));
+  defs.appendChild(el('filter', { id: 'bz-planet-node' }));
+  root.appendChild(defs);
+
+  // OV-I3-T07: four layered <g> groups in stable z-order.
+  //   1. zodiac-ring     — outer/inner rings, sector wedges, tick marks
+  //   2. houses-axes     — house cusp lines, ASC/MC/IC/DC angle markers
+  //   3. bodies-aspects  — aspect lines + planet nodes
+  //   4. labels          — sign names + body glyphs + degree labels
+  const layerZodiac = el('g', { 'data-layer': 'zodiac-ring' });
+  const layerHouses = el('g', { 'data-layer': 'houses-axes' });
+  const layerBodies = el('g', { 'data-layer': 'bodies-aspects' });
+  const layerLabels = el('g', { 'data-layer': 'labels' });
+  root.appendChild(layerZodiac);
+  root.appendChild(layerHouses);
+  root.appendChild(layerBodies);
+  root.appendChild(layerLabels);
+
+  // ── Layer 1: zodiac-ring (rings + sector wedges + ticks) ─────────────────
+  layerZodiac.appendChild(el('circle', {
     cx: 0, cy: 0, r: R_OUTER,
-    fill: 'none', stroke: 'currentColor', 'stroke-width': 1,
+    fill: 'none', stroke: 'currentColor', 'stroke-width': 1.4,
     'data-ring': 'outer',
   }));
-  root.appendChild(el('circle', {
+  layerZodiac.appendChild(el('circle', {
     cx: 0, cy: 0, r: R_INNER,
     fill: 'none', stroke: 'currentColor', 'stroke-width': 1,
     'data-ring': 'inner',
   }));
 
-  // Three cumulative tick layers (counts: 360 minor, 72 medium, 36 major).
-  // Every degree gets a minor tick; every 5° also gets a medium; every 10° also a major.
+  // OV-I3-T08: 12 zodiac sectors with element class. Element mapping:
+  //   fire  = Aries, Leo, Sagittarius      (0, 4, 8)
+  //   earth = Taurus, Virgo, Capricorn     (1, 5, 9)
+  //   air   = Gemini, Libra, Aquarius      (2, 6, 10)
+  //   water = Cancer, Scorpio, Pisces      (3, 7, 11)
+  for (let i = 0; i < 12; i++) {
+    const lonStart = i * 30;
+    const lonEnd   = lonStart + 30;
+    const element  = ZODIAC_ELEMENT[i % 4];
+    const p0 = lonToXYAsc(lonStart, R_OUTER, ascDeg);
+    const p1 = lonToXYAsc(lonEnd,   R_OUTER, ascDeg);
+    const q0 = lonToXYAsc(lonStart, R_INNER, ascDeg);
+    const q1 = lonToXYAsc(lonEnd,   R_INNER, ascDeg);
+    // Annular wedge — large-arc-flag=0 (each sector is 30° < 180°).
+    const d = [
+      `M ${p0.x} ${p0.y}`,
+      `A ${R_OUTER} ${R_OUTER} 0 0 0 ${p1.x} ${p1.y}`,
+      `L ${q1.x} ${q1.y}`,
+      `A ${R_INNER} ${R_INNER} 0 0 1 ${q0.x} ${q0.y}`,
+      'Z',
+    ].join(' ');
+    layerZodiac.appendChild(el('path', {
+      d,
+      class: `bz-sector bz-sector--${element}`,
+      'data-sector': String(i),
+      'data-sector-element': element,
+      'data-sign': SIGNS_DE[i],
+    }));
+  }
+
+  // Tick layers (360 minor, 72 medium, 36 major).
   for (let deg = 0; deg < 360; deg++) {
     const tipOuter = lonToXYAsc(deg, R_OUTER, ascDeg);
-    // Minor: every degree.
     const tipMinor = lonToXYAsc(deg, R_OUTER - 3, ascDeg);
-    root.appendChild(el('line', {
+    layerZodiac.appendChild(el('line', {
       x1: tipOuter.x, y1: tipOuter.y, x2: tipMinor.x, y2: tipMinor.y,
       stroke: 'currentColor', 'stroke-width': 0.3, opacity: 0.3,
       'data-tick': 'minor', 'data-tick-deg': deg,
     }));
-    // Medium: every 5°.
     if (deg % 5 === 0) {
       const tipMed = lonToXYAsc(deg, R_OUTER - 5, ascDeg);
-      root.appendChild(el('line', {
+      layerZodiac.appendChild(el('line', {
         x1: tipOuter.x, y1: tipOuter.y, x2: tipMed.x, y2: tipMed.y,
         stroke: 'currentColor', 'stroke-width': 0.6, opacity: 0.55,
         'data-tick': 'medium', 'data-tick-deg': deg,
       }));
     }
-    // Major: every 10°.
     if (deg % 10 === 0) {
       const tipMaj = lonToXYAsc(deg, R_OUTER - 8, ascDeg);
-      root.appendChild(el('line', {
+      layerZodiac.appendChild(el('line', {
         x1: tipOuter.x, y1: tipOuter.y, x2: tipMaj.x, y2: tipMaj.y,
         stroke: 'currentColor', 'stroke-width': 1.0, opacity: 0.85,
         'data-tick': 'major', 'data-tick-deg': deg,
@@ -272,27 +325,15 @@ export function NatalChartWheel({ wheel }) {
     }
   }
 
-  // Sign labels (12 × German name at the midpoint of each 30° sector).
-  for (let i = 0; i < 12; i++) {
-    const lon = i * 30;
-    const labelPos = lonToXYAsc(lon + 15, (R_OUTER + R_INNER) / 2, ascDeg);
-    root.appendChild(el('text', {
-      x: labelPos.x, y: labelPos.y,
-      'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      'font-size': 10, fill: 'currentColor',
-      'data-sign-label': SIGNS_DE[i],
-    }, SIGNS_DE[i]));
-  }
-
-  // House cusps.
+  // ── Layer 2: houses-axes (cusp lines + ASC/MC/IC/DC markers) ─────────────
   if (Array.isArray(w.houses) && w.houses.length) {
     for (const h of w.houses) {
       if (typeof h.cuspLongitude !== 'number') continue;
       const a = lonToXYAsc(h.cuspLongitude, R_INNER, ascDeg);
-      root.appendChild(el('line', {
+      layerHouses.appendChild(el('line', {
         x1: 0, y1: 0, x2: a.x, y2: a.y,
         stroke: 'currentColor', 'stroke-width': 0.5,
-        'stroke-dasharray': '2 2', opacity: 0.5,
+        'stroke-dasharray': '2 2', opacity: 0.35,
         'data-house': String(h.number),
       }));
     }
@@ -302,7 +343,7 @@ export function NatalChartWheel({ wheel }) {
   function renderAngleMarker(lon, label, position) {
     if (typeof lon !== 'number') return;
     const p = lonToXYAsc(lon, R_OUTER + 14, ascDeg);
-    root.appendChild(el('text', {
+    layerHouses.appendChild(el('text', {
       x: p.x, y: p.y,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
       'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
@@ -320,7 +361,7 @@ export function NatalChartWheel({ wheel }) {
   renderAngleMarker(typeof angles.dsc === 'number' ? angles.dsc : dscRaw, 'DSC', 'right');
   renderAngleMarker(typeof angles.ic  === 'number' ? angles.ic  : icRaw,  'IC',  'bottom');
 
-  // Aspect lines (major only, prefer sourceKey/targetKey).
+  // ── Layer 3: bodies-aspects (aspect lines + planet nodes) ────────────────
   if (Array.isArray(w.aspects)) {
     for (const asp of w.aspects) {
       if (!MAJOR_ASPECTS.has(asp.type)) continue;
@@ -332,19 +373,32 @@ export function NatalChartWheel({ wheel }) {
       if (typeof src.longitude !== 'number' || typeof tgt.longitude !== 'number') continue;
       const a = lonToXYAsc(src.longitude, R_ASPECT, ascDeg);
       const b = lonToXYAsc(tgt.longitude, R_ASPECT, ascDeg);
-      const tone = asp.tone ?? 'neutral';
-      root.appendChild(el('line', {
+      const tone = ['hard', 'soft', 'neutral'].includes(asp.tone) ? asp.tone : 'neutral';
+      layerBodies.appendChild(el('line', {
         x1: a.x, y1: a.y, x2: b.x, y2: b.y,
-        stroke: 'currentColor', 'stroke-width': 0.5, opacity: 0.4,
+        stroke: 'currentColor', 'stroke-width': 0.7, opacity: 0.85,
         'data-aspect': asp.type,
-        class: `natal-aspect natal-aspect--${tone}`,
+        'data-aspect-tone': tone,
+        class: `natal-aspect natal-aspect--${tone} bz-aspect bz-aspect--${tone}`,
       }));
     }
   }
 
   // Bodies with glyphs, degree labels, collision lanes, and leader-lines.
   if (Array.isArray(w.bodies)) {
-    renderBodies(root, w.bodies, ascDeg, { R_BODY });
+    renderBodies(layerBodies, w.bodies, ascDeg, { R_BODY });
+  }
+
+  // ── Layer 4: labels (sign names at sector midpoints) ─────────────────────
+  for (let i = 0; i < 12; i++) {
+    const lon = i * 30;
+    const labelPos = lonToXYAsc(lon + 15, (R_OUTER + R_INNER) / 2, ascDeg);
+    layerLabels.appendChild(el('text', {
+      x: labelPos.x, y: labelPos.y,
+      'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      'font-size': 10, fill: 'currentColor',
+      'data-sign-label': SIGNS_DE[i],
+    }, SIGNS_DE[i]));
   }
 
   // OV-I3-T06: embed an inline audit list inside the SVG so the wheel

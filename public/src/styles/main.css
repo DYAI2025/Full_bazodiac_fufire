@@ -2458,17 +2458,57 @@ h1.page-title, h2.layer-title {
 .natal-chart-wheel [data-tick="medium"] { opacity: 0.55; }
 .natal-chart-wheel [data-tick="major"]  { opacity: 0.85; }
 
+/* OV-I3-T07: stronger outer ring + dimmer house lines for visual hierarchy. */
+.natal-chart-wheel [data-ring="outer"] { stroke-width: 1.6; opacity: 0.95; }
+.natal-chart-wheel [data-ring="inner"] { stroke-width: 1.0; opacity: 0.75; }
+.natal-chart-wheel [data-layer="houses-axes"] [data-house] { opacity: 0.35; }
+/* OV-I3-T07: ASC axis primary; planet nodes glow. */
+.natal-chart-wheel [data-axis-key="ASC"] { stroke-width: 2; }
+.natal-chart-wheel [data-layer="bodies-aspects"] circle[data-body-key] {
+  filter: url(#bz-planet-node);
+}
+
 .natal-chart-wheel [data-leader-line="true"] { stroke-dasharray: 1 2; }
 
-.natal-chart-wheel .natal-aspect--hard    { stroke: var(--color-aspect-hard, #b94a4a); opacity: 0.6; }
-.natal-chart-wheel .natal-aspect--soft    { stroke: var(--color-aspect-soft, #4a9b6f); opacity: 0.6; }
-.natal-chart-wheel .natal-aspect--neutral { stroke: var(--color-aspect-neutral, #888); opacity: 0.35; }
+/* OV-I3-T07: aspect tone classes use existing semantic aliases. */
+.natal-chart-wheel .bz-aspect--hard,
+.natal-chart-wheel .natal-aspect--hard {
+  stroke: var(--color-aspect-hard, #b94a4a);
+  opacity: 0.9;
+}
+.natal-chart-wheel .bz-aspect--soft,
+.natal-chart-wheel .natal-aspect--soft {
+  stroke: var(--color-aspect-soft, #4a9b6f);
+  opacity: 0.9;
+}
+.natal-chart-wheel .bz-aspect--neutral,
+.natal-chart-wheel .natal-aspect--neutral {
+  stroke: var(--color-aspect-neutral, #888);
+  opacity: 0.55;
+}
+
+/* OV-I3-T07: sector wedges receive low-opacity element fills. Class names
+   are emitted now; colour tokens land in OV-I3-T08. Until then, sectors
+   stay invisible (fill = currentColor at 0 opacity). */
+.natal-chart-wheel .bz-sector { stroke: none; fill: currentColor; opacity: 0; }
+
+/* OV-I3-T09: hover/focus highlight for planet nodes + axes. */
+.natal-chart-wheel [data-body-key]:hover,
+.natal-chart-wheel [data-body-key]:focus,
+.natal-chart-wheel [data-axis-key]:hover,
+.natal-chart-wheel [data-axis-key]:focus {
+  outline: none;
+  filter: drop-shadow(0 0 4px currentColor);
+}
 
 .natal-chart-wheel [data-angle] {
   paint-order: stroke;
   stroke: var(--bg-base, #0c0c10);
   stroke-width: 3px;
 }
+
+/* OV-I3-T06: inline audit metadata is structural only — never painted. */
+.natal-chart-wheel [data-audit="inline"] { display: none; }
 
 /* ── I3: NatalChartAudit ───────────────────────────────────────────────── */
 .natal-chart-audit { display: grid; gap: 1rem; padding: 1rem 0; }
