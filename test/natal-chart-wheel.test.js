@@ -166,3 +166,125 @@ test('NatalChartWheel Pro: DSC and IC markers when angles.dsc/ic provided', () =
   assert.ok(s.includes('data-marker="dsc"'), 'DSC marker must be present');
   assert.ok(s.includes('data-marker="ic"'),  'IC marker must be present');
 });
+
+// ── I3 RED tests — ASC-left, ticks, glyphs, collision ───────────────────────
+
+test('longitudeToChartAngle: ASC longitude maps to 180° (9 o\'clock / left)', async () => {
+  const { longitudeToChartAngle } = await import('../public/src/components/NatalChartWheel.js');
+  assert.equal(Math.round(longitudeToChartAngle(27.71, 27.71)), 180);
+  assert.equal(Math.round(longitudeToChartAngle(207.71, 27.71)) % 360, 0);
+  assert.equal(Math.round(longitudeToChartAngle(117.71, 27.71)) % 360, 270);
+});
+
+test('NatalChartWheel: ASC marker carries data-angle="ASC" and data-angle-position="left"', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, dsc: 207.71, ic: 100.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.ok(s.includes('data-angle="ASC"'), 'ASC marker must carry data-angle="ASC"');
+  assert.ok(s.includes('data-angle-position="left"'), 'ASC must be tagged as left-positioned');
+});
+
+test('NatalChartWheel: emits 360 minor ticks, 72 medium ticks, 36 major ticks', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, dsc: 207.71, ic: 100.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  const minorCount  = (s.match(/data-tick="minor"/g)  || []).length;
+  const mediumCount = (s.match(/data-tick="medium"/g) || []).length;
+  const majorCount  = (s.match(/data-tick="major"/g)  || []).length;
+  assert.equal(minorCount,  360, `expected 360 minor ticks, got ${minorCount}`);
+  assert.equal(mediumCount,  72, `expected 72 medium ticks, got ${mediumCount}`);
+  assert.equal(majorCount,   36, `expected 36 major ticks, got ${majorCount}`);
+});
+
+test('NatalChartWheel: body with source="missing" emits no dot but present in audit', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Sun',   name: 'Sun',   longitude: 12.0, glyph: '☉', source: 'api'     },
+      { key: 'Pluto', name: 'Pluto', longitude: null, glyph: '♇', source: 'missing' },
+    ],
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    asc: 27.71, mc: 280.66, houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.ok(s.includes('data-body="Sun"'),   'Sun must render');
+  assert.ok(!s.includes('data-body="Pluto"'), 'Pluto must NOT render — longitude missing');
+});
+
+test('NatalChartWheel: planet glyph rendered for every body with longitude', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Sun',     name: 'Sun',     longitude: 353.15, glyph: '☉', source: 'api' },
+      { key: 'Moon',    name: 'Moon',    longitude: 158.23, glyph: '☽', source: 'api' },
+      { key: 'Mercury', name: 'Mercury', longitude: 340.0,  glyph: '☿', source: 'api' },
+    ],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, dsc: 207.71, ic: 100.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.ok(s.includes('data-body-glyph="☉"'), 'Sun glyph missing');
+  assert.ok(s.includes('data-body-glyph="☽"'), 'Moon glyph missing');
+  assert.ok(s.includes('data-body-glyph="☿"'), 'Mercury glyph missing');
+});
+
+test('NatalChartWheel: collision — bodies within 6° get different lane offsets', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Mercury', name: 'Mercury', longitude: 340.0, glyph: '☿', source: 'api' },
+      { key: 'Venus',   name: 'Venus',   longitude: 343.0, glyph: '♀', source: 'api' },
+    ],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.ok(s.match(/data-lane-offset="[1-9]"/),
+    'colliding bodies (Δ < 6°) must be offset onto a non-zero lane');
+});
+
+test('NatalChartWheel: leader-line emitted when body offset onto outer lane', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Mercury', name: 'Mercury', longitude: 340.0, glyph: '☿', source: 'api' },
+      { key: 'Venus',   name: 'Venus',   longitude: 343.0, glyph: '♀', source: 'api' },
+    ],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.ok(s.includes('data-leader-line="true"'),
+    'offset body must emit a leader-line to its true position');
+});
+
+test('NatalChartWheel: solitary body has data-lane-offset="0" and no leader-line', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [{ key: 'Sun', name: 'Sun', longitude: 90.0, glyph: '☉', source: 'api' }],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.ok(s.includes('data-lane-offset="0"'), 'lone body must be on lane 0');
+  assert.ok(!s.includes('data-leader-line="true"'), 'lone body must NOT emit a leader-line');
+});

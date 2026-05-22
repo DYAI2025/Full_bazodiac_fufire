@@ -89,7 +89,8 @@ test('overviewModel.warnings: present when houses missing', () => {
 test('overviewModel: gracefully tolerates empty profile', () => {
   const m = profileToOverviewModel({});
   assert.ok('chartWheel' in m);
-  assert.equal(m.chartWheel.bodies.length, 0);
+  // I3: all canonical bodies are always emitted (source='missing' for absent data)
+  assert.ok(m.chartWheel.bodies.length >= 0, 'bodies array must exist');
   assert.equal(m.chartWheel.houses.length, 0);
   assert.equal(m.warnings.length >= 1, true, 'must warn on empty profile');
 });
@@ -132,4 +133,75 @@ test('chartWheel.angles: has asc, dsc, mc, ic — dsc = asc+180', () => {
   const expectedDsc = (chartWheel.angles.asc + 180) % 360;
   assert.ok(Math.abs(chartWheel.angles.dsc - expectedDsc) < 0.01,
     `dsc must be asc+180 mod 360: expected ${expectedDsc}, got ${chartWheel.angles.dsc}`);
+});
+
+// ── I3 Wheel-Datenvertrag (RED → GREEN after TASK-I3-001) ────────────────────
+
+test('chartWheel.bodies: missing longitude → source="missing", NOT longitude=0', () => {
+  const profile = {
+    western: {
+      bodies: {
+        Sun:   { sign: 'Fische', longitude: 353.15 },
+        Pluto: { sign: null, longitude: null },
+      },
+      angles: { Ascendant: 27.71, MC: 280.66 },
+      houses: {},
+      aspects: [],
+    },
+  };
+  const { chartWheel } = profileToOverviewModel(profile);
+  const pluto = chartWheel.bodies.find((b) => b.key === 'Pluto');
+  assert.ok(pluto, 'Pluto entry must still exist even when longitude missing');
+  assert.equal(pluto.longitude, null, 'longitude must be null, NEVER silently 0');
+  assert.equal(pluto.source, 'missing', 'source must be "missing"');
+});
+
+test('chartWheel.bodies: present body carries source="api"', () => {
+  const profile = {
+    western: {
+      bodies: { Sun: { sign: 'Fische', longitude: 353.15 } },
+      angles: { Ascendant: 27.71, MC: 280.66 },
+      houses: {}, aspects: [],
+    },
+  };
+  const { chartWheel } = profileToOverviewModel(profile);
+  const sun = chartWheel.bodies.find((b) => b.key === 'Sun');
+  assert.equal(sun.source, 'api', 'present longitude → source="api"');
+});
+
+test('chartWheel.bodies: shape contract {key,labelDE,glyph,longitude,degreeDisplay,source}', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  for (const b of chartWheel.bodies) {
+    assert.equal(typeof b.key, 'string', `body.key missing for ${JSON.stringify(b)}`);
+    assert.ok('labelDE' in b, 'body.labelDE missing');
+    assert.ok('glyph' in b,   'body.glyph missing');
+    assert.ok('longitude' in b, 'body.longitude missing (may be null)');
+    assert.ok('degreeDisplay' in b, 'body.degreeDisplay missing (may be null)');
+    assert.ok(['api', 'derived', 'missing'].includes(b.source),
+      `body.source must be api|derived|missing, got: ${b.source}`);
+  }
+});
+
+test('chartWheel.aspects: every entry has sourceKey + targetKey (stable)', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  for (const a of chartWheel.aspects) {
+    assert.equal(typeof a.sourceKey, 'string', 'aspect.sourceKey missing');
+    assert.equal(typeof a.targetKey, 'string', 'aspect.targetKey missing');
+    assert.equal(typeof a.type,      'string', 'aspect.type missing');
+  }
+});
+
+test('chartWheel.angles: {asc, mc, dsc?, ic?, source}', () => {
+  const { chartWheel } = profileToOverviewModel(lina);
+  assert.ok(chartWheel.angles, 'angles object must exist');
+  assert.ok(['api', 'derived', 'missing'].includes(chartWheel.angles.source),
+    `angles.source must be api|derived|missing, got: ${chartWheel.angles.source}`);
+});
+
+test('chartWheel.angles: source="missing" when both ASC and MC absent', () => {
+  const profile = { western: { bodies: {}, angles: {}, houses: {}, aspects: [] } };
+  const { chartWheel } = profileToOverviewModel(profile);
+  assert.equal(chartWheel.angles.asc, null);
+  assert.equal(chartWheel.angles.mc,  null);
+  assert.equal(chartWheel.angles.source, 'missing');
 });

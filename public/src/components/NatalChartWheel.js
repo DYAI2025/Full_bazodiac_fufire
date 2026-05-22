@@ -1,17 +1,11 @@
 // public/src/components/NatalChartWheel.js
 //
-// Pure-SVG natal chart wheel. Additive Hero-section on /overview.
-// Consumes the normalized chartWheel shape produced by
-// profileToOverviewModel — no raw API field names enter this module.
-//
-// Production browsers: rendered via document.createElementNS so the
-// returned node is a real SVGElement that lays out and styles correctly.
-//
-// Test environment (capture-DOM stub): falls back to plain object nodes
-// with the same _attrs/_children/appendChild surface the stub records.
-//
-// Static (no animation, no interaction in Sprint I — those are deferred).
-// Carries data-lane="west" so Sprint-H lane recipes can color it.
+// I3: Professional natal chart wheel.
+//   - ASC-left invariant: Ascendant always renders at 9 o'clock (chart-angle 180°)
+//   - Three tick layers: 360 minor (every 1°), 72 medium (every 5°), 36 major (every 10°)
+//   - Planet glyphs with collision resolution and leader-lines
+//   - Bodies with source='missing' are skipped (never rendered at 0°)
+//   - Exported longitudeToChartAngle for pure-function testing
 
 const SIGNS_DE = [
   'Widder','Stier','Zwillinge','Krebs','Löwe','Jungfrau',
@@ -22,17 +16,48 @@ const MAJOR_ASPECTS = new Set([
   'conjunction','sextile','square','trine','opposition',
 ]);
 
+// Canonical planet glyph map — fallback for bodies that omit b.glyph.
+const PLANET_GLYPHS = {
+  Sun: '☉', Moon: '☽', Mercury: '☿', Venus: '♀', Mars: '♂',
+  Jupiter: '♃', Saturn: '♄', Uranus: '♅', Neptune: '♆', Pluto: '♇',
+  Chiron: '⚷',
+};
+
+// Collision: bodies whose longitudes are within this delta share a bucket
+// and are offset onto successive radial lanes outward.
+const COLLISION_DELTA_DEG = 6;
+// Each successive lane sits this many pixels further from R_BODY.
+const LANE_RADIAL_STEP = 18;
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-// Astronomical convention: 0° = Aries 0° = 9 o'clock (left side).
-// Rotating CCW so 90° lands at the top (Cancer 0°), 180° at right, 270° bottom.
-function lonToXY(lonDeg, radius) {
-  const rad = (180 - lonDeg) * Math.PI / 180;
+// I3: ASC-left invariant.
+//
+// chart-angle is measured in standard math convention (CCW from 3 o'clock):
+//   0°   = right (3 o'clock)
+//   90°  = top
+//   180° = left (9 o'clock)  ← ASC always lands here
+//   270° = bottom
+//
+// Without ascDeg, defaults to astronomical convention (0°=Aries=9 o'clock).
+// Zodiac increases CCW on the chart. ASC at 9-o'clock (chart-angle 180°).
+// delta=0 → 180°, delta=90° → 270° (bottom/IC), delta=180° → 0° (DSC), delta=270° → 90° (MC).
+export function longitudeToChartAngle(lonDeg, ascDeg) {
+  const asc = typeof ascDeg === 'number' ? ascDeg : 0;
+  const delta = ((lonDeg - asc) % 360 + 360) % 360;
+  return (180 + delta) % 360;
+}
+
+function chartAngleToXY(chartAngleDeg, radius) {
+  const rad = chartAngleDeg * Math.PI / 180;
   return { x: radius * Math.cos(rad), y: -radius * Math.sin(rad) };
 }
 
-// Cross-environment element factory. Real DOM gets SVG namespace; stub
-// gets a plain object that the capture-DOM helpers know how to record.
+function lonToXYAsc(lonDeg, radius, ascDeg) {
+  return chartAngleToXY(longitudeToChartAngle(lonDeg, ascDeg), radius);
+}
+
+// Cross-environment element factory.
 function el(tag, attrs = {}, textContent = null, children = []) {
   let node;
   if (typeof document !== 'undefined' && typeof document.createElementNS === 'function') {
@@ -44,9 +69,7 @@ function el(tag, attrs = {}, textContent = null, children = []) {
     if (textContent != null && textContent !== '') {
       node.appendChild(document.createTextNode(String(textContent)));
     }
-    for (const c of children) {
-      if (c != null) node.appendChild(c);
-    }
+    for (const c of children) if (c != null) node.appendChild(c);
     return node;
   }
   // Stub-fallback path.
@@ -62,13 +85,85 @@ function el(tag, attrs = {}, textContent = null, children = []) {
     if (v == null) continue;
     node._attrs[k] = String(v);
   }
-  if (textContent != null && textContent !== '') {
-    node._text = String(textContent);
-  }
-  for (const c of children) {
-    if (c != null) node._children.push(c);
-  }
+  if (textContent != null && textContent !== '') node._text = String(textContent);
+  for (const c of children) if (c != null) node._children.push(c);
   return node;
+}
+
+// Assign each body a lane index (0 = no offset; 1,2,... = outward).
+// Bodies whose longitudes are within COLLISION_DELTA_DEG of each other
+// share a collision bucket and are spread across successive lanes.
+function assignLanes(bodies) {
+  const placeable = bodies.filter((b) => typeof b.longitude === 'number');
+  const sorted = [...placeable].sort((a, b) => a.longitude - b.longitude);
+  const lanes = new Map();
+  let bucketStart = -Infinity;
+  let bucketIndex = 0;
+  for (const b of sorted) {
+    const key = b.key ?? b.name;
+    if (b.longitude - bucketStart < COLLISION_DELTA_DEG) {
+      lanes.set(key, bucketIndex);
+      bucketIndex++;
+    } else {
+      bucketStart = b.longitude;
+      bucketIndex = 0;
+      lanes.set(key, 0);
+      bucketIndex = 1;
+    }
+  }
+  return lanes;
+}
+
+function renderBodies(root, bodies, ascDeg, { R_BODY }) {
+  const lanes = assignLanes(bodies);
+  for (const b of bodies) {
+    if (typeof b.longitude !== 'number') continue; // source='missing' → skip
+    const bodyKey = b.key ?? b.name;
+    const lane = lanes.get(bodyKey) ?? 0;
+    const offsetRadius = R_BODY + lane * LANE_RADIAL_STEP;
+
+    const truePos = lonToXYAsc(b.longitude, R_BODY, ascDeg);
+    root.appendChild(el('circle', {
+      cx: truePos.x, cy: truePos.y, r: 3,
+      fill: 'currentColor',
+      'data-body': bodyKey,
+      'data-lane-offset': String(lane),
+    }));
+
+    const glyph = b.glyph ?? PLANET_GLYPHS[bodyKey] ?? '·';
+    const glyphPos = lonToXYAsc(b.longitude, offsetRadius + 8, ascDeg);
+    root.appendChild(el('text', {
+      x: glyphPos.x, y: glyphPos.y,
+      'text-anchor': 'middle', 'dominant-baseline': 'middle',
+      'font-size': 14, fill: 'currentColor',
+      'data-body-glyph': glyph,
+      'data-body-for': bodyKey,
+      'data-lane-offset': String(lane),
+    }, glyph));
+
+    if (b.degreeDisplay) {
+      const degPos = lonToXYAsc(b.longitude, offsetRadius + 22, ascDeg);
+      root.appendChild(el('text', {
+        x: degPos.x, y: degPos.y,
+        'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        'font-size': 8, fill: 'currentColor', opacity: 0.7,
+        'data-body-degree': b.degreeDisplay,
+        'data-body-for': bodyKey,
+      }, b.degreeDisplay));
+    }
+
+    // Leader-line back to true position when body is offset.
+    if (lane > 0) {
+      const leaderEnd = lonToXYAsc(b.longitude, offsetRadius - 2, ascDeg);
+      root.appendChild(el('line', {
+        x1: truePos.x, y1: truePos.y,
+        x2: leaderEnd.x, y2: leaderEnd.y,
+        stroke: 'currentColor', 'stroke-width': 0.5, opacity: 0.5,
+        'data-leader-line': 'true',
+        'data-leader-for': bodyKey,
+      }));
+    }
+  }
 }
 
 export function NatalChartWheel({ wheel }) {
@@ -79,17 +174,17 @@ export function NatalChartWheel({ wheel }) {
   const R_BODY  = 140;
   const R_ASPECT = R_BODY - 12;
 
-  const w = wheel || { bodies: [], asc: null, mc: null, houses: [], aspects: [] };
+  const w = wheel || { bodies: [], asc: null, mc: null, houses: [], aspects: [], angles: {} };
+  const ascDeg = typeof w.asc === 'number' ? w.asc : (w.angles?.asc ?? 0);
 
   const root = el('svg', {
     viewBox: `-${HALF} -${HALF} ${VIEW} ${VIEW}`,
-    width: '100%',
-    height: 'auto',
+    width: '100%', height: 'auto',
     preserveAspectRatio: 'xMidYMid meet',
-    'data-lane':   'west',
-    'aria-label':  'Geburtsrad',
-    role:          'img',
-    class:         'natal-chart-wheel',
+    'data-lane': 'west',
+    'aria-label': 'Geburtsrad',
+    role: 'img',
+    class: 'natal-chart-wheel',
   });
 
   // Outer + inner rings.
@@ -104,18 +199,41 @@ export function NatalChartWheel({ wheel }) {
     'data-ring': 'inner',
   }));
 
-  // Sign-ring: 12 tick lines + 12 labels (sign labels always render —
-  // they are the static orientation fallback when bodies/houses absent).
+  // Three cumulative tick layers (counts: 360 minor, 72 medium, 36 major).
+  // Every degree gets a minor tick; every 5° also gets a medium; every 10° also a major.
+  for (let deg = 0; deg < 360; deg++) {
+    const tipOuter = lonToXYAsc(deg, R_OUTER, ascDeg);
+    // Minor: every degree.
+    const tipMinor = lonToXYAsc(deg, R_OUTER - 3, ascDeg);
+    root.appendChild(el('line', {
+      x1: tipOuter.x, y1: tipOuter.y, x2: tipMinor.x, y2: tipMinor.y,
+      stroke: 'currentColor', 'stroke-width': 0.3, opacity: 0.3,
+      'data-tick': 'minor', 'data-tick-deg': deg,
+    }));
+    // Medium: every 5°.
+    if (deg % 5 === 0) {
+      const tipMed = lonToXYAsc(deg, R_OUTER - 5, ascDeg);
+      root.appendChild(el('line', {
+        x1: tipOuter.x, y1: tipOuter.y, x2: tipMed.x, y2: tipMed.y,
+        stroke: 'currentColor', 'stroke-width': 0.6, opacity: 0.55,
+        'data-tick': 'medium', 'data-tick-deg': deg,
+      }));
+    }
+    // Major: every 10°.
+    if (deg % 10 === 0) {
+      const tipMaj = lonToXYAsc(deg, R_OUTER - 8, ascDeg);
+      root.appendChild(el('line', {
+        x1: tipOuter.x, y1: tipOuter.y, x2: tipMaj.x, y2: tipMaj.y,
+        stroke: 'currentColor', 'stroke-width': 1.0, opacity: 0.85,
+        'data-tick': 'major', 'data-tick-deg': deg,
+      }));
+    }
+  }
+
+  // Sign labels (12 × German name at the midpoint of each 30° sector).
   for (let i = 0; i < 12; i++) {
     const lon = i * 30;
-    const tickOuter = lonToXY(lon, R_OUTER);
-    const tickInner = lonToXY(lon, R_INNER);
-    root.appendChild(el('line', {
-      x1: tickOuter.x, y1: tickOuter.y, x2: tickInner.x, y2: tickInner.y,
-      stroke: 'currentColor', 'stroke-width': 0.5,
-      'data-sign-tick': SIGNS_DE[i],
-    }));
-    const labelPos = lonToXY(lon + 15, (R_OUTER + R_INNER) / 2);
+    const labelPos = lonToXYAsc(lon + 15, (R_OUTER + R_INNER) / 2, ascDeg);
     root.appendChild(el('text', {
       x: labelPos.x, y: labelPos.y,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
@@ -124,11 +242,11 @@ export function NatalChartWheel({ wheel }) {
     }, SIGNS_DE[i]));
   }
 
-  // House cusps (if delivered).
+  // House cusps.
   if (Array.isArray(w.houses) && w.houses.length) {
     for (const h of w.houses) {
       if (typeof h.cuspLongitude !== 'number') continue;
-      const a = lonToXY(h.cuspLongitude, R_INNER);
+      const a = lonToXYAsc(h.cuspLongitude, R_INNER, ascDeg);
       root.appendChild(el('line', {
         x1: 0, y1: 0, x2: a.x, y2: a.y,
         stroke: 'currentColor', 'stroke-width': 0.5,
@@ -138,50 +256,26 @@ export function NatalChartWheel({ wheel }) {
     }
   }
 
-  // ASC marker (text "ASC" outside the outer ring at ASC longitude).
-  if (typeof w.asc === 'number') {
-    const p = lonToXY(w.asc, R_OUTER + 14);
+  // Angle markers (ASC always at left = chart-angle 180°).
+  function renderAngleMarker(lon, label, position) {
+    if (typeof lon !== 'number') return;
+    const p = lonToXYAsc(lon, R_OUTER + 14, ascDeg);
     root.appendChild(el('text', {
       x: p.x, y: p.y,
       'text-anchor': 'middle', 'dominant-baseline': 'middle',
       'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
-      'data-marker': 'asc',
-    }, 'ASC'));
+      'data-marker': label.toLowerCase(),
+      'data-angle': label,
+      'data-angle-position': position,
+    }, label));
   }
-
-  // MC marker.
-  if (typeof w.mc === 'number') {
-    const p = lonToXY(w.mc, R_OUTER + 14);
-    root.appendChild(el('text', {
-      x: p.x, y: p.y,
-      'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
-      'data-marker': 'mc',
-    }, 'MC'));
-  }
-
-  // DSC + IC markers from angles sub-object (Pro contract).
+  renderAngleMarker(w.asc ?? w.angles?.asc, 'ASC', 'left');
+  renderAngleMarker(w.mc  ?? w.angles?.mc,  'MC',  'top');
   const angles = w.angles || {};
-  if (typeof angles.dsc === 'number') {
-    const p = lonToXY(angles.dsc, R_OUTER + 14);
-    root.appendChild(el('text', {
-      x: p.x, y: p.y,
-      'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
-      'data-marker': 'dsc',
-    }, 'DSC'));
-  }
-  if (typeof angles.ic === 'number') {
-    const p = lonToXY(angles.ic, R_OUTER + 14);
-    root.appendChild(el('text', {
-      x: p.x, y: p.y,
-      'text-anchor': 'middle', 'dominant-baseline': 'middle',
-      'font-size': 12, 'font-weight': 'bold', fill: 'currentColor',
-      'data-marker': 'ic',
-    }, 'IC'));
-  }
+  renderAngleMarker(angles.dsc, 'DSC', 'right');
+  renderAngleMarker(angles.ic,  'IC',  'bottom');
 
-  // Aspect lines (major only). Prefer sourceKey/targetKey; fall back to source/target.
+  // Aspect lines (major only, prefer sourceKey/targetKey).
   if (Array.isArray(w.aspects)) {
     for (const asp of w.aspects) {
       if (!MAJOR_ASPECTS.has(asp.type)) continue;
@@ -191,52 +285,21 @@ export function NatalChartWheel({ wheel }) {
       const tgt = w.bodies.find((b) => (b.key ?? b.name) === tgtKey);
       if (!src || !tgt) continue;
       if (typeof src.longitude !== 'number' || typeof tgt.longitude !== 'number') continue;
-      const a = lonToXY(src.longitude, R_ASPECT);
-      const b = lonToXY(tgt.longitude, R_ASPECT);
+      const a = lonToXYAsc(src.longitude, R_ASPECT, ascDeg);
+      const b = lonToXYAsc(tgt.longitude, R_ASPECT, ascDeg);
       const tone = asp.tone ?? 'neutral';
       root.appendChild(el('line', {
         x1: a.x, y1: a.y, x2: b.x, y2: b.y,
-        stroke: 'currentColor', 'stroke-width': 0.5, opacity: 0.35,
+        stroke: 'currentColor', 'stroke-width': 0.5, opacity: 0.4,
         'data-aspect': asp.type,
         class: `natal-aspect natal-aspect--${tone}`,
       }));
     }
   }
 
-  // Bodies: dot + planet glyph (Pro) or fallback dot-only (legacy model).
+  // Bodies with glyphs, degree labels, collision lanes, and leader-lines.
   if (Array.isArray(w.bodies)) {
-    for (const b of w.bodies) {
-      if (typeof b.longitude !== 'number') continue;
-      const bodyKey = b.key ?? b.name;
-      const pos = lonToXY(b.longitude, R_BODY);
-      root.appendChild(el('circle', {
-        cx: pos.x, cy: pos.y, r: 4,
-        fill: 'currentColor',
-        'data-body': bodyKey,
-      }));
-      // Planet glyph (Pro contract: b.glyph is planet glyph).
-      if (b.glyph) {
-        const glyphPos = lonToXY(b.longitude, R_BODY + 14);
-        root.appendChild(el('text', {
-          x: glyphPos.x, y: glyphPos.y,
-          'text-anchor': 'middle', 'dominant-baseline': 'middle',
-          'font-size': 11, fill: 'currentColor',
-          'data-body-glyph': b.glyph,
-          'data-body-for': bodyKey,
-        }, b.glyph));
-      }
-      // Degree label.
-      if (b.degreeDisplay) {
-        const degPos = lonToXY(b.longitude, R_BODY + 26);
-        root.appendChild(el('text', {
-          x: degPos.x, y: degPos.y,
-          'text-anchor': 'middle', 'dominant-baseline': 'middle',
-          'font-size': 8, fill: 'currentColor', opacity: 0.7,
-          'data-body-degree': b.degreeDisplay,
-          'data-body-for': bodyKey,
-        }, b.degreeDisplay));
-      }
-    }
+    renderBodies(root, w.bodies, ascDeg, { R_BODY });
   }
 
   return root;

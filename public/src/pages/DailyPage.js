@@ -1,5 +1,6 @@
 // public/src/pages/DailyPage.js
 import { getDailyExperience, getTransitNow, getTransitTimeline } from '../api/client.js';
+import { wireHeroRolling } from '../components/RollingText.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
@@ -111,9 +112,9 @@ export function DailyPage(app, { profile = null } = {}) {
   app.innerHTML = `
     <main class="daily-page">
       <div class="sig-bar-mount"></div>
-      <header class="daily-header">
+      <header class="daily-header" data-section="hero">
         <a href="#/" class="daily-back-link">← Zurück</a>
-        <h1 class="daily-title">Tagespuls</h1>
+        <h1 class="daily-title bz-h1" data-page-title>Tagespuls</h1>
         <p class="daily-date">${today}</p>
       </header>
       <p class="trust-microcopy" role="note">Der Tagespuls ist kein Urteil. Er ist ein Beobachtungsrahmen für 24 Stunden.</p>
@@ -194,6 +195,8 @@ export function DailyPage(app, { profile = null } = {}) {
       <div class="daily-three-doors-mount"></div>
     </main>
   `;
+
+  wireHeroRolling(app);
 
   if (expProfile) {
     app.querySelector('.sig-bar-mount').replaceWith(

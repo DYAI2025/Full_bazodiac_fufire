@@ -10,6 +10,7 @@
 // could diverge from WuxingPage / CareerFinancePage on partial fixtures.
 
 import { enrichWuxing } from '../domain/wuxingEnrichment.js';
+import { wireHeroRolling } from '../components/RollingText.js';
 // Sprint H3: Pentagonal radar extracted into pure-function module so
 // WuxingPage + FusionPage share one source. cycleRelation + SHENG/KE
 // also live there now.
@@ -199,9 +200,9 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
         <a href="#/career-finance" class="nav-link">Arbeit &amp; Ressourcen</a>
       </nav>
 
-      <section class="insight-hero insight-hero--neutral">
+      <section class="insight-hero insight-hero--neutral" data-section="hero">
         <p class="insight-hero__eyebrow">WuXing</p>
-        <h1 class="insight-hero__title">Deine Element-Ökonomie</h1>
+        <h1 class="insight-hero__title bz-h1" data-page-title>Deine Element-Ökonomie</h1>
         <p class="insight-hero__statement">Wie deine Energie zwischen den fünf Elementen verteilt ist — kein Persönlichkeitsanteil, sondern Intensität im Signaturraum.</p>
       </section>
 
@@ -232,8 +233,8 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
         ${coherencePill}
       </header>
 
-      <section class="fusion-wheel-wrap">
-        <h2>Element-Rad</h2>
+      <section class="fusion-wheel-wrap" data-section="wheel">
+        <h2 class="bz-h2">Element-Rad</h2>
         ${distribution ? ElementWheel(distribution) : '<p class="fusion-empty">Keine Vektor-Daten.</p>'}
       </section>
 
@@ -244,13 +245,13 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
         </div>
       </details>
 
-      <section class="fusion-narrative">
-        <h2>Element für Element</h2>
+      <section class="fusion-narrative" data-section="narrative">
+        <h2 class="bz-h2">Element für Element</h2>
         <div class="fusion-element-grid">${ElementNarrative(distribution || {})}</div>
       </section>
 
-      <section class="fusion-remediation">
-        <h2>3-Stufen-Plan — was du heute, diese Woche, in 30 Tagen tun kannst</h2>
+      <section class="fusion-remediation" data-section="remediation">
+        <h2 class="bz-h2">3-Stufen-Plan — was du heute, diese Woche, in 30 Tagen tun kannst</h2>
         ${RemediationPanel(remediation)}
       </section>
     </main>
@@ -268,4 +269,6 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
       });
     });
   }
+
+  wireHeroRolling(app);
 }

@@ -77,3 +77,11 @@ test('legacy-alias bridge resolves every pre-Sprint-H var still consumed by main
     assert.ok(defined.has(name), `legacy alias ${name} must be defined in tokens.css`);
   }
 });
+
+test('legacy --accent alias must route through a --bz-* token, not a literal', () => {
+  const m = TOKENS_CSS.match(/--accent\s*:\s*([^;]+);/g);
+  assert.ok(m && m.length > 0, '--accent must be declared at least once');
+  const lastDecl = m[m.length - 1];
+  assert.ok(/var\(--bz-/.test(lastDecl),
+    `final --accent declaration must reference a --bz-* token; got: ${lastDecl}`);
+});

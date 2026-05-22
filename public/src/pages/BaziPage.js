@@ -11,6 +11,7 @@
 import { enrichBaziPillars } from '../domain/baziPillarEnrichment.js';
 import { ExplainableCard }    from '../components/ExplainableCard.js';
 import { UnavailableCard }    from '../components/UnavailableCard.js';
+import { wireHeroRolling }    from '../components/RollingText.js';
 
 const ROLE_LABEL = {
   year:  'Jahr · Wurzel',
@@ -91,9 +92,9 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
         <a href="#/overview" class="nav-link">← Signatur-Übersicht</a>
       </nav>
 
-      <header class="page-head">
+      <header class="page-head" data-section="hero">
         <p class="page-eyebrow">BaZi · Vier Säulen des Schicksals</p>
-        <h1 class="page-title">Dein ostasiatischer Kern</h1>
+        <h1 class="page-title bz-h1" data-page-title>Dein ostasiatischer Kern</h1>
         <p class="page-intro">
           BaZi beschreibt deine Geburtszeit als vier vertikale Säulen — Jahr, Monat, Tag, Stunde.
           Jede Säule trägt einen Himmelsstamm (天干 — die obere, klimatische Kraft) und einen
@@ -102,18 +103,18 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
         </p>
       </header>
 
-      <section class="bazi-day-master" aria-label="Day Master">
+      <section class="bazi-day-master" aria-label="Day Master" data-section="day-master">
         <p class="layer-eyebrow">Day Master · Kern</p>
         <div class="bazi-dm-mount"></div>
       </section>
 
-      <section class="bazi-pillars" aria-label="Vier Säulen">
+      <section class="bazi-pillars" aria-label="Vier Säulen" data-section="pillars">
         <p class="layer-eyebrow">Vier Säulen</p>
         <p class="layer-hint">Tippe für Detail</p>
         <div class="bazi-pillars-grid"></div>
       </section>
 
-      <section class="bazi-luck-pillar" aria-label="Glückssäule">
+      <section class="bazi-luck-pillar" aria-label="Glückssäule" data-section="luck-pillar">
         <p class="layer-eyebrow">Aktuelle Glückssäule (Luck Pillar)</p>
         <div class="bazi-luck-mount"></div>
       </section>
@@ -124,6 +125,8 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
       </footer>
     </main>
   `;
+
+  wireHeroRolling(app);
 
   // ── Day Master tile ──────────────────────────────────────────────────────
   const dmMount = app.querySelector('.bazi-dm-mount');

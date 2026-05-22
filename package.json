@@ -8,8 +8,11 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node --test",
-    "test:contract": "FUFIRE_CONTRACT_TEST=true node --test test/contract.test.js"
+    "test": "node --test 'test/*.test.js'",
+    "test:contract": "FUFIRE_CONTRACT_TEST=true node --test test/contract.test.js",
+    "test:e2e": "playwright test --config=playwright.config.mjs",
+    "test:e2e:update": "playwright test --config=playwright.config.mjs --update-snapshots",
+    "test:e2e:headed": "playwright test --config=playwright.config.mjs --headed"
   },
   "keywords": [
     "fufire",
@@ -17,5 +20,9 @@
     "bazi",
     "astrology"
   ],
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "jsdom": "^29.1.1"
+  }
 }
