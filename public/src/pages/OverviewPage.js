@@ -18,6 +18,7 @@ import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js'
 import { ThreeDoors }            from '../components/ThreeDoors.js';
 import { SectionHeader }         from '../components/SectionHeader.js';
 import { LuxuryCard }            from '../components/LuxuryCard.js';
+import { NatalChartAudit }       from '../components/NatalChartAudit.js';
 import {
   buildFusionSignatureTitle,
   buildDominantTension,
@@ -566,7 +567,13 @@ export function OverviewPage(app, { profile, onNavigate }) {
   const overviewModel = profileToOverviewModel(profile);
   const wheelMount    = app.querySelector('.natal-wheel-mount');
   if (wheelMount) {
-    wheelMount.replaceWith(NatalChartWheel({ wheel: overviewModel.chartWheel }));
+    const wheelEl = NatalChartWheel({ wheel: overviewModel.chartWheel });
+    const auditEl = NatalChartAudit({ wheel: overviewModel.chartWheel });
+    const wrapper = document.createElement('div');
+    wrapper.className = 'natal-wheel-section';
+    wrapper.appendChild(wheelEl);
+    wrapper.appendChild(auditEl);
+    wheelMount.replaceWith(wrapper);
   }
   const warningsList = app.querySelector('.natal-wheel-warnings');
   if (warningsList && Array.isArray(overviewModel.warnings)) {

@@ -36,33 +36,46 @@ function normalizeLon(deg) {
 }
 
 // ── chartWheel sub-builder ──────────────────────────────────────────────────
-// Bodies: enrichWesternBodies returns object keyed by English name; flatten
-// to array with normalized fields the wheel expects.
+// I3: every canonical body always appears in the output array, even when
+// upstream omits its longitude — marked source='missing' so the wheel
+// skips rendering and the audit shows "Daten fehlen". NEVER silently 0°.
+const CANONICAL_BODIES = [
+  'Sun', 'Moon', 'Mercury', 'Venus', 'Mars',
+  'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Chiron',
+];
+
 function buildChartWheel(rawWestern) {
   const enrichedBodies = enrichWesternBodies(rawWestern || {});
-  const bodies = Object.entries(enrichedBodies).map(([bodyKey, b]) => ({
-    // New contract fields
-    key:          bodyKey,
-    labelDE:      PLANET_DE_CLEAN[bodyKey] ?? bodyKey,
-    glyph:        PLANET_GLYPH[bodyKey] ?? null,
-    signGlyph:    (b.sign && SIGN_GLYPH[b.sign]) ?? null,
-    degreeDisplay: b.degDisplay ?? null,
-    house:        b.house ?? null,
-    // Backcompat fields (existing tests use b.name)
-    name:         bodyKey,
-    longitude:    b.longitude,
-    signDE:       b.signDE,
-    retrograde:   b.retrograde,
-  })).filter((b) => typeof b.longitude === 'number');
+
+  const bodies = CANONICAL_BODIES.map((bodyKey) => {
+    const b = enrichedBodies[bodyKey] || {};
+    const hasLon = typeof b.longitude === 'number' && Number.isFinite(b.longitude);
+    return {
+      key:           bodyKey,
+      labelDE:       PLANET_DE_CLEAN[bodyKey] ?? bodyKey,
+      glyph:         PLANET_GLYPH[bodyKey] ?? null,
+      signGlyph:     (b.sign && SIGN_GLYPH[b.sign]) ?? null,
+      degreeDisplay: hasLon ? (b.degDisplay ?? null) : null,
+      house:         b.house ?? null,
+      // Backcompat (existing tests use b.name)
+      name:          bodyKey,
+      longitude:     hasLon ? b.longitude : null,
+      signDE:        hasLon ? b.signDE : null,
+      retrograde:    b.retrograde ?? false,
+      // I3: provenance tag — wheel skips source='missing', audit shows pill
+      source:        hasLon ? 'api' : 'missing',
+    };
+  });
 
   const ascLon = num(rawWestern?.angles?.Ascendant);
   const mcLon  = num(rawWestern?.angles?.MC);
-
-  // Derive DSC and IC from ASC and MC.
   const dscLon = ascLon != null ? normalizeLon(ascLon + 180) : null;
   const icLon  = mcLon  != null ? normalizeLon(mcLon  + 180) : null;
+  const anglesSource =
+    ascLon != null && mcLon != null ? 'api'
+    : ascLon != null || mcLon != null ? 'derived'
+    : 'missing';
 
-  // Houses: raw shape is `{ "1": { longitude, sign }, ... }`. Normalize.
   const rawHouses = rawWestern?.houses || {};
   const houses = Object.entries(rawHouses)
     .map(([num_, h]) => ({
@@ -73,28 +86,25 @@ function buildChartWheel(rawWestern) {
     .filter((h) => Number.isFinite(h.number) && typeof h.cuspLongitude === 'number')
     .sort((a, b) => a.number - b.number);
 
-  // Aspects: raw uses planet1/planet2; normalize to source/target + new contract.
   const enrichedAspects = selectSalientAspects(rawWestern?.aspects || [], 12);
   const aspects = enrichedAspects.map((a) => ({
-    // New contract fields
-    sourceKey:    a.planet1,
-    targetKey:    a.planet2,
-    typeDE:       ASPECT_DE[a.type] ?? a.type,
-    tone:         aspectTone(a.type),
-    // Backcompat fields (existing tests use a.source/a.target)
-    source:       a.planet1,
-    target:       a.planet2,
-    type:         a.type,
-    orb:          a.orb,
+    sourceKey: a.planet1,
+    targetKey: a.planet2,
+    typeDE:    ASPECT_DE[a.type] ?? a.type,
+    tone:      aspectTone(a.type),
+    // Backcompat
+    source:    a.planet1,
+    target:    a.planet2,
+    type:      a.type,
+    orb:       a.orb,
   }));
 
   return {
     bodies,
-    // New angles sub-object
-    angles:  { asc: ascLon, dsc: dscLon, mc: mcLon, ic: icLon },
-    // Backcompat top-level (existing tests check chartWheel.asc/mc directly)
-    asc:     ascLon,
-    mc:      mcLon,
+    angles: { asc: ascLon, dsc: dscLon, mc: mcLon, ic: icLon, source: anglesSource },
+    // Backcompat top-level
+    asc: ascLon,
+    mc:  mcLon,
     houses,
     aspects,
   };
@@ -131,7 +141,8 @@ function buildTopFacts(profile) {
 function buildWarnings(profile, chartWheel) {
   const warnings = [];
   if (!profile?.western)            warnings.push('Westliches Chart nicht geliefert.');
-  if (!chartWheel.bodies.length)    warnings.push('Keine Planetenpositionen vorhanden — Wheel zeigt nur Tierkreis.');
+  const presentBodies = chartWheel.bodies.filter((b) => b.source !== 'missing');
+  if (!presentBodies.length)        warnings.push('Keine Planetenpositionen vorhanden — Wheel zeigt nur Tierkreis.');
   if (!chartWheel.houses.length)    warnings.push('Häuser nicht geliefert — Wheel zeigt nur Tierkreis und Planeten.');
   if (chartWheel.asc == null)       warnings.push('Aszendent fehlt.');
   if (chartWheel.mc == null)        warnings.push('Medium Coeli fehlt.');

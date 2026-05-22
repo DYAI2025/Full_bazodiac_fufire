@@ -114,6 +114,15 @@
   --bz-space-md:      1rem;      /* 16px — standard gaps */
   --bz-space-lg:      2rem;      /* 32px — section gaps */
 
+  /* ── I3: Semantic color aliases (wheel aspects, provenance pills) ───── */
+  --bg-base:              #0c0c10;
+  --color-aspect-hard:    #b94a4a;
+  --color-aspect-soft:    #4a9b6f;
+  --color-aspect-neutral: #888888;
+  --color-warn:           #d49e4a;
+  --color-ok:             #4a9b6f;
+  --color-info:           #6f8fb9;
+
   /* ── RADII ────────────────────────────────────────────────────────── */
   --bz-radius-sm:     4px;      /* stele cards (BaZi pillars) */
   --bz-radius-md:     12px;     /* default cards */

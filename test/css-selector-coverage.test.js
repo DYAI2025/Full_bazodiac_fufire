@@ -76,6 +76,22 @@ const ALLOW_KNOWN_TEMPLATE = new Set([
   'rolling-text',           // RollingText.js: el.classList.add('rolling-text')
   'rolling-text--rolling',  // RollingText.js: el.classList.add('rolling-text--rolling') in engine
   'rolling-text--settled',  // RollingText.js: el.classList.add('rolling-text--settled') on completion
+  // I3: NatalChartWheel aspect tone (template: `natal-aspect natal-aspect--${tone}`)
+  'natal-aspect--hard',
+  'natal-aspect--soft',
+  'natal-aspect--neutral',
+  // I3: NatalChartAudit source-pill BEM modifiers (template: `audit-source-pill--${source}`)
+  'audit-source-pill--missing',
+  'audit-source-pill--api',
+  'audit-source-pill--derived',
+  // I3: NatalChartAudit row source BEM modifiers (template: `audit-row--${source}`)
+  'audit-row--missing',
+  'audit-row--api',
+  'audit-row--derived',
+  // I3: NatalChartAudit bucket tone BEM modifiers (template: `audit-bucket--${bucket}`)
+  'audit-bucket--hard',
+  'audit-bucket--soft',
+  'audit-bucket--neutral',
 ]);
 
 test('Sprint-K @media selectors all exist as className assignments in public/src/', () => {

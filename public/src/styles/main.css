@@ -2405,6 +2405,72 @@ h1.page-title, h2.layer-title {
   }
 }
 
+/* ── I3: NatalChartWheel professional styling ──────────────────────────── */
+.natal-wheel-section { display: grid; gap: 1.5rem; }
+
+.natal-chart-wheel [data-tick="minor"]  { opacity: 0.25; }
+.natal-chart-wheel [data-tick="medium"] { opacity: 0.55; }
+.natal-chart-wheel [data-tick="major"]  { opacity: 0.85; }
+
+.natal-chart-wheel [data-leader-line="true"] { stroke-dasharray: 1 2; }
+
+.natal-chart-wheel .natal-aspect--hard    { stroke: var(--color-aspect-hard, #b94a4a); opacity: 0.6; }
+.natal-chart-wheel .natal-aspect--soft    { stroke: var(--color-aspect-soft, #4a9b6f); opacity: 0.6; }
+.natal-chart-wheel .natal-aspect--neutral { stroke: var(--color-aspect-neutral, #888); opacity: 0.35; }
+
+.natal-chart-wheel [data-angle] {
+  paint-order: stroke;
+  stroke: var(--bg-base, #0c0c10);
+  stroke-width: 3px;
+}
+
+/* ── I3: NatalChartAudit ───────────────────────────────────────────────── */
+.natal-chart-audit { display: grid; gap: 1rem; padding: 1rem 0; }
+.audit-section-title { font-family: var(--bz-font-serif, serif); margin: 0 0 0.5rem; }
+.audit-body-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.25rem; }
+.audit-row {
+  display: grid;
+  grid-template-columns: 2ch 1.5fr 1fr 1fr 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+.audit-row--missing { opacity: 0.6; background: rgba(255,255,255,0.03); }
+.audit-glyph  { font-size: 1rem; }
+.audit-name   { font-weight: 600; }
+.audit-sign, .audit-degree, .audit-house, .audit-missing { font-size: 0.85rem; opacity: 0.8; }
+.audit-missing { color: var(--color-warn, #d49e4a); font-style: italic; }
+.audit-source-pill {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+.audit-source-pill--missing { color: var(--color-warn, #d49e4a); }
+.audit-source-pill--api     { color: var(--color-ok, #4a9b6f); }
+.audit-source-pill--derived { color: var(--color-info, #6f8fb9); }
+.audit-legend { display: grid; gap: 0.5rem; grid-template-columns: repeat(3, 1fr); }
+.audit-bucket { padding: 0.5rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; }
+.audit-bucket--hard    { border-color: var(--color-aspect-hard, #b94a4a); }
+.audit-bucket--soft    { border-color: var(--color-aspect-soft, #4a9b6f); }
+.audit-bucket--neutral { border-color: var(--color-aspect-neutral, #888); }
+.audit-bucket-title { font-size: 0.85rem; font-weight: 600; margin: 0 0 0.25rem; }
+.audit-bucket-desc  { font-size: 0.75rem; opacity: 0.65; margin: 0 0 0.5rem; }
+.audit-bucket-list  { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; }
+.audit-bucket-empty { opacity: 0.4; }
+.audit-aspect       { padding: 0.1rem 0; opacity: 0.85; }
+.audit-empty        { opacity: 0.5; font-style: italic; }
+.audit-warning {
+  color: var(--color-warn, #d49e4a);
+  font-size: 0.85rem;
+  border-left: 3px solid currentColor;
+  padding-left: 0.5rem;
+}
+@media (max-width: 720px) { .audit-legend { grid-template-columns: 1fr; } }
+
 /* ════════════════════════════════════════════════════════════════════════
    SPRINT K — RESPONSIVE COVERAGE
    Single consolidated section. Each rule is scoped to one selector +
