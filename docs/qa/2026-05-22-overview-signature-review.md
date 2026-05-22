@@ -123,4 +123,63 @@ Playwright `test/e2e/overview-hero.spec.js`: 4/4 pass.
 
 ### Push
 
+`feat/overview-signature-experience` → pushed (`362b4ab..6b2130a`).
+
+---
+
+## Iteration OV-I3 — Wheel geometry + layers + colors + interaction
+
+**Sprintziel.** Das Wheel wird als lebendiges, plastisches Signaturbild erfahrbar und bleibt gleichzeitig auditierbar.
+
+### Commits
+
+| SHA | Task | Title |
+|---|---|---|
+| `fcb4bee` | OV-I3-T06 | fix(wheel): geometry + provenance — no 0deg fallback, ASC-left, audit source pill |
+| `a9e4bf8` | OV-I3-T07 | feat(wheel): three SVG layers + defs (zodiac/houses/bodies/labels) |
+| `9b849ad` | OV-I3-T08 | feat(wheel): element + aspect color semantics with token palette |
+| `f209da3` | OV-I3-T09 | feat(wheel): hover/click + keyboard linking to audit list |
+| `227424b` | fix       | fix(overview): scope audit-row activation to <li>, skip SVG metadata |
+
+### Tests
+
+| Metric | Before OV-I3 | After OV-I3 + fix | Delta |
+|---|---|---|---|
+| tests | 757 | 764 | +7 |
+| pass | 745 | 752 | +7 |
+| fail | 0 | 0 | — |
+| skipped | 12 | 12 | — |
+
+Playwright `test/e2e/overview-wheel-interaction.spec.js`: 3/3 pass.
+Playwright `test/e2e/overview-hero.spec.js`: 4/4 pass.
+
+### Screenshots (`docs/qa/screenshots/overview-signature/ov-i3/`)
+
+- `wheel-hover-sun.png` — Sun hover highlights Sun audit row.
+- `wheel-hover-ac.png` — ASC focus + Enter highlights ASC audit row.
+- `wheel-closeup.png` — desktop wheel close-up.
+
+### Parallel subagent gate
+
+- **Tester:** GREEN. 7/7 Playwright pass (3 wheel-interaction + 4 hero), no silent skip, all screenshots in window. DOM probe confirms all 4 layers, ASC rotation, derived DSC/IC, audit rows + sources, all 4 element classes.
+- **Reviewer (1st pass):** **RED:1 Critical** — querySelector picked SVG `<metadata>` before the visible `<li>`, so data-active landed on an invisible node.
+- **Acceptance reviewer:** GREEN. All 6 REQs (REQ-F-WH-001/002/003/004, REQ-D-001/002) PASS. Minor visual notes (plasticity, ASC label glyph rendering) — non-blocking.
+- **Reviewer (2nd pass after fix 227424b):** **GREEN.** Critical resolved by scoping listener + e2e locator to non-metadata. Minor findings (DSC vs DC label, assignLanes bucket edge case, `-0` cosmetic) tracked, non-blocking.
+
+### Findings & fixes
+
+| # | Sev | Finding | Fix |
+|---|---|---|---|
+| 1 | Critical | `installWheelAuditLink` queried `[data-audit-row=X]` first match → SVG `<metadata>` (invisible); audit `<li>` never highlighted | `227424b` — filter `n.tagName.toLowerCase() !== 'metadata'` in both clear-pass and set-pass; e2e locators scoped to `li[data-audit-row=...]` |
+| 2 | Minor | `data-axis-key="DSC"` differs from plan label list "DC" | kept DSC — matches existing tests + AuditTabs convention |
+| 3 | Minor | `assignLanes` bucketStart edge case (5° chain) | tracked for follow-up |
+| 4 | Nit | `data-asc-rotation="-0"` cosmetic when asc=0 | tracked |
+| 5 | Visual | Wheel plasticity thin; ASC label glyph render artifact | non-blocking PO question |
+
+### Verdict
+
+**GREEN.** All 6 REQs PASS, all 7 e2e tests pass, full suite 752/764 pass / 0 fail.
+
+### Push
+
 `git push origin feat/overview-signature-experience` — pending execution.
