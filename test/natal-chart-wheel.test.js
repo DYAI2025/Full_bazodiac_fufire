@@ -356,6 +356,47 @@ test('OV-I3: DSC and IC derived consistently from ASC and MC (asc=27.71, mc=280.
   assert.match(s, /data-angle-ic="100\.66"/,  'IC  = (mc +180) mod 360 = 100.66');
 });
 
+// ── OV-I3-T08 RED tests — color semantics ───────────────────────────────────
+
+test('OV-I3: zodiac sectors carry element classes (fire/earth/air/water)', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  for (const klass of ['bz-sector--fire', 'bz-sector--earth', 'bz-sector--air', 'bz-sector--water']) {
+    assert.match(s, new RegExp(klass), `missing sector element class ${klass}`);
+  }
+});
+
+test('OV-I3: aspect tones carry hard/soft/neutral classes', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'A', name: 'A', longitude:   0, glyph: '○', source: 'api' },
+      { key: 'B', name: 'B', longitude:  60, glyph: '○', source: 'api' },
+      { key: 'C', name: 'C', longitude: 120, glyph: '○', source: 'api' },
+      { key: 'D', name: 'D', longitude: 180, glyph: '○', source: 'api' },
+    ],
+    asc: 0, mc: 90,
+    angles: { asc: 0, mc: 90, source: 'api' },
+    houses: [],
+    aspects: [
+      { sourceKey: 'A', targetKey: 'B', source: 'A', target: 'B', type: 'square',      tone: 'hard'    },
+      { sourceKey: 'A', targetKey: 'C', source: 'A', target: 'C', type: 'trine',       tone: 'soft'    },
+      { sourceKey: 'A', targetKey: 'D', source: 'A', target: 'D', type: 'conjunction', tone: 'neutral' },
+    ],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  for (const t of ['hard', 'soft', 'neutral']) {
+    assert.match(s, new RegExp(`bz-aspect--${t}`), `missing aspect tone class bz-aspect--${t}`);
+  }
+});
+
 // ── OV-I3-T07 RED tests — three SVG layers ──────────────────────────────────
 
 test('OV-I3: wheel has four named SVG layers in order', () => {

@@ -2470,27 +2470,29 @@ h1.page-title, h2.layer-title {
 
 .natal-chart-wheel [data-leader-line="true"] { stroke-dasharray: 1 2; }
 
-/* OV-I3-T07: aspect tone classes use existing semantic aliases. */
+/* OV-I3-T08: aspect tone classes via token palette. */
 .natal-chart-wheel .bz-aspect--hard,
 .natal-chart-wheel .natal-aspect--hard {
-  stroke: var(--color-aspect-hard, #b94a4a);
+  stroke: var(--bz-aspect-hard);
   opacity: 0.9;
 }
 .natal-chart-wheel .bz-aspect--soft,
 .natal-chart-wheel .natal-aspect--soft {
-  stroke: var(--color-aspect-soft, #4a9b6f);
+  stroke: var(--bz-aspect-soft);
   opacity: 0.9;
 }
 .natal-chart-wheel .bz-aspect--neutral,
 .natal-chart-wheel .natal-aspect--neutral {
-  stroke: var(--color-aspect-neutral, #888);
+  stroke: var(--bz-aspect-neutral);
   opacity: 0.55;
 }
 
-/* OV-I3-T07: sector wedges receive low-opacity element fills. Class names
-   are emitted now; colour tokens land in OV-I3-T08. Until then, sectors
-   stay invisible (fill = currentColor at 0 opacity). */
-.natal-chart-wheel .bz-sector { stroke: none; fill: currentColor; opacity: 0; }
+/* OV-I3-T08: sector wedges receive low-opacity element fills. */
+.natal-chart-wheel .bz-sector { stroke: none; opacity: 0.18; }
+.natal-chart-wheel .bz-sector--fire  { fill: var(--bz-elem-fire); }
+.natal-chart-wheel .bz-sector--earth { fill: var(--bz-elem-earth); }
+.natal-chart-wheel .bz-sector--air   { fill: var(--bz-elem-air); }
+.natal-chart-wheel .bz-sector--water { fill: var(--bz-elem-water); }
 
 /* OV-I3-T09: hover/focus highlight for planet nodes + axes. */
 .natal-chart-wheel [data-body-key]:hover,
@@ -2498,7 +2500,7 @@ h1.page-title, h2.layer-title {
 .natal-chart-wheel [data-axis-key]:hover,
 .natal-chart-wheel [data-axis-key]:focus {
   outline: none;
-  filter: drop-shadow(0 0 4px currentColor);
+  filter: drop-shadow(0 0 4px var(--bz-elem-fire, currentColor));
 }
 
 .natal-chart-wheel [data-angle] {
