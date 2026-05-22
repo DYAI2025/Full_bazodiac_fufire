@@ -63,4 +63,64 @@ Result: 4/4 pass, 5.5s.
 
 ### Push
 
-`git push -u origin feat/overview-signature-experience` — pending execution.
+`feat/overview-signature-experience` → pushed (origin tracking).
+
+---
+
+## Iteration OV-I2 — SignatureHero + MeaningBridge
+
+**Sprintziel.** Die erste Bildschirmhoehe der Overview beantwortet: Wer bin ich im Modell? Was ist die zentrale Fusion-Signatur? Was kann ich als naechstes tun?
+
+### Commits
+
+| SHA | Message |
+|---|---|
+| `36d3350` | test(overview): lock target hero DOM structure (OV-I2-T03) |
+| `4b0e66c` | feat(overview): SignatureHero with wheel-left / fusion-signature-right (OV-I2-T04) |
+| `196d215` | feat(overview): MeaningBridge cards (carries/friction/today-lever) (OV-I2-T05) |
+| `6d7ed7f` | fix(overview): wheel-anchor owns wheel only, contrast tokens, dedup essence (OV-I2 fix) |
+
+### Tests
+
+| Metric | Before OV-I2 | After OV-I2 + fix | Delta |
+|---|---|---|---|
+| tests | 749 | 757 | +8 |
+| pass | 737 | 745 | +8 |
+| fail | 0 | 0 | — |
+| skipped | 12 | 12 | — |
+
+Playwright `test/e2e/overview-hero.spec.js`: 4/4 pass.
+
+### Screenshots (`docs/qa/screenshots/overview-signature/ov-i2/`)
+
+- `overview-desktop-i2.png` — wheel left, signature panel right with 3 evidence cards + 2 CTAs.
+- `overview-mobile-i2.png` — stacked wheel-over-panel, no horizontal overflow.
+- `hero-closeup-i2.png` — hero close crop.
+
+### Parallel subagent gate
+
+- **Tester:** GREEN. 4/4 Playwright pass, no silent skip, screenshots in window, DOM probe confirms signature-hero + legacy hero + meaning-bridge + wheel-anchor + fusion-signature-panel + 3 evidence + 3 meaning cards.
+- **Reviewer (1st pass):** GREEN with Major flag: legacy hero nested inside wheel-anchor (line 183).
+- **Acceptance reviewer (1st pass):** **RED.** 3 Critical (evidence cards unreadable, wheel not dominant, MeaningBridge body invisible) + 2 Major (duplicated essence, nested legacy hero).
+- **Acceptance reviewer (2nd pass after fix 6d7ed7f):** **GREEN.** All four REQs PASS, no remaining blockers. Suggestion: BaZi card text wraps aggressively — non-blocking.
+
+### Findings & fixes
+
+| # | Sev | Finding | Fix |
+|---|---|---|---|
+| 1 | Critical | Evidence cards on desktop unreadable (no text color set) | `6d7ed7f` — hardcoded `rgba(255,255,255,0.95)` on `.bz-evidence-card` text |
+| 2 | Critical | Wheel shrunk because legacy hero filled `[data-hero-slot="wheel-anchor"]` | `6d7ed7f` — wheel-anchor now mounts `NatalChartWheel` directly; legacy hero dismantled, key-facts + birthchart-wheel kept as siblings, fusion-narrative removed |
+| 3 | Critical | MeaningBridge body + source invisible (contrast) | `6d7ed7f` — same contrast token applied to `.bz-meaning-card` |
+| 4 | Major | Essence headline duplicated (SignatureHero + legacy fusion-narrative) | `6d7ed7f` — fusion-narrative block removed |
+| 5 | Major | Legacy hero nested inside wheel-anchor (`OverviewPage.js:183`) | `6d7ed7f` — refactor per finding #2 |
+| 6 | Minor | Empty `href="#"` for empty cta.route | `6d7ed7f` — filter empty routes in FusionSignaturePanel |
+| 7 | Minor | Empty `<p data-card-source>` when source blank | `6d7ed7f` — skip when blank in MeaningBridge |
+| 8 | Suggestion | BaZi card text wraps aggressively | tracked, non-blocking |
+
+### Verdict
+
+**GREEN.** All four REQs (REQ-F-OV-001/002/003, REQ-NF-002) PASS.
+
+### Push
+
+`git push origin feat/overview-signature-experience` — pending execution.
