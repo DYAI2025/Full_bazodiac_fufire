@@ -137,6 +137,106 @@ function buildTopFacts(profile) {
   ];
 }
 
+// ── OV-I1 narrative sub-builders ────────────────────────────────────────────
+// Pure: no DOM, no fetch. They map the safe profile into UI-ready narrative
+// blocks the OverviewPage renders. Missing data degrades to human German
+// fallbacks — never raw technical field names ("Distribution", "Plan", …).
+
+function buildSignatureHero(profile) {
+  const dm = profile?.bazi?.day_master;
+  const headline = profile?.fusion?.headline
+                ?? profile?.fusion?.summary
+                ?? null;
+  const essence = headline
+    ? headline
+    : dm?.stem
+      ? `Dein Muster trägt einen ${dm.stem}-Kern.`
+      : 'Signatur noch nicht vollständig geliefert.';
+  return {
+    essence,
+    ctas: [
+      { label: 'Heute anwenden',     route: '/daily'    },
+      { label: 'In Beziehung sehen', route: '/synastry' },
+    ],
+  };
+}
+
+function buildEvidenceCards(profile) {
+  const sun = profile?.western?.bodies?.Sun;
+  const dm  = profile?.bazi?.day_master;
+  const coh = num(profile?.fusion?.coherence_index)
+           ?? num(profile?.fusion?.coherence);
+  return {
+    western: {
+      title: 'Westliches Chart',
+      body:  sun?.sign
+        ? `Sonne in ${sun.sign}.`
+        : 'Westliches Chart noch nicht geliefert.',
+    },
+    bazi: {
+      title: 'BaZi',
+      body:  dm?.stem
+        ? `Day Master ${dm.stem}${dm.element ? ' / ' + dm.element : ''}.`
+        : 'BaZi Day Master noch nicht geliefert.',
+    },
+    fusion: {
+      title: 'Fusion',
+      body:  coh != null
+        ? `Kohärenz-Index ${coh}.`
+        : 'Fusion-Layer noch nicht geliefert.',
+    },
+  };
+}
+
+function buildMeaningBridge(profile) {
+  const sun  = profile?.western?.bodies?.Sun;
+  const moon = profile?.western?.bodies?.Moon;
+  const dm   = profile?.bazi?.day_master;
+  return {
+    carries: {
+      title:  'Was dich trägt',
+      body:   sun?.sign && dm?.stem
+        ? `Sonne in ${sun.sign} und Day Master ${dm.stem} bilden deinen Grundimpuls.`
+        : 'Tragende Achse wird angezeigt, sobald Sonne und Day Master geliefert sind.',
+      source: 'western.Sun + bazi.day_master',
+    },
+    friction: {
+      title:  'Was reibt',
+      body:   moon?.sign
+        ? `Mond in ${moon.sign} arbeitet gegen den Tagesimpuls, wenn du ihn ignorierst.`
+        : 'Reibungsachse wird angezeigt, sobald der Mond geliefert ist.',
+      source: 'western.Moon',
+    },
+    todayLever: {
+      title:  'Was heute hilft',
+      body:   'Beginne den Tag mit einer kurzen, fokussierten Handlung statt mit Recherche.',
+      source: 'todayLever (heuristic placeholder)',
+    },
+  };
+}
+
+function buildTopMovements(profile) {
+  const aspects = Array.isArray(profile?.western?.aspects)
+    ? profile.western.aspects
+    : [];
+  return aspects.slice(0, 3).map((a) => ({
+    sourceKey: a.planet1,
+    targetKey: a.planet2,
+    typeDE:    (typeof a.type === 'string' && a.type) || 'aspekt',
+    tone:      aspectTone(a.type),
+    orb:       num(a.orb),
+  }));
+}
+
+function buildGuidedDeepDives() {
+  return [
+    { intent: 'Ich will mich verstehen',         route: '/personality' },
+    { intent: 'Ich will es heute anwenden',      route: '/daily'       },
+    { intent: 'Ich will Beziehungsmuster sehen', route: '/synastry'    },
+    { intent: 'Ich will die Berechnung prüfen',  route: '/method'      },
+  ];
+}
+
 // ── warnings sub-builder ────────────────────────────────────────────────────
 function buildWarnings(profile, chartWheel) {
   const warnings = [];
@@ -175,6 +275,14 @@ export function profileToOverviewModel(profile) {
               ?? null,
     },
     elementEconomy: safe?.fusion ? enrichWuxing(safe) : null,
+    signatureHero:   buildSignatureHero(safe),
+    fusionEssence:   safe?.fusion?.summary
+                   ?? safe?.fusion?.headline
+                   ?? '',
+    evidenceCards:   buildEvidenceCards(safe),
+    meaningBridge:   buildMeaningBridge(safe),
+    topMovements:    buildTopMovements(safe),
+    guidedDeepDives: buildGuidedDeepDives(),
     nextDoors: [
       { path: '/bazi',    label: 'BaZi'    },
       { path: '/western', label: 'Western' },
