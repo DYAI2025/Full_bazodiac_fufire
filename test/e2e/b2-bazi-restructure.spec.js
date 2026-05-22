@@ -110,7 +110,7 @@ test('B2 shared detail opens when pillar is clicked', async ({ page }) => {
 test('B2 captures collapsed + expanded screenshots', async ({ browser }) => {
   mkdirSync(DIR, { recursive: true });
   // Collapsed state — no profile needed for structure verification
-  await captureMatrix({ browser, page: 'bazi-collapsed', path: '/#/bazi', dir: DIR });
+  await captureMatrix({ browser, slug: 'bazi-collapsed', path: '/#/bazi', dir: DIR });
   // Expanded state — seed profile then click first pillar
   await captureMatrix({
     browser,

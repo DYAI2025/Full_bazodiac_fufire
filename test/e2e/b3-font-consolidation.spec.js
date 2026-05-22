@@ -44,35 +44,35 @@ const PROFILE = {
 
 async function injectProfile(page) {
   await page.evaluate((p) => sessionStorage.setItem('azodiac_profile', JSON.stringify(p)), PROFILE);
-  await page.reload();
+  await page.reload({ waitUntil: 'load' });
   await page.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
-  await page.waitForTimeout(300);
 }
 
 for (const pg of PAGES) {
   test(`B3 ${pg.slug} — no banned brand fonts render`, async ({ browser }) => {
     const ctx = await browser.newContext();
     const p = await ctx.newPage();
-    await setTheme(p, 'planetarium');
-    await p.goto(pg.path, { waitUntil: 'load' });
-    await p.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
-    await injectProfile(p);
-    await p.goto(pg.path, { waitUntil: 'load' });
-    await p.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
-    await p.waitForTimeout(300);
+    try {
+      // Seed profile via addInitScript so it is available on the first (and only) navigation.
+      await p.addInitScript((pr) => sessionStorage.setItem('azodiac_profile', JSON.stringify(pr)), PROFILE);
+      await setTheme(p, 'planetarium');
+      await p.goto(pg.path, { waitUntil: 'load' });
+      await p.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
 
-    const families = await p.evaluate(() => {
-      const used = new Set();
-      for (const el of document.querySelectorAll('#app *')) {
-        const f = getComputedStyle(el).fontFamily;
-        for (const part of f.split(',')) used.add(part.trim().replace(/['"]/g, ''));
-      }
-      return [...used];
-    });
+      const families = await p.evaluate(() => {
+        const used = new Set();
+        for (const el of document.querySelectorAll('#app *')) {
+          const f = getComputedStyle(el).fontFamily;
+          for (const part of f.split(',')) used.add(part.trim().replace(/['"]/g, ''));
+        }
+        return [...used];
+      });
 
-    const offenders = families.filter((f) => BANNED_BRAND_FONTS.has(f));
-    expect(offenders, `${pg.slug} uses banned brand fonts: ${offenders.join(', ')}`).toEqual([]);
-    await ctx.close();
+      const offenders = families.filter((f) => BANNED_BRAND_FONTS.has(f));
+      expect(offenders, `${pg.slug} uses banned brand fonts: ${offenders.join(', ')}`).toEqual([]);
+    } finally {
+      await ctx.close();
+    }
   });
 }
 
@@ -80,12 +80,7 @@ test('B3 headings use Cormorant Garamond as primary serif', async ({ page }) => 
   await setTheme(page, 'planetarium');
   await page.goto('/#/overview', { waitUntil: 'load' });
   await page.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
-  // Inject profile so page-title / layer-title elements are rendered
-  await page.evaluate((p) => sessionStorage.setItem('azodiac_profile', JSON.stringify(p)), PROFILE);
-  await page.reload({ waitUntil: 'load' });
-  await page.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
-  await page.waitForTimeout(300);
-  // Target elements that main.css binds --bz-font-serif to
+  await injectProfile(page);
   const h = await page.locator(
     '#app .page-title, #app .layer-title, #app .bz-display, #app .bz-h1, #app .bz-h2, #app .bz-h3'
   ).first().evaluate(el => getComputedStyle(el).fontFamily);
@@ -104,14 +99,13 @@ test('B3 body text uses Sora as primary sans', async ({ page }) => {
 test('B3 screenshot matrix — overview page', async ({ browser }) => {
   await captureMatrix({
     browser,
-    page: 'overview',
+    slug: 'overview',
     path: '/#/overview',
     dir: DIR,
     beforeShot: async (p) => {
       await p.evaluate((pr) => sessionStorage.setItem('azodiac_profile', JSON.stringify(pr)), PROFILE);
-      await p.reload();
+      await p.reload({ waitUntil: 'load' });
       await p.locator('#app > *').first().waitFor({ state: 'attached', timeout: 8000 });
-      await p.waitForTimeout(300);
     },
   });
 });
