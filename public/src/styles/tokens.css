@@ -328,6 +328,19 @@
   --bg:         var(--bz-dawn);
   --fg:         var(--bz-ink);
   color-scheme: light;
+  /* B1: Surface tokens not previously overridden in morning recipe */
+  --panel:            var(--bz-parchment);
+  --panel2:           rgba(30, 41, 59, 0.06);
+  --card:             rgba(30, 41, 59, 0.08);
+  --border:           rgba(30, 41, 59, 0.18);
+  --text:             var(--bz-ink);
+  --text-muted:       var(--bz-ink-60);
+  --text-strong:      var(--bz-ink);
+  --surface-elevated: rgba(30, 41, 59, 0.06);
+  --border-subtle:    rgba(30, 41, 59, 0.10);
+  --muted:            var(--bz-fg-3);
+  /* B1: Lane bg tokens — replace dark gradients with light-mode surfaces */
+  --lane-bg:          rgba(30, 41, 59, 0.06);
 }
 
 /* ════════════════════════════════════════════════════════════════════════
