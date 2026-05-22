@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node --test",
+    "test": "node --test 'test/*.test.js'",
     "test:contract": "FUFIRE_CONTRACT_TEST=true node --test test/contract.test.js",
     "test:e2e": "playwright test --config=playwright.config.mjs",
     "test:e2e:update": "playwright test --config=playwright.config.mjs --update-snapshots",
