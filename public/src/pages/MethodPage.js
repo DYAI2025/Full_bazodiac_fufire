@@ -1,153 +1,192 @@
 // public/src/pages/MethodPage.js
 //
-// Sprint E #5 — Method / Raw-Data / Debug view. Per goal-condition the
-// ONLY place where raw endpoint paths, fetch timestamps, and full
-// JSON payloads are user-visible.
-//
-// Sources:
-//   - getConfig()  → upstream endpoint catalog
-//   - getHealth()  → upstream base URL + endpoint allowlist
-//   - currentProfile from sessionStorage (raw payload preview)
+// I5 — API / Daten-Provenienz view.
+// Pure renderer functions (exported for unit tests) + async MethodPage mount.
 
-import { getConfig, getHealth } from '../api/client.js';
-import { UnavailableCard } from '../components/UnavailableCard.js';
-import { PageShell }      from '../components/PageShell.js';
-import { SectionHeader }  from '../components/SectionHeader.js';
-import { LuxuryCard }     from '../components/LuxuryCard.js';
-import { RollingText }    from '../components/RollingText.js';
+import { getConfig, getHealth }                                      from '../api/client.js';
+import { RollingText }                                               from '../components/RollingText.js';
+import { buildProvenance, FRONTEND_CONSUMERS, redactSensitive }      from '../domain/apiProvenance.js';
 
-function fmtJSON(obj, max = 800) {
-  try {
-    const s = JSON.stringify(obj, null, 2);
-    return s.length > max ? s.slice(0, max) + '\n…' : s;
-  } catch { return '(unable to stringify)'; }
+// ─── Pure renderers (unit-testable, no DOM) ──────────────────────────────────
+
+const STATUS_CLASS = {
+  reachable: 'pill pill--ok',
+  fallback:  'pill pill--warn',
+  unused:    'pill pill--muted',
+  unknown:   'pill pill--unknown',
+  known:     'pill pill--neutral',
+};
+
+export function statusPillClass(status) {
+  return STATUS_CLASS[status] ?? 'pill pill--unknown';
 }
 
-function endpointRow(ep) {
-  const row = document.createElement('article');
-  row.className = 'method-endpoint';
-  const head = document.createElement('header');
-  head.className = 'method-endpoint__head';
-  const method = document.createElement('span');
-  method.className = `method-endpoint__verb method-endpoint__verb--${(ep.method || 'GET').toLowerCase()}`;
-  method.textContent = ep.method || 'GET';
-  const path = document.createElement('code');
-  path.className = 'method-endpoint__path';
-  path.textContent = ep.localPath || ep.path || ep.proxyPath || '—';
-  head.append(method, path);
-  row.appendChild(head);
-  if (ep.description) {
-    const desc = document.createElement('p');
-    desc.className = 'method-endpoint__desc';
-    desc.textContent = ep.description;
-    row.appendChild(desc);
+export function renderHero() {
+  return `<section class="method-hero" data-section="hero">
+  <h1 class="bz-h1" data-rolling-text="hero-headline">API / Daten-Provenienz</h1>
+  <p class="method-hero__sub">Welche Endpunkte existieren, live erreichbar sind und welche Seiten sie verwenden.</p>
+</section>`;
+}
+
+export function renderProvenanceTable(entries) {
+  const rows = (entries || []).map(e => {
+    const pill      = `<span class="${statusPillClass(e.status)}">${e.status}</span>`;
+    const consumers = Array.isArray(e.consumers) && e.consumers.length ? e.consumers.join(', ') : '—';
+    return `<tr>
+      <td><code>${e.endpoint}</code></td>
+      <td>${e.method}</td>
+      <td>${e.source}</td>
+      <td>${pill}</td>
+      <td>${consumers}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="provenance-table">
+  <thead><tr>
+    <th>Endpoint</th><th>Method</th><th>Quelle</th><th>Status</th><th>Seiten</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>`;
+}
+
+export function renderLiveStatus(health) {
+  if (!health) {
+    return `<div class="live-status">
+  <span class="pill pill--unknown">unbekannt</span>
+  <p>Upstream nicht erreichbar oder Status unbekannt.</p>
+</div>`;
   }
-  return row;
+  const pill = health.upstream_ok
+    ? '<span class="pill pill--ok">upstream ok</span>'
+    : '<span class="pill pill--warn">upstream fallback</span>';
+  const url = health.fufire_base_url ?? '—';
+  return `<div class="live-status">
+  ${pill}
+  <p>Base URL: <code>${url}</code></p>
+</div>`;
 }
 
-function readProfileFromStorage() {
-  try {
-    const raw = sessionStorage.getItem('azodiac_profile');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+export function renderUsage(entries) {
+  const byPage = {};
+  for (const e of (entries || [])) {
+    for (const page of (e.consumers || [])) {
+      if (!byPage[page]) byPage[page] = [];
+      byPage[page].push(e.endpoint);
+    }
+  }
+  const items = Object.entries(byPage).map(([page, eps]) => {
+    const epList = eps.map(ep => `<li><code>${ep}</code></li>`).join('');
+    return `<li class="usage-page"><strong>${page}</strong><ul>${epList}</ul></li>`;
+  }).join('');
+  return `<ul class="usage-pages">${items}</ul>`;
 }
 
-export function MethodPage(app, { profile = null } = {}) {
-  app.innerHTML = '';
+export function renderRawData(raw) {
+  const safe = redactSensitive(raw ?? {});
+  let json;
+  try { json = JSON.stringify(safe, null, 2); } catch { json = '(unable to stringify)'; }
+  return `<details class="raw-data">
+  <summary>Rohdaten (nur für Debugging)</summary>
+  <pre>${json}</pre>
+</details>`;
+}
 
-  const nav = document.createElement('nav');
-  nav.className = 'page-nav';
-  const back = document.createElement('a');
-  back.href = '#/overview';
-  back.className = 'nav-link';
-  back.textContent = '← Signatur-Übersicht';
-  nav.appendChild(back);
-  app.appendChild(nav);
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-  const shell = PageShell({
-    eyebrow: 'Methode · Roh-Daten',
-    headline: 'Was hier passiert',
-    subline: 'Diese Seite ist die einzige Stelle der App, die rohe API-Antworten, Endpunkt-Pfade und Berechnungs-Provenienz zeigt. Alles andere ist aufbereitet — hier siehst du, was die FuFire-Engine zurückgibt.',
-  });
-  shell.setAttribute('data-lane', 'fusion');
+function catalogFromConfig(config) {
+  if (!Array.isArray(config?.endpoints)) return [];
+  return config.endpoints.map(ep => ({
+    endpoint: ep.localPath || ep.path || ep.proxyPath || ep.endpoint || '',
+    method:   ep.method || 'GET',
+  })).filter(e => e.endpoint);
+}
 
-  // I2: replace static h1 with RollingText hero title.
-  const staticH1 = shell.querySelector('[data-page-title]');
-  if (staticH1) {
-    const heroRoll = RollingText({ text: 'Was hier passiert', tagName: 'h1', className: 'bz-h1 page-title' });
-    heroRoll.setAttribute('data-rolling-text', 'hero');
-    staticH1.replaceWith(heroRoll);
+function mountHTML(parent, html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return parent.appendChild(tmp.firstElementChild);
+}
+
+function replaceHTML(el, html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  el.replaceWith(tmp.firstElementChild);
+}
+
+// ─── Page mount ──────────────────────────────────────────────────────────────
+
+export async function MethodPage(root, _opts = {}) {
+  root.innerHTML = '';
+
+  const page = document.createElement('div');
+  page.className = 'method-page';
+  page.setAttribute('data-page', 'method');
+  root.appendChild(page);
+
+  // Hero
+  const heroEl = mountHTML(page, renderHero());
+  const staticTitle = heroEl.querySelector('[data-rolling-text]');
+  if (staticTitle) {
+    const rolling = RollingText({ text: 'API / Daten-Provenienz', tagName: 'h1', className: 'bz-h1' });
+    rolling.setAttribute('data-rolling-text', 'hero-headline');
+    staticTitle.replaceWith(rolling);
     if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => heroRoll.startRolling());
+      requestAnimationFrame(() => rolling.startRolling?.());
     } else {
-      heroRoll.startRolling();
+      rolling.startRolling?.();
     }
   }
 
-  // Endpoint catalog section
-  const catalogSection = document.createElement('section');
-  catalogSection.setAttribute('aria-label', 'Endpunkt-Katalog');
-  catalogSection.appendChild(SectionHeader({
-    eyebrow: 'Endpunkt-Katalog',
-    headline: 'Verfügbare FuFire-Endpoints',
-  }));
-  const catalogCard = LuxuryCard({ lane: 'fusion' });
-  catalogCard.body.textContent = 'Lade Katalog …';
-  catalogSection.appendChild(catalogCard);
-  shell.body.appendChild(catalogSection);
+  // Live status placeholder
+  const statusSection = document.createElement('section');
+  statusSection.className = 'method-section';
+  statusSection.setAttribute('data-section', 'live-status');
+  const statusH2 = document.createElement('h2');
+  statusH2.className = 'bz-h2';
+  statusH2.textContent = 'Upstream-Status';
+  statusSection.appendChild(statusH2);
+  const statusEl = mountHTML(statusSection, renderLiveStatus(null));
+  page.appendChild(statusSection);
 
-  // Health section
-  const healthSection = document.createElement('section');
-  healthSection.setAttribute('aria-label', 'Health');
-  healthSection.appendChild(SectionHeader({
-    eyebrow: 'Health',
-    headline: 'Upstream-Status',
-  }));
-  const healthPre = document.createElement('pre');
-  healthPre.className = 'method-pre';
-  healthPre.textContent = 'Lade Health …';
-  healthSection.appendChild(healthPre);
-  shell.body.appendChild(healthSection);
+  // Provenance table placeholder
+  const provenanceSection = document.createElement('section');
+  provenanceSection.className = 'method-section';
+  provenanceSection.setAttribute('data-section', 'provenance');
+  const provenanceH2 = document.createElement('h2');
+  provenanceH2.className = 'bz-h2';
+  provenanceH2.textContent = 'API-Endpunkte & Provenienz';
+  provenanceSection.appendChild(provenanceH2);
+  const tableEl = mountHTML(provenanceSection, renderProvenanceTable([]));
+  page.appendChild(provenanceSection);
 
-  // Raw profile section
-  const profileSection = document.createElement('section');
-  profileSection.setAttribute('aria-label', 'Raw profile');
-  profileSection.appendChild(SectionHeader({
-    eyebrow: 'Rohdaten',
-    headline: 'Aktuelles Profil (Vorschau)',
-  }));
-  const profilePre = document.createElement('pre');
-  profilePre.className = 'method-pre';
-  profileSection.appendChild(profilePre);
-  shell.body.appendChild(profileSection);
+  // Usage placeholder
+  const usageSection = document.createElement('section');
+  usageSection.className = 'method-section';
+  usageSection.setAttribute('data-section', 'usage');
+  const usageH2 = document.createElement('h2');
+  usageH2.className = 'bz-h2';
+  usageH2.textContent = 'Nutzung nach Seite';
+  usageSection.appendChild(usageH2);
+  const usageSlot = document.createElement('div');
+  usageSection.appendChild(usageSlot);
+  page.appendChild(usageSection);
 
-  app.appendChild(shell);
+  // Raw data placeholder
+  const rawSection = document.createElement('section');
+  rawSection.className = 'method-section';
+  rawSection.setAttribute('data-section', 'raw-data');
+  const rawSlot = document.createElement('div');
+  rawSection.appendChild(rawSlot);
+  page.appendChild(rawSection);
 
-  // Async fill: endpoint catalog
-  getConfig().then((res) => {
-    catalogCard.body.textContent = '';
-    if (!res.ok || !res.data?.endpoints) {
-      catalogCard.body.appendChild(UnavailableCard({
-        title: 'Endpunkt-Katalog',
-        reason: `Konnte /api/config nicht laden: ${res.error || `HTTP ${res.status}`}`,
-      }));
-      return;
-    }
-    for (const ep of res.data.endpoints) catalogCard.body.appendChild(endpointRow(ep));
-  }).catch((err) => {
-    catalogCard.body.textContent = `Fehler: ${err.message}`;
-  });
+  // Async fill
+  const [healthRes, configRes] = await Promise.allSettled([getHealth(), getConfig()]);
 
-  // Async fill: health
-  getHealth().then((res) => {
-    healthPre.textContent = res.ok ? fmtJSON(res.data) : `Fehler: ${res.error || `HTTP ${res.status}`}`;
-  }).catch((err) => {
-    healthPre.textContent = `Fehler: ${err.message}`;
-  });
+  const health  = healthRes.status === 'fulfilled' && healthRes.value?.ok ? healthRes.value.data  : null;
+  const catalog = configRes.status  === 'fulfilled' && configRes.value?.ok  ? catalogFromConfig(configRes.value.data) : [];
 
-  // Raw profile
-  const prof = profile || readProfileFromStorage();
-  profilePre.textContent = prof
-    ? fmtJSON(prof, 2000)
-    : 'Kein Profil in sessionStorage. Erst Berechnung auf der Startseite ausführen.';
+  replaceHTML(statusEl,  renderLiveStatus(health));
+  const entries = buildProvenance(catalog, health, FRONTEND_CONSUMERS);
+  replaceHTML(tableEl,   renderProvenanceTable(entries));
+  usageSlot.innerHTML  = renderUsage(entries);
+  rawSlot.innerHTML    = renderRawData(health ?? {});
 }

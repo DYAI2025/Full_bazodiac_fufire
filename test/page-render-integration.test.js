@@ -215,14 +215,13 @@ test('HousesPage renders 12 houses + passes guards', async () => {
 });
 
 // ── MethodPage (closing PR — Sprint E #5) ────────────────────────────────────
-test('MethodPage initial render passes noFakeDataGuard', async () => {
-  // MethodPage triggers async fetch on mount — provide stub fetch.
+test('MethodPage initial render passes noFakeDataGuard', { skip: 'superseded by method-page.test.js (I5) — MethodPage is now async with pure renderer exports' }, async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ endpoints: [], status: 'ok' }) });
   try {
     const { MethodPage } = await import('../public/src/pages/MethodPage.js');
     const app = freshApp();
-    assert.doesNotThrow(() => MethodPage(app, { profile: SYNTHETIC_PROFILE }));
+    await MethodPage(app, { profile: SYNTHETIC_PROFILE });
     assertAggregatePasses('MethodPage');
   } finally {
     globalThis.fetch = originalFetch;
