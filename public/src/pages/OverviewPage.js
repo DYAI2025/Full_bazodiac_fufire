@@ -217,12 +217,19 @@ function installWheelAuditLink(root) {
   root.addEventListener('wheel:body:active', (e) => {
     const detail = e && e.detail;
     if (!detail || !detail.key) return;
-    // Clear any previously active row for the same kind first.
-    const previouslyActive = root.querySelectorAll('[data-audit-row][data-active="true"]');
+    // Clear any previously active row first. Exclude the inline SVG
+    // <metadata data-audit-row> markers the wheel emits for screen readers —
+    // their DOM order precedes the visible <li> audit rows, so a plain
+    // querySelector would land data-active on an invisible node and the
+    // <li> highlight would never appear. Scope to non-metadata nodes.
+    const isVisibleRow = (n) => n && n.tagName && n.tagName.toLowerCase() !== 'metadata';
+    const previouslyActive = Array.from(
+      root.querySelectorAll('[data-audit-row][data-active="true"]'),
+    ).filter(isVisibleRow);
     for (const node of previouslyActive) node.removeAttribute('data-active');
     if (detail.active === false) return;
-    const target = root.querySelector(`[data-audit-row="${detail.key}"]`);
-    if (target) target.setAttribute('data-active', 'true');
+    const candidates = Array.from(root.querySelectorAll(`[data-audit-row="${detail.key}"]`)).filter(isVisibleRow);
+    if (candidates[0]) candidates[0].setAttribute('data-active', 'true');
   });
 }
 

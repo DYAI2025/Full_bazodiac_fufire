@@ -52,13 +52,13 @@ test.describe('OV-I3-T09: Wheel hover/click → audit linking', () => {
 
     // Wheel + audit tabs must be in DOM.
     await expect(page.locator('.natal-chart-wheel').first()).toBeAttached();
-    await expect(page.locator('[data-audit-row="Sun"]').first()).toBeAttached();
+    await expect(page.locator('li[data-audit-row="Sun"]').first()).toBeAttached();
 
     const sun = page.locator('[data-body-key="Sun"]').first();
     await sun.hover();
 
     // Linked row must flip data-active="true".
-    await expect(page.locator('[data-audit-row="Sun"]').first())
+    await expect(page.locator('li[data-audit-row="Sun"]').first())
       .toHaveAttribute('data-active', 'true');
 
     await page.screenshot({
@@ -70,13 +70,13 @@ test.describe('OV-I3-T09: Wheel hover/click → audit linking', () => {
   test('focus ASC axis + Enter activates the ASC audit row', async ({ page }) => {
     await seedAndReload(page);
 
-    await expect(page.locator('[data-audit-row="ASC"]').first()).toBeAttached();
+    await expect(page.locator('li[data-audit-row="ASC"]').first()).toBeAttached();
 
     const asc = page.locator('[data-axis-key="ASC"]').first();
     await asc.focus();
     await page.keyboard.press('Enter');
 
-    await expect(page.locator('[data-audit-row="ASC"]').first())
+    await expect(page.locator('li[data-audit-row="ASC"]').first())
       .toHaveAttribute('data-active', 'true');
 
     await page.screenshot({
