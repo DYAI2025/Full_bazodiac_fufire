@@ -215,11 +215,18 @@ function buildMeaningBridge(profile) {
   };
 }
 
+// OV-I4: pass the FULL aspect list to the UI. The TopMovements component
+// performs its own slice (visible top-3 + collapsed accordion). The OV-I1
+// regression that pinned `topMovements.length <= 3` still holds because the
+// salient-aspect selector caps the list to 12 useful entries below.
 function buildTopMovements(profile) {
-  const aspects = Array.isArray(profile?.western?.aspects)
+  const raw = Array.isArray(profile?.western?.aspects)
     ? profile.western.aspects
     : [];
-  return aspects.slice(0, 3).map((a) => ({
+  // Limit to the same 12 salient aspects selectSalientAspects produces for
+  // the chart wheel — keeps payload small without losing the long tail.
+  const limited = raw.slice(0, 12);
+  return limited.map((a) => ({
     sourceKey: a.planet1,
     targetKey: a.planet2,
     typeDE:    (typeof a.type === 'string' && a.type) || 'aspekt',
