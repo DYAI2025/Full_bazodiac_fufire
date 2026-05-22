@@ -113,3 +113,68 @@ docs/qa/screenshots/b3-font-consolidation/
 - Final run: 22/22 green
 
 ---
+
+## Optischer Review
+
+Screenshots zeigen overview-Seite in 4 Varianten (Desktop+Mobile × Dark+Light).
+
+| Kriterium | Ergebnis |
+|---|---|
+| Cormorant Garamond Ueberschriften sichtbar | PASS — erkennbarer Serifen-Charakter in Headlines |
+| Sora Body/UI lesbar | PASS — klare sans-serif Lesbarkeit |
+| Light Mode Kontrast | PASS — keine Regressionen (B1 Tokens unveraendert) |
+| Dark Mode Kontrast | PASS |
+| Mobile Layout | PASS — Font-Scale korrekt |
+| Keine internen Feldnamen sichtbar | PASS |
+| Debug-Artefakte sichtbar | PASS (keine) |
+
+Findings: **0 Critical, 0 Major, 0 Minor**
+
+---
+
+## Code Review
+
+| Kriterium | Ergebnis |
+|---|---|
+| Keine Backend-Architekturverletzung | PASS |
+| Keine neuen Runtime-Dependencies | PASS |
+| Keine hardcodierten Brand-Font-Literale | PASS nach Fix |
+| Keine CSS-Token-Konflikte | PASS |
+| Tests pruefen eigentliche Anforderung | PASS |
+| CJK-Fallback `main.css:1976` unveraendert | PASS — system-level CJK fallback, kein Google Fonts Import noetig |
+
+Minor-Befund (gefixt): `.error-page .error-detail { font-family: monospace }` war hardcodiert → auf `var(--bz-font-mono)` umgestellt.
+
+Findings: **0 Critical, 0 Major, 1 Minor** (gefixt)
+
+Note zu `main.css:1976` (`Noto Serif CJK SC`, `Noto Sans CJK SC`): Das ist ein system-level CJK-Glyph-Fallback fuer chinesische Schriftzeichen auf Betriebssystemen die Noto CJK mitliefern. Per Dev Brief §9 ist CJK-Fallback nur "technischer Glyph-Fallback", kein Brand-Font, kein Google Fonts Import noetig. Pre-existing, out-of-scope fuer B3.
+
+---
+
+## Fix-Runden
+
+| Runde | Finding | Fix | Ergebnis |
+|---|---|---|---|
+| 1 | TDD: Heading-Selektor ohne Profil-Inject findet kein Element | Profile-Inject vor Heading-Test hinzugefuegt | PASS |
+| 2 | Minor (Code Review): `.error-page .error-detail` hardcodiert `monospace` | `var(--bz-font-mono)` gesetzt | PASS |
+
+---
+
+## Abschlussstatus
+
+**PASS**
+
+Bedingungen erfuellt:
+- `/goal` vorhanden, unter 4000 Zeichen ✅
+- TDD-Nachweis: Roter Gate committed, gruen nach Implementierung ✅
+- `npm test` gruen: 791 pass, 0 fail ✅
+- Playwright-Live-Test gruen: 22/22 ✅
+- Screenshot-Matrix komplett (4 PNGs: Desktop+Mobile × Dark+Light) ✅
+- Optischer Review: PASS ✅
+- Code Review: PASS (1 Minor gefixt) ✅
+- 0 offene Critical Findings ✅
+- 0 offene Major Findings ✅
+
+## Offene Minor Findings
+
+- Keine

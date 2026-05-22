@@ -248,7 +248,7 @@ input:focus { border-color: var(--accent); }
 /* ── Router error boundary ── */
 .error-page { display: flex; flex-direction: column; gap: 16px; padding: 40px 24px; max-width: 480px; }
 .error-page h1 { font-size: 1.2rem; color: var(--warn); }
-.error-page .error-detail { font-size: .82rem; color: var(--muted); font-family: monospace; background: var(--panel2); padding: 8px 12px; border-radius: var(--radius); word-break: break-word; }
+.error-page .error-detail { font-size: .82rem; color: var(--muted); font-family: var(--bz-font-mono); background: var(--panel2); padding: 8px 12px; border-radius: var(--radius); word-break: break-word; }
 .error-page a { color: var(--accent); font-size: .9rem; }
 
 /* ── Mobile (375px) ── */
