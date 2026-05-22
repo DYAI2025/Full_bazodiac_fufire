@@ -51,7 +51,7 @@ Reference-Doc: docs/qa/2026-05-22-b1-light-mode-contrast.md
 
 ## Testbefunde — Failing test (TDD-Red)
 
-Vor dem Fix scheiterten alle 8 Seiten. Repraesentative Offenders:
+Vor dem Fix scheiterten alle 8 Seiten. Representative Offenders:
 
 - `profile-missing-banner`: bgBright=0.11 (`var(--card)` = `rgba(26,28,30,0.55)` = `#1A1C1E`-Ton), fgBright=0.16 (`--bz-ink`)
 - `method-section` / `raw-data pre`: bgBright=0 (hardcoded `rgba(0,0,0,.35)`)
