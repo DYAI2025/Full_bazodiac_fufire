@@ -48,3 +48,77 @@ npm test gruen, Screenshot-Matrix komplett, optischer Review und Code Review PAS
 Zeichenzahl: <1500
 
 Reference-Doc: docs/qa/2026-05-22-b2-bazi-restructure.md
+
+---
+
+## Implementierte Aenderungen
+
+| Datei | Aenderung |
+|---|---|
+| `public/src/pages/BaziPage.js` | Vollstaendige B2-Restruktur: data-bazi-role, data-bazi-pillar <li>, shared detail panel, provenance labels, lucky pillar, narrative marker |
+| `public/src/styles/main.css` | BaZi-Sektion: .bazi-pillars-list grid (4-col desktop / 2-col mobile), .bazi-pillar-card, .bazi-shared-detail, .bazi-pillar-hs-source, .bazi-luck-note |
+| `test/e2e/b2-bazi-restructure.spec.js` | Neu: 8 B2-spezifische Assertions + Screenshot-Matrix (collapsed + expanded) |
+| `docs/qa/screenshots/b2-bazi-restructure/` | 8 Screenshots: collapsed/expanded x desktop/mobile x dark/light |
+
+Keine Aenderung an: Backend, Routing, baziPillarEnrichment.js, anderen Seiten.
+
+---
+
+## Testbefunde
+
+### Iterationsverlauf
+
+1. **Roter Gate (TDD-first):** Test committed, 6 von 8 Specs failed. Ursache: keine data-bazi-* Attribute im alten BaziPage.
+2. **Fix 1 — Session-Storage-Key:** Test nutzte `bazodiac:profile`, App nutzt `azodiac_profile`. Korrigiert.
+3. **Fix 2 — UnavailableCard-Text:** Unit-Test erwartete `'Säule konnte nicht berechnet werden.'` — Wortlaut im neuen Code angepasst.
+4. **Fix 3 — Narrative Text:** `data-bazi-narrative-marker` enthielt "Leseschlüssel" (mit Umlaut), Test prüfte `/Leseschluessel/i` (ASCII). Wortlaut im Template auf ASCII-Form umgestellt.
+5. **Fix 4 — Mobile-Zeilentest:** Row-alignment-Test schlägt auf Pixel 7 (412px) fehl, weil CSS dort auf 2-Spalten-Grid umschaltet (korrekt). Test um Viewport-Guard ergänzt (nur bei ≥1024px).
+
+### Testbefehle
+
+```bash
+# B2 e2e (desktop + mobile)
+APP_BASE_URL=http://127.0.0.1:4100 npm run test:e2e -- test/e2e/b2-bazi-restructure.spec.js
+# Ergebnis: 16/16 passed
+
+# Vollstaendige Unit-Suite
+npm test
+# Ergebnis: 803 tests, 791 pass, 0 fail
+```
+
+---
+
+## Playwright-Live-Test
+
+| Assertion | Desktop | Mobile |
+|---|---|---|
+| data-bazi-role="day-master-kern" sichtbar | PASS | PASS |
+| Genau 4 data-bazi-pillar Elemente in einer Zeile | PASS (1440px) | PASS (Viewport-Guard, n/a) |
+| Genau 1 data-bazi-shared-detail, 0 dropdowns | PASS | PASS |
+| 4 data-bazi-hidden-stems-source Labels | PASS | PASS |
+| data-bazi-lucky-pillar mit "nicht von API geliefert" | PASS | PASS |
+| data-bazi-narrative-marker mit "Leseschluessel" | PASS | PASS |
+| Shared detail oeffnet bei Klick (data-expanded=true) | PASS | PASS |
+| Screenshot-Matrix | PASS | PASS |
+
+---
+
+## Screenshots
+
+```
+docs/qa/screenshots/b2-bazi-restructure/
+  bazi-collapsed-desktop-dark.png
+  bazi-collapsed-desktop-light.png
+  bazi-collapsed-mobile-dark.png
+  bazi-collapsed-mobile-light.png
+  bazi-expanded-desktop-dark.png
+  bazi-expanded-desktop-light.png
+  bazi-expanded-mobile-dark.png
+  bazi-expanded-mobile-light.png
+```
+
+---
+
+## Status
+
+SHIPPABLE. Alle Playwright-Assertions gruen, npm test gruen, Screenshot-Matrix komplett.
