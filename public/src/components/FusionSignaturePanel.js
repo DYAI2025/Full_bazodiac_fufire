@@ -49,13 +49,14 @@ export function renderFusionSignaturePanel({ signatureHero, evidenceCards } = {}
   panel.append(evidenceGrid);
 
   const ctas = Array.isArray(safeHero.ctas) ? safeHero.ctas : [];
-  if (ctas.length > 0) {
+  const validCtas = ctas.filter((c) => c && c.route);
+  if (validCtas.length > 0) {
     const nav = document.createElement('nav');
     nav.className = 'bz-hero__ctas';
-    for (const cta of ctas) {
+    for (const cta of validCtas) {
       const a = document.createElement('a');
       a.className = 'bz-cta';
-      a.href = `#${cta.route || ''}`;
+      a.href = `#${cta.route}`;
       a.textContent = cta.label || '';
       nav.append(a);
     }

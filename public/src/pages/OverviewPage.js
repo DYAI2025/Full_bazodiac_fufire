@@ -11,7 +11,6 @@
 import { profileToOverviewModel }                  from '../domain/overviewModel.js';
 import { NatalChartWheel }                          from '../components/NatalChartWheel.js';
 import { NatalChartAudit }                          from '../components/NatalChartAudit.js';
-import { RollingText }                              from '../components/RollingText.js';
 import { SectionHeader }                            from '../components/SectionHeader.js';
 import { LuxuryCard }                               from '../components/LuxuryCard.js';
 import { renderSignatureHero }                      from '../components/SignatureHero.js';
@@ -156,13 +155,16 @@ function renderPage(vm) {
   const wrap = document.createElement('div');
   wrap.className = 'overview-page';
 
-  // OV-I2: SignatureHero is the FIRST data-section. It composes the wheel (left)
-  // and the fusion-signature panel (right). The legacy hero (key-facts strip +
-  // wheel/narrative slots) is mounted INSIDE the SignatureHero's wheel-anchor so
-  // backwards-compatible selectors (data-section="hero", data-section="key-facts",
-  // data-section="birthchart-wheel", data-section="fusion-narrative") still exist.
+  // OV-I2 fix: SignatureHero owns the wheel directly via wheel-anchor.
+  // The legacy data-section="hero" wrapper is dismantled — the key-facts strip
+  // and the birthchart-wheel audit panel are now their own sibling sections
+  // beneath signature-hero. The duplicated fusion-narrative block (which
+  // repeated the essence headline + evidence cards already shown in the
+  // signature panel) is removed entirely.
   wrap.append(
-    renderSignatureHeroWithLegacyHero(vm),
+    renderSignatureHeroWithWheel(vm),
+    renderKeyFacts(vm),
+    renderBirthchartWheelDetail(vm),
     renderMeaningBridge(vm),
     renderBaziPillars(vm),
     renderWesternCore(vm),
@@ -173,82 +175,27 @@ function renderPage(vm) {
   return wrap;
 }
 
-// OV-I2: wraps the existing renderHero output inside a SignatureHero section so
-// that:
-//   1. data-section="signature-hero" is the first section on the page.
-//   2. The existing data-section="hero" / "key-facts" / "birthchart-wheel" /
-//      "fusion-narrative" anchors are preserved (mounted inside wheel-anchor).
-function renderSignatureHeroWithLegacyHero(vm) {
-  const legacyHero = renderHero(vm);
-  const signatureHero = renderSignatureHero(vm, { wheelNode: legacyHero });
-  return signatureHero;
+// OV-I2 fix: build the wheel as a single node and inject it directly into the
+// SignatureHero's wheel-anchor. No legacy hero wrapper.
+function renderSignatureHeroWithWheel(vm) {
+  let wheelNode = null;
+  if (vm.wheel) {
+    wheelNode = NatalChartWheel({ wheel: vm.wheel });
+  }
+  return renderSignatureHero(vm, { wheelNode });
 }
 
-// ── Hero section (data-section="hero")
-// Contains: key-facts strip, then a CSS-grid with wheel (left) and narrative (right).
-// key-facts comes first in DOM → document order: hero → key-facts → birthchart-wheel → fusion-narrative.
-
-function renderHero(vm) {
-  const hero = document.createElement('section');
-  hero.dataset.section = 'hero';
-  hero.className = 'overview-hero';
-
-  // 1. Key-facts strip inside hero (first in source order so it appears first in querySelectorAll).
-  hero.append(renderKeyFacts(vm));
-
-  // 2. Two-column grid.
-  const grid = document.createElement('div');
-  grid.className = 'overview-hero__grid';
-
-  // Left — birthchart wheel.
-  const wheelSlot = document.createElement('div');
-  wheelSlot.dataset.heroSlot = 'wheel';
-  wheelSlot.className = 'overview-hero__wheel';
-
-  const wheelSection = document.createElement('div');
-  wheelSection.dataset.section = 'birthchart-wheel';
+// ── Birthchart wheel audit detail (data-section="birthchart-wheel") ─────────
+// Kept as its own section for audit tooling + provenance verification. The
+// actual wheel is rendered above inside signature-hero's wheel-anchor.
+function renderBirthchartWheelDetail(vm) {
+  const section = document.createElement('section');
+  section.dataset.section = 'birthchart-wheel';
+  section.className = 'overview-section overview-section--birthchart-wheel';
   if (vm.wheel) {
-    wheelSection.append(NatalChartWheel({ wheel: vm.wheel }));
-    wheelSection.append(NatalChartAudit({ wheel: vm.wheel }));
+    section.append(NatalChartAudit({ wheel: vm.wheel }));
   }
-  wheelSlot.append(wheelSection);
-
-  // Right — fusion narrative.
-  const narrativeSlot = document.createElement('div');
-  narrativeSlot.dataset.heroSlot = 'narrative';
-  narrativeSlot.className = 'overview-hero__narrative';
-
-  const narrativeSection = document.createElement('div');
-  narrativeSection.dataset.section = 'fusion-narrative';
-
-  const rollingEl = RollingText({
-    text:    vm.fusionNarrative.headline,
-    tagName: 'h2',
-    className: 'overview-hero__headline',
-  });
-  rollingEl.setAttribute('data-rolling-text', 'hero-headline');
-
-  narrativeSection.append(rollingEl);
-
-  const evidenceGrid = document.createElement('div');
-  evidenceGrid.className = 'overview-hero__evidence';
-  for (const ev of vm.fusionNarrative.evidence.slice(0, 3)) {
-    const card = LuxuryCard({ lane: 'west' });
-    card.dataset.evidenceCard = ev.title.toLowerCase();
-    const header = document.createElement('strong');
-    header.textContent = ev.title;
-    const body = document.createElement('p');
-    body.textContent = ev.body;
-    card.body.append(header, body);
-    evidenceGrid.append(card);
-  }
-  narrativeSection.append(evidenceGrid);
-  narrativeSlot.append(narrativeSection);
-
-  grid.append(wheelSlot, narrativeSlot);
-  hero.append(grid);
-
-  return hero;
+  return section;
 }
 
 // ── Key facts strip (data-section="key-facts") ──────────────────────────────

@@ -83,17 +83,14 @@ test('OverviewPage renders all hero sections in correct order', () => {
   const sections = Array.from(root.querySelectorAll('[data-section]'));
   const ids = sections.map((el) => el.getAttribute('data-section'));
 
-  // OV-I2: SignatureHero wraps the legacy hero structure as the first section.
-  // The legacy data-section anchors (hero, key-facts, birthchart-wheel,
-  // fusion-narrative) remain inside the new signature-hero for backward
-  // compatibility with the I4 e2e spec and audit tooling.
-  // meaning-bridge sits between the hero and the legacy thematic sections.
+  // OV-I2 fix: SignatureHero is the dominant first section and owns the wheel
+  // directly via [data-hero-slot="wheel-anchor"]. The legacy nested hero
+  // wrapper + fusion-narrative duplication have been removed; key-facts and
+  // birthchart-wheel remain as their own sibling sections for audit tooling.
   assert.deepEqual(ids, [
     'signature-hero',
-    'hero',
     'key-facts',
     'birthchart-wheel',
-    'fusion-narrative',
     'meaning-bridge',
     'bazi-pillars',
     'western-core',
@@ -103,28 +100,30 @@ test('OverviewPage renders all hero sections in correct order', () => {
   ], `Section order mismatch. Got: ${ids.join(', ')}`);
 });
 
-test('Hero section contains wheel on left and fusion narrative on right', () => {
+test('Signature hero contains wheel-anchor and fusion-signature-panel slots in order', () => {
   const root = mountPage(FIXTURE);
-  const hero = root.querySelector('[data-section="hero"]');
-  assert.ok(hero, 'hero section missing');
+  const hero = root.querySelector('[data-section="signature-hero"]');
+  assert.ok(hero, 'signature-hero section missing');
 
-  const wheel     = hero.querySelector('[data-hero-slot="wheel"]');
-  const narrative = hero.querySelector('[data-hero-slot="narrative"]');
-  assert.ok(wheel,     'hero wheel slot missing');
-  assert.ok(narrative, 'hero narrative slot missing');
+  const wheelAnchor = hero.querySelector('[data-hero-slot="wheel-anchor"]');
+  const panel       = hero.querySelector('[data-hero-slot="fusion-signature-panel"]');
+  assert.ok(wheelAnchor, 'signature-hero wheel-anchor slot missing');
+  assert.ok(panel,       'signature-hero fusion-signature-panel slot missing');
 
-  const slots = Array.from(hero.querySelectorAll('[data-hero-slot]'));
-  assert.equal(slots[0].getAttribute('data-hero-slot'), 'wheel');
-  assert.equal(slots[1].getAttribute('data-hero-slot'), 'narrative');
+  const slots = Array.from(hero.querySelectorAll(':scope > [data-hero-slot]'));
+  assert.equal(slots[0].getAttribute('data-hero-slot'), 'wheel-anchor');
+  assert.equal(slots[1].getAttribute('data-hero-slot'), 'fusion-signature-panel');
 });
 
-test('Hero narrative contains RollingText headline + 3 evidence cards', () => {
-  const root      = mountPage(FIXTURE);
-  const narrative = root.querySelector('[data-hero-slot="narrative"]');
-  const rolling   = narrative.querySelector('[data-rolling-text]');
-  assert.ok(rolling, 'RollingText must render in narrative');
+test('Signature panel contains the essence headline + 3 evidence cards', () => {
+  const root  = mountPage(FIXTURE);
+  const panel = root.querySelector('[data-hero-slot="fusion-signature-panel"]');
+  assert.ok(panel, 'fusion-signature-panel slot missing');
 
-  const evidenceCards = narrative.querySelectorAll('[data-evidence-card]');
+  const essence = panel.querySelector('.bz-hero__essence');
+  assert.ok(essence, 'essence headline must render in signature panel');
+
+  const evidenceCards = panel.querySelectorAll('[data-evidence]');
   assert.equal(evidenceCards.length, 3, 'must have exactly 3 evidence cards');
 });
 

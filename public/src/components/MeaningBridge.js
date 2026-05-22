@@ -51,11 +51,14 @@ export function renderMeaningBridge(viewModel) {
     body.textContent = truncate(card.body || '');
     article.append(body);
 
-    const source = document.createElement('p');
-    source.className = 'bz-meaning-card__source';
-    source.setAttribute('data-card-source', '');
-    source.textContent = card.source || '';
-    article.append(source);
+    const sourceText = (card.source == null ? '' : String(card.source)).trim();
+    if (sourceText) {
+      const source = document.createElement('p');
+      source.className = 'bz-meaning-card__source';
+      source.setAttribute('data-card-source', '');
+      source.textContent = sourceText;
+      article.append(source);
+    }
 
     section.append(article);
   }
