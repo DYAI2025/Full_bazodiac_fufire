@@ -4,7 +4,7 @@
 // Pure renderer functions (exported for unit tests) + async MethodPage mount.
 
 import { getConfig, getHealth }                                      from '../api/client.js';
-import { RollingText }                                               from '../components/RollingText.js';
+import { wireHeroRolling }                                           from '../components/RollingText.js';
 import { buildProvenance, FRONTEND_CONSUMERS, redactSensitive }      from '../domain/apiProvenance.js';
 
 // ─── Pure renderers (unit-testable, no DOM) ──────────────────────────────────
@@ -23,7 +23,7 @@ export function statusPillClass(status) {
 
 export function renderHero() {
   return `<section class="method-hero" data-section="hero">
-  <h1 class="bz-h1" data-rolling-text="hero-headline">API / Daten-Provenienz</h1>
+  <h1 class="bz-h1" data-rolling-text="hero" data-page-title>API / Daten-Provenienz</h1>
   <p class="method-hero__sub">Welche Endpunkte existieren, live erreichbar sind und welche Seiten sie verwenden.</p>
 </section>`;
 }
@@ -122,19 +122,9 @@ export async function MethodPage(root, _opts = {}) {
   page.setAttribute('data-page', 'method');
   root.appendChild(page);
 
-  // Hero
-  const heroEl = mountHTML(page, renderHero());
-  const staticTitle = heroEl.querySelector('[data-rolling-text]');
-  if (staticTitle) {
-    const rolling = RollingText({ text: 'API / Daten-Provenienz', tagName: 'h1', className: 'bz-h1' });
-    rolling.setAttribute('data-rolling-text', 'hero-headline');
-    staticTitle.replaceWith(rolling);
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => rolling.startRolling?.());
-    } else {
-      rolling.startRolling?.();
-    }
-  }
+  // Hero — renderHero emits a <h1 data-page-title>; wireHeroRolling replaces it.
+  mountHTML(page, renderHero());
+  wireHeroRolling(page);
 
   // Live status placeholder
   const statusSection = document.createElement('section');
