@@ -14,7 +14,7 @@
 import { enrichWuxing } from '../domain/wuxingEnrichment.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
 import { WuxingRadar } from '../components/WuxingRadar.js';
-import { RollingText } from '../components/RollingText.js';
+import { wireHeroRolling } from '../components/RollingText.js';
 
 function elementBar(entry) {
   const row = document.createElement('article');
@@ -156,19 +156,7 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  // I6: wire hero title as RollingText.
-  const wuxH1 = app.querySelector('[data-page-title]');
-  if (wuxH1) {
-    const heroRoll = RollingText({ text: 'Was zirkuliert, was staut', tagName: 'h1', className: 'page-title bz-h1' });
-    heroRoll.setAttribute('data-rolling-text', 'hero');
-    heroRoll.setAttribute('data-page-title', '');
-    wuxH1.replaceWith(heroRoll);
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => heroRoll.startRolling?.());
-    } else {
-      heroRoll.startRolling?.();
-    }
-  }
+  wireHeroRolling(app);
 
   // Empty state: no fusion section at all
   if (!vm || vm.distribution.length === 0) {

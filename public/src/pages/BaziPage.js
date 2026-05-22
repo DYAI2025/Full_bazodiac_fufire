@@ -11,7 +11,7 @@
 import { enrichBaziPillars } from '../domain/baziPillarEnrichment.js';
 import { ExplainableCard }    from '../components/ExplainableCard.js';
 import { UnavailableCard }    from '../components/UnavailableCard.js';
-import { RollingText }        from '../components/RollingText.js';
+import { wireHeroRolling }    from '../components/RollingText.js';
 
 const ROLE_LABEL = {
   year:  'Jahr · Wurzel',
@@ -126,19 +126,7 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  // I6: wire hero title as RollingText.
-  const baziH1 = app.querySelector('[data-page-title]');
-  if (baziH1) {
-    const heroRoll = RollingText({ text: 'Dein ostasiatischer Kern', tagName: 'h1', className: 'page-title bz-h1' });
-    heroRoll.setAttribute('data-rolling-text', 'hero');
-    heroRoll.setAttribute('data-page-title', '');
-    baziH1.replaceWith(heroRoll);
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => heroRoll.startRolling?.());
-    } else {
-      heroRoll.startRolling?.();
-    }
-  }
+  wireHeroRolling(app);
 
   // ── Day Master tile ──────────────────────────────────────────────────────
   const dmMount = app.querySelector('.bazi-dm-mount');

@@ -19,7 +19,7 @@ import { enrichWesternAspects }            from '../domain/aspectEnrichment.js';
 import { signFromLongitude }               from '../data/astro-mappings.js';
 import { ExplainableCard }                 from '../components/ExplainableCard.js';
 import { UnavailableCard }                 from '../components/UnavailableCard.js';
-import { RollingText }                     from '../components/RollingText.js';
+import { wireHeroRolling }                 from '../components/RollingText.js';
 
 const CORE_ROLE_LABEL = {
   Sun:       'Sonne · Identität',
@@ -158,19 +158,7 @@ export function WesternPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  // I6: wire hero title as RollingText.
-  const westH1 = app.querySelector('[data-page-title]');
-  if (westH1) {
-    const heroRoll = RollingText({ text: 'Faktoren, Zeichen, Häuser', tagName: 'h1', className: 'page-title bz-h1' });
-    heroRoll.setAttribute('data-rolling-text', 'hero');
-    heroRoll.setAttribute('data-page-title', '');
-    westH1.replaceWith(heroRoll);
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => heroRoll.startRolling?.());
-    } else {
-      heroRoll.startRolling?.();
-    }
-  }
+  wireHeroRolling(app);
 
   // ── Cores: Sun, Moon, Asc, MC ──────────────────────────────────────────
   const coreGrid = app.querySelector('.western-cores-grid');

@@ -9,7 +9,7 @@ import { computeBodyHouse } from '../domain/westernBodyEnrichment.js';
 import { HOUSE_MEANINGS } from '../domain/meanings.js';
 import { SIGN_DE } from '../data/astro-mappings.js';
 import { UnavailableCard } from '../components/UnavailableCard.js';
-import { RollingText } from '../components/RollingText.js';
+import { wireHeroRolling } from '../components/RollingText.js';
 
 function bodiesPerHouse(bodies, houseCusps) {
   const out = Array.from({ length: 13 }, () => []);
@@ -97,19 +97,7 @@ export function HousesPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  // I6: wire hero title as RollingText for visual consistency across subpages.
-  const houseH1 = app.querySelector('[data-page-title]');
-  if (houseH1) {
-    const heroRoll = RollingText({ text: 'Wo deine Energien wirken', tagName: 'h1', className: 'page-title bz-h1' });
-    heroRoll.setAttribute('data-rolling-text', 'hero');
-    heroRoll.setAttribute('data-page-title', '');
-    houseH1.replaceWith(heroRoll);
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => heroRoll.startRolling?.());
-    } else {
-      heroRoll.startRolling?.();
-    }
-  }
+  wireHeroRolling(app);
 
   const grid = app.querySelector('.houses-grid');
   if (!houses) {

@@ -10,7 +10,7 @@
 // could diverge from WuxingPage / CareerFinancePage on partial fixtures.
 
 import { enrichWuxing } from '../domain/wuxingEnrichment.js';
-import { RollingText } from '../components/RollingText.js';
+import { wireHeroRolling } from '../components/RollingText.js';
 // Sprint H3: Pentagonal radar extracted into pure-function module so
 // WuxingPage + FusionPage share one source. cycleRelation + SHENG/KE
 // also live there now.
@@ -270,18 +270,5 @@ export function FusionPage(app, { profile, onNavigate } = {}) {
     });
   }
 
-  // I2 + I6: wire hero title as RollingText with bz-h1 design-token class.
-  const heroH1 = app.querySelector('.insight-hero__title');
-  if (heroH1) {
-    const heroText = heroH1.textContent.trim();
-    const heroRoll = RollingText({ text: heroText, tagName: 'h1', className: 'insight-hero__title bz-h1' });
-    heroRoll.setAttribute('data-rolling-text', 'hero');
-    heroRoll.setAttribute('data-page-title', '');
-    heroH1.replaceWith(heroRoll);
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => heroRoll.startRolling());
-    } else {
-      heroRoll.startRolling();
-    }
-  }
+  wireHeroRolling(app);
 }

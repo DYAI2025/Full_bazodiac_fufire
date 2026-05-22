@@ -1,6 +1,6 @@
 // public/src/pages/DailyPage.js
 import { getDailyExperience, getTransitNow, getTransitTimeline } from '../api/client.js';
-import { RollingText } from '../components/RollingText.js';
+import { wireHeroRolling } from '../components/RollingText.js';
 import { InsightHero }           from '../components/InsightHero.js';
 import { ActionExperimentCard }  from '../components/ActionExperimentCard.js';
 import { PersistentSignatureBar } from '../components/PersistentSignatureBar.js';
@@ -196,19 +196,7 @@ export function DailyPage(app, { profile = null } = {}) {
     </main>
   `;
 
-  // I2 + I6: wire hero title as RollingText with bz-h1 design-token class.
-  const dailyH1 = app.querySelector('.daily-title');
-  if (dailyH1) {
-    const heroRoll = RollingText({ text: 'Tagespuls', tagName: 'h1', className: 'daily-title bz-h1' });
-    heroRoll.setAttribute('data-rolling-text', 'hero');
-    heroRoll.setAttribute('data-page-title', '');
-    dailyH1.replaceWith(heroRoll);
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => heroRoll.startRolling());
-    } else {
-      heroRoll.startRolling();
-    }
-  }
+  wireHeroRolling(app);
 
   if (expProfile) {
     app.querySelector('.sig-bar-mount').replaceWith(
