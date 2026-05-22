@@ -144,6 +144,46 @@ export function RollingText({
 }
 
 /**
+ * Wire a page hero h1 (marked with `data-page-title`) as a RollingText.
+ * Idempotent: returns null if no marker found, so callers don't need a guard.
+ * Returns a `cleanup` callback that stops the RAF loop — call on page unmount.
+ *
+ * Replaces the marker element with a RollingText node that:
+ *   - inherits all original classNames
+ *   - keeps the `data-page-title` attribute (so re-wires are still findable)
+ *   - sets `data-rolling-text="hero"` for Playwright/test anchors
+ *   - uses the marker's textContent as hero text (fallback if empty)
+ *
+ * Used by every subpage to avoid duplicating the ~13-line wiring block.
+ *
+ * @param {Element} root — the page root element (app or main)
+ * @param {string}  [fallbackText] — used if marker's textContent is empty
+ * @returns {(() => void) | null}
+ */
+export function wireHeroRolling(root, fallbackText = '') {
+  if (!root || typeof root.querySelector !== 'function') return null;
+  const marker = root.querySelector('[data-page-title]');
+  if (!marker) return null;
+
+  const text      = (marker.textContent || '').trim() || fallbackText;
+  const className = marker.getAttribute('class') || '';
+  const tagName   = (marker.tagName || 'h1').toLowerCase();
+
+  const roll = RollingText({ text, tagName, className });
+  roll.setAttribute('data-rolling-text', 'hero');
+  roll.setAttribute('data-page-title', '');
+  marker.replaceWith(roll);
+
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => roll.startRolling?.());
+  } else {
+    roll.startRolling?.();
+  }
+
+  return () => roll.stopRolling?.();
+}
+
+/**
  * Decorate existing nodes matching `selector`. Adds `startRolling()` to each
  * decorated node and returns the list so callers can mount/start in bulk.
  */
