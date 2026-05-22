@@ -92,6 +92,7 @@ test('OverviewPage renders all hero sections in correct order', () => {
     'key-facts',
     'birthchart-wheel',
     'meaning-bridge',
+    'top-movements',
     'bazi-pillars',
     'western-core',
     'fusion-coherence',

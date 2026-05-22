@@ -92,6 +92,14 @@ const ALLOW_KNOWN_TEMPLATE = new Set([
   'audit-bucket--hard',
   'audit-bucket--soft',
   'audit-bucket--neutral',
+  // OV-I4-T10: TopMovements tone BEM modifiers (template: `bz-movement-group--${tone}`)
+  'bz-movement-group--hard',
+  'bz-movement-group--soft',
+  'bz-movement-group--neutral',
+  // OV-I4-T10: TopMovements movement tone BEM modifiers (template: `bz-movement--${tone}`)
+  'bz-movement--hard',
+  'bz-movement--soft',
+  'bz-movement--neutral',
 ]);
 
 test('Sprint-K @media selectors all exist as className assignments in public/src/', () => {

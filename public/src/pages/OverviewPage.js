@@ -16,6 +16,7 @@ import { SectionHeader }                            from '../components/SectionH
 import { LuxuryCard }                               from '../components/LuxuryCard.js';
 import { renderSignatureHero }                      from '../components/SignatureHero.js';
 import { renderMeaningBridge }                      from '../components/MeaningBridge.js';
+import { renderTopMovements }                       from '../components/TopMovements.js';
 
 // ── Public export ────────────────────────────────────────────────────────────
 
@@ -71,6 +72,17 @@ function withSignatureHeroFallback(vm) {
       friction:   { title: 'Was reibt',        body: 'Reibungsachse wird angezeigt, sobald der Mond geliefert ist.',               source: 'fallback' },
       todayLever: { title: 'Was heute hilft',  body: 'Beginne den Tag mit einer kurzen, fokussierten Handlung statt mit Recherche.', source: 'fallback' },
     };
+  }
+  if (!Array.isArray(out.topMovements)) {
+    out.topMovements = [];
+  }
+  if (!Array.isArray(out.guidedDeepDives) || out.guidedDeepDives.length === 0) {
+    out.guidedDeepDives = [
+      { intent: 'Ich will mich verstehen',         route: '/personality' },
+      { intent: 'Ich will es heute anwenden',      route: '/daily'       },
+      { intent: 'Ich will Beziehungsmuster sehen', route: '/synastry'    },
+      { intent: 'Ich will die Berechnung prüfen',  route: '/method'      },
+    ];
   }
   return out;
 }
@@ -142,6 +154,8 @@ function buildHeroViewModel(profile) {
     westernCore:      { bodies: existing.westernFactors },
     fusionCoherence:  existing.fusionSummary,
     elementEconomy:   existing.elementEconomy,
+    topMovements:     existing.topMovements,
+    guidedDeepDives:  existing.guidedDeepDives,
     deepDive: [
       { id: 'bazi',    title: 'BaZi — Vier Säulen',   href: '#/bazi'    },
       { id: 'western', title: 'Westliche Signatur',    href: '#/western' },
@@ -170,6 +184,7 @@ function renderPage(vm) {
     renderKeyFacts(vm),
     renderBirthchartWheelDetail(vm),
     renderMeaningBridge(vm),
+    renderTopMovements(vm),
     renderBaziPillars(vm),
     renderWesternCore(vm),
     renderFusionCoherence(vm),
