@@ -9,7 +9,51 @@
 // Unknown routes (e.g. /method before Sprint E#5 builds the page) fall
 // through the router gracefully without crashing.
 
-import { ROUTES } from '../data/routes.js';
+import { ROUTES, ROUTE_GROUPS } from '../data/routes.js';
+
+function navigateTo(path) {
+  if (typeof window !== 'undefined') {
+    window.location.hash = '#' + path;
+  }
+}
+
+function buildTabButton(route, currentPath) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'secondary-nav__tab';
+  btn.setAttribute('data-lane', route.lane);
+  btn.setAttribute('data-path', route.path);
+  if (route.path === currentPath) btn.setAttribute('data-active', 'true');
+  btn.textContent = route.label;
+  btn.addEventListener('click', () => navigateTo(route.path));
+  return btn;
+}
+
+function buildGroupDropdown(groupKey, groupedRoutes, currentPath) {
+  const meta = ROUTE_GROUPS[groupKey] || { label: groupKey, lane: 'fusion' };
+  const details = document.createElement('details');
+  details.className = 'secondary-nav__group';
+  details.setAttribute('data-group', groupKey);
+
+  const summary = document.createElement('summary');
+  summary.className = 'secondary-nav__tab secondary-nav__group-summary';
+  summary.setAttribute('data-lane', meta.lane);
+  summary.textContent = meta.label;
+  // If any nested route is active, mark the dropdown active too.
+  if (groupedRoutes.some(r => r.path === currentPath)) {
+    summary.setAttribute('data-active', 'true');
+  }
+  details.appendChild(summary);
+
+  for (const route of groupedRoutes) {
+    const btn = buildTabButton(route, currentPath);
+    btn.classList.add('secondary-nav__tab--nested');
+    // Close the dropdown after navigation.
+    btn.addEventListener('click', () => { details.open = false; });
+    details.appendChild(btn);
+  }
+  return details;
+}
 
 export function SecondaryNav() {
   const nav = document.createElement('nav');
@@ -19,23 +63,29 @@ export function SecondaryNav() {
   const currentHash = (typeof window !== 'undefined' && window.location?.hash) || '#/';
   const currentPath = currentHash.replace(/^#\/?/, '/').replace(/^\/+/, '/') || '/';
 
+  // Bucket routes: ungrouped go straight in; grouped collected per key.
+  const grouped = new Map();
+  const renderQueue = []; // ordered list of { kind: 'route'|'group', payload }
+
   for (const route of ROUTES) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'secondary-nav__tab';
-    // Use setAttribute (not dataset.*) so capture-DOM-stub records under _attrs.
-    btn.setAttribute('data-lane', route.lane);
-    btn.setAttribute('data-path', route.path);
-    if (route.path === currentPath) {
-      btn.setAttribute('data-active', 'true');
-    }
-    btn.textContent = route.label;
-    btn.addEventListener('click', () => {
-      if (typeof window !== 'undefined') {
-        window.location.hash = '#' + route.path;
+    if (route.group) {
+      if (!grouped.has(route.group)) {
+        grouped.set(route.group, []);
+        // Reserve the dropdown's position at first encounter to preserve order.
+        renderQueue.push({ kind: 'group', key: route.group });
       }
-    });
-    nav.appendChild(btn);
+      grouped.get(route.group).push(route);
+    } else {
+      renderQueue.push({ kind: 'route', route });
+    }
+  }
+
+  for (const item of renderQueue) {
+    if (item.kind === 'route') {
+      nav.appendChild(buildTabButton(item.route, currentPath));
+    } else {
+      nav.appendChild(buildGroupDropdown(item.key, grouped.get(item.key), currentPath));
+    }
   }
   return nav;
 }

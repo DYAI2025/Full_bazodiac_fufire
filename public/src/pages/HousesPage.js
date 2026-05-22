@@ -97,7 +97,7 @@ export function HousesPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  wireHeroRolling(app);
+  const heroCleanup = wireHeroRolling(app);
 
   const grid = app.querySelector('.houses-grid');
   if (!houses) {
@@ -115,4 +115,6 @@ export function HousesPage(app, { profile, onNavigate } = {}) {
 
   app.querySelector('.nav-western')?.addEventListener('click', () => onNavigate?.('/western'));
   app.querySelector('.nav-fusion')?.addEventListener('click',  () => onNavigate?.('/fusion'));
+
+  return heroCleanup;
 }

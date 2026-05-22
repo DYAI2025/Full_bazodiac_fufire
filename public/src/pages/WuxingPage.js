@@ -156,7 +156,7 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
     </main>
   `;
 
-  wireHeroRolling(app);
+  const heroCleanup = wireHeroRolling(app);
 
   // Empty state: no fusion section at all
   if (!vm || vm.distribution.length === 0) {
@@ -219,4 +219,6 @@ export function WuxingPage(app, { profile, onNavigate } = {}) {
   // ── Navigation ────────────────────────────────────────────────────────────
   app.querySelector('.nav-bazi')?.addEventListener('click',   () => onNavigate?.('/bazi'));
   app.querySelector('.nav-fusion')?.addEventListener('click', () => onNavigate?.('/fusion'));
+
+  return heroCleanup;
 }

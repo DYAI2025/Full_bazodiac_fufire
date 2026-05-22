@@ -31,20 +31,39 @@ test('ROUTES every entry has path + label + lane + boolean needsProfile', () => 
   }
 });
 
-test('SecondaryNav renders one tab per ROUTES entry with label + lane attribute', () => {
+// I7 Cut A: SecondaryNav now buckets group=cards routes into a <details>
+// dropdown. Flat counts no longer hold — iterate the full route tree
+// (top-level buttons + nested-in-details buttons) instead.
+
+function collectTabs(nav) {
+  const flat = [];
+  for (const child of nav._children) {
+    if (child.tag === 'button') {
+      flat.push(child);
+    } else if (child.tag === 'details') {
+      for (const inner of (child._children || [])) {
+        if (inner.tag === 'button') flat.push(inner);
+      }
+    }
+  }
+  return flat;
+}
+
+test('SecondaryNav: every route is rendered with label + lane attribute (flat or in group)', () => {
   cap.reset();
   const nav = SecondaryNav();
   assert.equal(nav.tag, 'nav');
-  assert.equal(nav._children.length, ROUTES.length);
-  for (let i = 0; i < ROUTES.length; i++) {
-    const tab = nav._children[i];
-    assert.equal(tab.tag, 'button', `child ${i} must be a <button>`);
-    assert.equal(tab._text, ROUTES[i].label, `child ${i} label mismatch`);
-    // Lane attribute is set either via dataset.lane or setAttribute('data-lane', ...).
-    // The capture-stub records setAttribute under _attrs; dataset assignments
-    // may not be observable. Accept either path.
+  const tabs = collectTabs(nav);
+  assert.equal(tabs.length, ROUTES.length, 'all routes must surface as buttons (across nav + dropdowns)');
+  // Map by data-path to compare independent of render order.
+  const byPath = new Map(tabs.map(t => [t._attrs?.['data-path'], t]));
+  for (const route of ROUTES) {
+    const tab = byPath.get(route.path);
+    assert.ok(tab, `route ${route.path} must produce a tab`);
+    assert.equal(tab.tag, 'button', `${route.path} must be a <button>`);
+    assert.equal(tab._text, route.label, `${route.path} label mismatch`);
     const laneAttr = tab._attrs?.['data-lane'] || tab.dataset?.lane;
-    assert.equal(laneAttr, ROUTES[i].lane, `child ${i} data-lane mismatch (got ${laneAttr})`);
+    assert.equal(laneAttr, route.lane, `${route.path} data-lane mismatch (got ${laneAttr})`);
   }
 });
 
@@ -53,10 +72,11 @@ test('SecondaryNav renders one tab per ROUTES entry with label + lane attribute'
 test('SecondaryNav: each tab carries data-path attribute (active-state-by-path, NOT positional index)', () => {
   cap.reset();
   const nav = SecondaryNav();
-  for (let i = 0; i < ROUTES.length; i++) {
-    const tab = nav._children[i];
-    assert.equal(tab._attrs['data-path'], ROUTES[i].path,
-      `tab ${i} must carry data-path="${ROUTES[i].path}" so active-state survives tab filtering/reordering`);
+  const tabs = collectTabs(nav);
+  const paths = tabs.map(t => t._attrs?.['data-path']);
+  for (const route of ROUTES) {
+    assert.ok(paths.includes(route.path),
+      `route ${route.path} must carry data-path so active-state survives tab filtering/reordering`);
   }
 });
 

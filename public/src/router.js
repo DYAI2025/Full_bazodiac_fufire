@@ -18,13 +18,19 @@ export const router = {
     const handle = () => {
       const hash = window.location.hash.replace('#', '') || '/';
       const mount = routes.get(hash) || routes.get('*');
-      if (currentCleanup) currentCleanup();
+      // I7: only invoke if cleanup is actually callable (pages may return
+      // Promises from async mounts, non-function literals, or undefined).
+      if (typeof currentCleanup === 'function') {
+        try { currentCleanup(); } catch (e) { /* cleanup must never block nav */ }
+      }
+      currentCleanup = null;
       const app = document.getElementById('app');
       if (!app) return;
       app.innerHTML = '';
       if (!mount) return;
       try {
-        currentCleanup = mount(app) || null;
+        const result = mount(app);
+        currentCleanup = typeof result === 'function' ? result : null;
       } catch (err) {
         app.innerHTML = '';
         const main = document.createElement('main');
