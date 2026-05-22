@@ -132,7 +132,8 @@ function populateDetail(panel, pillar, role, enriched) {
   const apiVal = pillar.stemChar || pillar.stem || '—';
   const provLabel = document.createElement('strong');
   provLabel.textContent = 'Quelle:';
-  prov.append(provLabel, ` ${apiVal} (API-Wert)`);
+  // Avoid claiming a specific source when the value may be derived or missing
+  prov.append(provLabel, ` ${apiVal}`);
 
   // Hidden stems section
   const hs = pillar.hiddenStems || [];
