@@ -15,6 +15,7 @@ import { RollingText }                              from '../components/RollingT
 import { SectionHeader }                            from '../components/SectionHeader.js';
 import { LuxuryCard }                               from '../components/LuxuryCard.js';
 import { renderSignatureHero }                      from '../components/SignatureHero.js';
+import { renderMeaningBridge }                      from '../components/MeaningBridge.js';
 
 // ── Public export ────────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ function renderPage(vm) {
   // data-section="birthchart-wheel", data-section="fusion-narrative") still exist.
   wrap.append(
     renderSignatureHeroWithLegacyHero(vm),
+    renderMeaningBridge(vm),
     renderBaziPillars(vm),
     renderWesternCore(vm),
     renderFusionCoherence(vm),

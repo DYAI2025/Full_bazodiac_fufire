@@ -2909,3 +2909,43 @@ details[data-progressive] > summary {
 @media (max-width: 600px) {
   .bz-evidence-grid { grid-template-columns: 1fr; }
 }
+
+/* ── OV-I2: MeaningBridge cards (carries / friction / today-lever) ───────── */
+.bz-meaning-bridge {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bz-space-md, 1rem);
+  margin-block: var(--bz-space-lg, 1.5rem);
+}
+.bz-meaning-card {
+  background: var(--panel, #1a1a1a);
+  border: 1px solid color-mix(in srgb, var(--bz-gold, #b8945e) 30%, transparent);
+  border-radius: var(--bz-radius-md, 0.5rem);
+  padding: var(--bz-space-md, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.bz-meaning-card__title {
+  margin: 0;
+  font-family: var(--bz-font-serif);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bz-gold-light, #d4af7a);
+}
+.bz-meaning-card__body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--fg, #f5f5f5);
+}
+.bz-meaning-card__source {
+  margin: 0;
+  font-family: var(--bz-font-ui);
+  font-size: 0.7rem;
+  color: var(--muted, #888);
+  letter-spacing: 0.04em;
+}
+@media (max-width: 700px) {
+  .bz-meaning-bridge { grid-template-columns: 1fr; }
+}

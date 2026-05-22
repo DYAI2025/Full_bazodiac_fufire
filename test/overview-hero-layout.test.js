@@ -87,12 +87,14 @@ test('OverviewPage renders all hero sections in correct order', () => {
   // The legacy data-section anchors (hero, key-facts, birthchart-wheel,
   // fusion-narrative) remain inside the new signature-hero for backward
   // compatibility with the I4 e2e spec and audit tooling.
+  // meaning-bridge sits between the hero and the legacy thematic sections.
   assert.deepEqual(ids, [
     'signature-hero',
     'hero',
     'key-facts',
     'birthchart-wheel',
     'fusion-narrative',
+    'meaning-bridge',
     'bazi-pillars',
     'western-core',
     'fusion-coherence',
