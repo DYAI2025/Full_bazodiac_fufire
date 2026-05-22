@@ -288,3 +288,70 @@ test('NatalChartWheel: solitary body has data-lane-offset="0" and no leader-line
   assert.ok(s.includes('data-lane-offset="0"'), 'lone body must be on lane 0');
   assert.ok(!s.includes('data-leader-line="true"'), 'lone body must NOT emit a leader-line');
 });
+
+// ── OV-I3-T06 RED tests — wheel geometry + provenance ───────────────────────
+
+test('OV-I3: missing longitude is never rendered as 0deg', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Sun',  name: 'Sun',  longitude: null,    glyph: '☉', source: 'missing' },
+      { key: 'Moon', name: 'Moon', longitude: 158.23,  glyph: '☽', source: 'api'     },
+    ],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  // The Sun must NOT appear as a positioned body marker.
+  assert.ok(!/data-body-key="Sun"[^>\n]*data-pos=/.test(s),
+    'Sun (source=missing) must NOT emit a positioned body marker');
+  // Moon must still render.
+  assert.ok(s.includes('data-body-key="Moon"'),
+    'Moon (source=api) must emit a positioned body marker');
+});
+
+test('OV-I3: every body in audit list carries source pill', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Sun',  name: 'Sun',  longitude: 12.0,  glyph: '☉', source: 'api'     },
+      { key: 'Moon', name: 'Moon', longitude: null,  glyph: '☽', source: 'missing' },
+    ],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  // Audit list inside the wheel SVG carries data-audit-source per row.
+  assert.ok(/data-audit-source="(api|derived|missing)"/.test(s),
+    'audit rows must carry data-audit-source');
+});
+
+test('OV-I3: rotation root emits data-asc-rotation="-{asc}" with asc=27.71', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, dsc: 207.71, ic: 100.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.match(s, /data-asc-rotation="-27\.71"/,
+    'rotation root must carry data-asc-rotation as the negative ASC offset');
+});
+
+test('OV-I3: DSC and IC derived consistently from ASC and MC (asc=27.71, mc=280.66)', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.match(s, /data-angle-dsc="207\.71"/, 'DSC = (asc+180) mod 360 = 207.71');
+  assert.match(s, /data-angle-ic="100\.66"/,  'IC  = (mc +180) mod 360 = 100.66');
+});

@@ -53,6 +53,19 @@ function chartAngleToXY(chartAngleDeg, radius) {
   return { x: radius * Math.cos(rad), y: -radius * Math.sin(rad) };
 }
 
+// Format a number for data-attributes without trailing zeros (e.g. 27.71 → "27.71").
+function formatNum(n) {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+  const fixed = n.toFixed(2);
+  return fixed.replace(/\.?0+$/, '') || '0';
+}
+
+// Normalize a longitude to [0, 360).
+function normalizeLon(n) {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+  return ((n % 360) + 360) % 360;
+}
+
 function lonToXYAsc(lonDeg, radius, ascDeg) {
   return chartAngleToXY(longitudeToChartAngle(lonDeg, ascDeg), radius);
 }
@@ -118,6 +131,7 @@ function renderBodies(root, bodies, ascDeg, { R_BODY }) {
   const lanes = assignLanes(bodies);
   for (const b of bodies) {
     if (typeof b.longitude !== 'number') continue; // source='missing' → skip
+    if (b.source === 'missing') continue;          // OV-I3: provenance guard
     const bodyKey = b.key ?? b.name;
     const lane = lanes.get(bodyKey) ?? 0;
     const offsetRadius = R_BODY + lane * LANE_RADIAL_STEP;
@@ -127,7 +141,10 @@ function renderBodies(root, bodies, ascDeg, { R_BODY }) {
       cx: truePos.x, cy: truePos.y, r: 3,
       fill: 'currentColor',
       'data-body': bodyKey,
+      'data-body-key': bodyKey,
+      'data-pos': formatNum(b.longitude),
       'data-lane-offset': String(lane),
+      tabindex: '0',
     }));
 
     const glyph = b.glyph ?? PLANET_GLYPHS[bodyKey] ?? '·';
@@ -175,9 +192,26 @@ export function NatalChartWheel({ wheel }) {
   const R_ASPECT = R_BODY - 12;
 
   const w = wheel || { bodies: [], asc: null, mc: null, houses: [], aspects: [], angles: {} };
-  const ascDeg = typeof w.asc === 'number' ? w.asc : (w.angles?.asc ?? 0);
+  const ascRaw = typeof w.asc === 'number' ? w.asc : (w.angles?.asc ?? null);
+  const mcRaw  = typeof w.mc  === 'number' ? w.mc  : (w.angles?.mc  ?? null);
+  const ascDeg = typeof ascRaw === 'number' ? ascRaw : 0;
 
-  const root = el('svg', {
+  // OV-I3: DSC/IC are always derived from ASC/MC. If a value is provided
+  // by the model we trust it for tagging; if not we compute it.
+  const dscRaw =
+    typeof w.angles?.dsc === 'number'
+      ? w.angles.dsc
+      : typeof ascRaw === 'number'
+      ? normalizeLon(ascRaw + 180)
+      : null;
+  const icRaw =
+    typeof w.angles?.ic === 'number'
+      ? w.angles.ic
+      : typeof mcRaw === 'number'
+      ? normalizeLon(mcRaw + 180)
+      : null;
+
+  const rootAttrs = {
     viewBox: `-${HALF} -${HALF} ${VIEW} ${VIEW}`,
     width: '100%', height: 'auto',
     preserveAspectRatio: 'xMidYMid meet',
@@ -185,7 +219,15 @@ export function NatalChartWheel({ wheel }) {
     'aria-label': 'Geburtsrad',
     role: 'img',
     class: 'natal-chart-wheel',
-  });
+    // OV-I3: rotation offset + derived angles exposed for tests/audits.
+    'data-asc-rotation':
+      typeof ascRaw === 'number' ? `-${formatNum(ascRaw)}` : null,
+    'data-angle-asc': formatNum(ascRaw),
+    'data-angle-mc':  formatNum(mcRaw),
+    'data-angle-dsc': formatNum(dscRaw),
+    'data-angle-ic':  formatNum(icRaw),
+  };
+  const root = el('svg', rootAttrs);
 
   // Outer + inner rings.
   root.appendChild(el('circle', {
@@ -267,13 +309,16 @@ export function NatalChartWheel({ wheel }) {
       'data-marker': label.toLowerCase(),
       'data-angle': label,
       'data-angle-position': position,
+      // OV-I3-T09: axis nodes are focusable + tagged for hover/click linking.
+      'data-axis-key': label,
+      tabindex: '0',
     }, label));
   }
-  renderAngleMarker(w.asc ?? w.angles?.asc, 'ASC', 'left');
-  renderAngleMarker(w.mc  ?? w.angles?.mc,  'MC',  'top');
   const angles = w.angles || {};
-  renderAngleMarker(angles.dsc, 'DSC', 'right');
-  renderAngleMarker(angles.ic,  'IC',  'bottom');
+  renderAngleMarker(ascRaw, 'ASC', 'left');
+  renderAngleMarker(mcRaw,  'MC',  'top');
+  renderAngleMarker(typeof angles.dsc === 'number' ? angles.dsc : dscRaw, 'DSC', 'right');
+  renderAngleMarker(typeof angles.ic  === 'number' ? angles.ic  : icRaw,  'IC',  'bottom');
 
   // Aspect lines (major only, prefer sourceKey/targetKey).
   if (Array.isArray(w.aspects)) {
@@ -301,6 +346,26 @@ export function NatalChartWheel({ wheel }) {
   if (Array.isArray(w.bodies)) {
     renderBodies(root, w.bodies, ascDeg, { R_BODY });
   }
+
+  // OV-I3-T06: embed an inline audit list inside the SVG so the wheel
+  // itself carries provenance information per body. Each row mirrors the
+  // canonical body source ('api' | 'derived' | 'missing'). The list is
+  // hidden from the visual layer via the audit-attribute selector.
+  const auditList = el('g', {
+    'data-audit': 'inline',
+    'aria-hidden': 'true',
+  });
+  if (Array.isArray(w.bodies)) {
+    for (const b of w.bodies) {
+      const key = b.key ?? b.name;
+      if (!key) continue;
+      auditList.appendChild(el('metadata', {
+        'data-audit-row': key,
+        'data-audit-source': b.source || (typeof b.longitude === 'number' ? 'api' : 'missing'),
+      }, key));
+    }
+  }
+  root.appendChild(auditList);
 
   return root;
 }
