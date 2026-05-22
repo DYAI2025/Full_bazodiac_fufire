@@ -130,15 +130,14 @@ function populateDetail(panel, pillar, role, enriched) {
   const prov = document.createElement('p');
   prov.className = 'bazi-detail-prov';
   const apiVal = pillar.stemChar || pillar.stem || '—';
-  prov.innerHTML = `<strong>Quelle:</strong> ${apiVal} (API-Wert)`;
+  const provLabel = document.createElement('strong');
+  provLabel.textContent = 'Quelle:';
+  prov.append(provLabel, ` ${apiVal} (API-Wert)`);
 
   // Hidden stems section
   const hs = pillar.hiddenStems || [];
   const hsSection = document.createElement('div');
   hsSection.className = 'bazi-detail-hs';
-  const hsSrcText = panel.closest
-    ? '' // source label is already on the pillar card
-    : '';
   const hsTitle = document.createElement('strong');
   hsTitle.textContent = 'Versteckte Stämme';
   hsSection.appendChild(hsTitle);

@@ -2015,7 +2015,7 @@ input:focus { border-color: var(--accent); }
 .bazi-luck-pillar { margin: 0 0 1.5rem; }
 .bazi-luck-note { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
 
-/* B2: Mobile — stack to 2 columns below 720px, 1 column below 480px */
+/* B2: Mobile — 2 columns below 720px, 2 columns below 480px */
 @media (max-width: 720px) {
   .bazi-pillars-list { grid-template-columns: repeat(2, 1fr); }
 }
