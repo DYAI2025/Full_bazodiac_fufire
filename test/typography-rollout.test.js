@@ -18,11 +18,15 @@ test('tokens.css declares all 5 font-family tokens (--bz-font-{serif,sans,ui,mon
   }
 });
 
-test('tokens.css @imports Playfair Display + DM Serif Display + Inter + Plus Jakarta Sans + JetBrains Mono + Noto Sans SC from Google Fonts (I1)', () => {
-  // I1 replaced Cormorant Garamond + Manrope with Playfair Display + DM Serif Display
-  // + Plus Jakarta Sans for a premium editorial feel.
-  for (const fam of ['Playfair\\+Display', 'DM\\+Serif\\+Display', 'Inter', 'Plus\\+Jakarta\\+Sans', 'JetBrains\\+Mono', 'Noto\\+Sans\\+SC']) {
+test('tokens.css @imports Cormorant Garamond + Sora + Noto Sans SC from Google Fonts (B3)', () => {
+  // B3 consolidated to Cormorant Garamond (serif/display) + Sora (sans/ui).
+  // Noto Sans SC kept as CJK glyph fallback.
+  for (const fam of ['Cormorant\\+Garamond', 'Sora', 'Noto\\+Sans\\+SC']) {
     assert.match(TOKENS_CSS, new RegExp(fam), `tokens.css must @import ${fam.replace(/\\\+/g, '+')}`);
+  }
+  // Banned fonts must NOT appear in @import
+  for (const fam of ['Playfair\\+Display', 'DM\\+Serif\\+Display', 'Plus\\+Jakarta\\+Sans', 'JetBrains\\+Mono']) {
+    assert.doesNotMatch(TOKENS_CSS, new RegExp(fam), `tokens.css must NOT @import ${fam.replace(/\\\+/g, '+')}`);
   }
 });
 

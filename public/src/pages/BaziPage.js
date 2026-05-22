@@ -1,15 +1,15 @@
 // public/src/pages/BaziPage.js
+// B2 restructure: Day Master kern, 4-pillar line, shared detail panel, provenance labels.
 //
-// First Sprint E page rendered from the enrichment layer.
-// Reads `currentProfile` from app.js, enriches via baziPillarEnrichment,
-// renders Page-Head + Day-Master tile + 4-pillar grid + Luck-Pillar
-// UnavailableCard (deferred — not yet in upstream) + CTAs.
-//
-// Design reference: /tmp/fufire-spec/src/pages-1.jsx:437 (BaziPage).
-// Enrichment contract: docs/contracts/2026-05-19-design-vs-real-gap.md §2.4 + §2.5.
+// Key changes from B1:
+//   - data-bazi-role="day-master-kern" on Day Master section
+//   - 4 pillar <li> cards with data-bazi-pillar attribute, no per-card <details> drawer
+//   - Single [data-bazi-shared-detail] panel below pillars, toggled by pillar click
+//   - data-bazi-hidden-stems-source per pillar: "API" or "aus Branch-Tabelle abgeleitet"
+//   - data-bazi-lucky-pillar with "nicht von API geliefert"
+//   - data-bazi-narrative-marker="Leseschluessel" on intro paragraph
 
 import { enrichBaziPillars } from '../domain/baziPillarEnrichment.js';
-import { ExplainableCard }    from '../components/ExplainableCard.js';
 import { UnavailableCard }    from '../components/UnavailableCard.js';
 import { wireHeroRolling }    from '../components/RollingText.js';
 
@@ -27,63 +27,168 @@ const ROLE_AGE = {
   hour:  'späte Lebensphase & Output',
 };
 
-function pillarDrawerMeaning(pillar, role) {
-  if (!pillar) return null;
-  const hiddenLabels = (pillar.hiddenStems || []).map((h) => {
-    const stem = h.stem || '';
-    const element = h.element || '';
-    const polarity = h.polarity || '';
-    return [stem, polarity, element].filter(Boolean).join(' ');
-  });
-  return {
-    title:    `${ROLE_LABEL[role] || role} — ${pillar.stem ?? '?'}${pillar.branch ?? '?'}`,
-    subtitle: [pillar.animal, pillar.polarity, pillar.stemElement].filter(Boolean).join(' · '),
-    what:     [
-      pillar.stemChar && `${pillar.stemChar} (${pillar.polarity || ''} ${pillar.stemElement || ''})`,
-      pillar.branchChar && `auf ${pillar.branchChar} (${pillar.animal || ''}, ${pillar.branchElement || ''})`,
-    ].filter(Boolean).join(' '),
-    meaning:  pillar.roleDescription || '',
-    resource: pillar.ressource || '',
-    shadow:   pillar.schatten || '',
-    practice: pillar.handlung || '',
-    extras:   hiddenLabels.length
-      ? [`Versteckte Stämme: ${hiddenLabels.join(', ')}`, `Alter: ${ROLE_AGE[role] || ''}`].filter(Boolean)
-      : (ROLE_AGE[role] ? [`Alter: ${ROLE_AGE[role]}`] : []),
-  };
+// Determine provenance of hidden stems from the raw pillar object.
+// The raw API shape is: hidden_stems: { source: 'api'|'derived', stems: [...] }
+// or hidden_stems: [...] (legacy array shape).
+function hiddenStemsSource(rawPillar) {
+  if (!rawPillar) return 'aus Branch-Tabelle abgeleitet';
+  const hs = rawPillar.hidden_stems;
+  if (!hs) return 'aus Branch-Tabelle abgeleitet';
+  // Object shape with .source field
+  if (typeof hs === 'object' && !Array.isArray(hs)) {
+    return hs.source === 'api' ? 'API' : 'aus Branch-Tabelle abgeleitet';
+  }
+  // Array shape — treat as API-supplied
+  if (Array.isArray(hs) && hs.length > 0) return 'API';
+  return 'aus Branch-Tabelle abgeleitet';
 }
 
-function pillarCard(pillar, role) {
+function buildPillarCard(pillar, role, rawPillar) {
+  const li = document.createElement('li');
+  li.setAttribute('data-bazi-pillar', role);
+  li.className = `bazi-pillar-card bazi-pillar-card--${role}${role === 'day' ? ' bazi-pillar-card--day-master' : ''}`;
+  li.setAttribute('role', 'button');
+  li.setAttribute('tabindex', '0');
+  li.setAttribute('aria-expanded', 'false');
+
   if (!pillar) {
-    return UnavailableCard({
-      title: ROLE_LABEL[role] || role,
-      reason: 'Säule konnte nicht berechnet werden.',
-    });
+    const ua = UnavailableCard({ title: ROLE_LABEL[role] || role, reason: 'Säule konnte nicht berechnet werden.' });
+    li.appendChild(ua);
+    // Still need source label even for unavailable pillars
+    const hsSource = document.createElement('div');
+    hsSource.setAttribute('data-bazi-hidden-stems-source', role);
+    hsSource.className = 'bazi-pillar-hs-source';
+    hsSource.textContent = hiddenStemsSource(rawPillar);
+    li.appendChild(hsSource);
+    return li;
   }
-  const isDayMaster = (role === 'day');
-  const labelLine = [pillar.stem, pillar.branch, pillar.animal].filter(Boolean).join(' · ');
-  const helperBits = [pillar.stemElement, pillar.polarity].filter(Boolean).join(' · ');
-  const card = ExplainableCard({
-    domain:      'bazi',
-    label:       ROLE_LABEL[role] || role,
-    value:       labelLine || '—',
-    helper:      helperBits,
-    highlighted: isDayMaster,
-    meaning:     pillarDrawerMeaning(pillar, role),
-  });
-  // Wrap with CJK stem-char header (Phase C style-shift step 1 — pillar siegel).
-  const wrap = document.createElement('section');
-  wrap.className = `bazi-pillar-card bazi-pillar-card--${role}${isDayMaster ? ' bazi-pillar-card--day-master' : ''}`;
-  const stem = document.createElement('div');
-  stem.className = 'bazi-pillar-stem-char';
-  stem.textContent = pillar.stemChar || pillar.stem || '';
-  wrap.appendChild(stem);
-  wrap.appendChild(card);
-  return wrap;
+
+  const stemChar = document.createElement('div');
+  stemChar.className = 'bazi-pillar-stemchar';
+  stemChar.textContent = pillar.stemChar || pillar.stem || '';
+  stemChar.setAttribute('aria-hidden', 'true');
+
+  const label = document.createElement('div');
+  label.className = 'bazi-pillar-label';
+  label.textContent = ROLE_LABEL[role];
+
+  const value = document.createElement('div');
+  value.className = 'bazi-pillar-value';
+  value.textContent = [pillar.stem, pillar.branch].filter(Boolean).join(' · ');
+
+  const animal = document.createElement('div');
+  animal.className = 'bazi-pillar-animal';
+  animal.textContent = [pillar.animal, pillar.branchElement].filter(Boolean).join(' · ');
+
+  // Hidden stems source label
+  const hsSource = document.createElement('div');
+  hsSource.setAttribute('data-bazi-hidden-stems-source', role);
+  hsSource.className = 'bazi-pillar-hs-source';
+  hsSource.textContent = hiddenStemsSource(rawPillar);
+
+  li.append(stemChar, label, value, animal, hsSource);
+  return li;
+}
+
+function buildSharedDetail() {
+  const panel = document.createElement('section');
+  panel.setAttribute('data-bazi-shared-detail', '');
+  panel.setAttribute('data-expanded', 'false');
+  panel.setAttribute('aria-live', 'polite');
+  panel.className = 'bazi-shared-detail';
+  panel.setAttribute('hidden', '');
+  return panel;
+}
+
+function populateDetail(panel, pillar, role, enriched) {
+  panel.innerHTML = '';
+
+  if (!pillar) {
+    const msg = document.createElement('p');
+    msg.textContent = 'Keine Daten für diese Säule.';
+    panel.appendChild(msg);
+    return;
+  }
+
+  const title = document.createElement('h3');
+  title.className = 'bazi-detail-title';
+  title.textContent = `${ROLE_LABEL[role] || role} — ${pillar.stem ?? '?'} ${pillar.branch ?? '?'}`;
+
+  const age = document.createElement('p');
+  age.className = 'bazi-detail-age';
+  age.textContent = `Lebensphase: ${ROLE_AGE[role] || ''}`;
+
+  const elements = document.createElement('p');
+  elements.className = 'bazi-detail-elements';
+  elements.textContent = [
+    pillar.stemElement  && `Stamm-Element: ${pillar.stemElement}`,
+    pillar.branchElement && `Zweig-Element: ${pillar.branchElement}`,
+    pillar.polarity     && `Polarität: ${pillar.polarity}`,
+  ].filter(Boolean).join(' · ');
+
+  // Provenance row
+  const prov = document.createElement('p');
+  prov.className = 'bazi-detail-prov';
+  const apiVal = pillar.stemChar || pillar.stem || '—';
+  const provLabel = document.createElement('strong');
+  provLabel.textContent = 'Quelle:';
+  // Avoid claiming a specific source when the value may be derived or missing
+  prov.append(provLabel, ` ${apiVal}`);
+
+  // Hidden stems section
+  const hs = pillar.hiddenStems || [];
+  const hsSection = document.createElement('div');
+  hsSection.className = 'bazi-detail-hs';
+  const hsTitle = document.createElement('strong');
+  hsTitle.textContent = 'Versteckte Stämme';
+  hsSection.appendChild(hsTitle);
+  if (hs.length > 0) {
+    const hsList = document.createElement('ul');
+    hsList.className = 'bazi-detail-hs-list';
+    for (const h of hs) {
+      const item = document.createElement('li');
+      item.textContent = [h.stem, h.polarity, h.element].filter(Boolean).join(' · ');
+      hsList.appendChild(item);
+    }
+    hsSection.appendChild(hsList);
+  } else {
+    const none = document.createElement('span');
+    none.textContent = ' — keine';
+    hsSection.appendChild(none);
+  }
+
+  // Narrative texts — marked as Leseschluessel
+  const narrativeParts = [
+    enriched?.[role]?.roleDescription && { label: 'Bedeutung', text: enriched[role].roleDescription },
+    enriched?.[role]?.ressource        && { label: 'Ressource', text: enriched[role].ressource },
+    enriched?.[role]?.schatten         && { label: 'Schatten',  text: enriched[role].schatten },
+    enriched?.[role]?.handlung         && { label: 'Impulse',   text: enriched[role].handlung },
+  ].filter(Boolean);
+
+  panel.append(title, age, elements, prov, hsSection);
+
+  if (narrativeParts.length > 0) {
+    const narrative = document.createElement('div');
+    narrative.setAttribute('data-bazi-narrative-marker', 'Leseschluessel');
+    narrative.className = 'bazi-detail-narrative';
+    const narTitle = document.createElement('p');
+    narTitle.className = 'bazi-detail-narrative-label';
+    narTitle.textContent = 'Leseschluessel — interpretative Hinweise, kein Urteil';
+    narrative.appendChild(narTitle);
+    for (const { label: nl, text } of narrativeParts) {
+      const p = document.createElement('p');
+      p.className = 'bazi-detail-narrative-item';
+      p.innerHTML = `<strong>${nl}:</strong> ${text}`;
+      narrative.appendChild(p);
+    }
+    panel.appendChild(narrative);
+  }
 }
 
 export function BaziPage(app, { profile, onNavigate } = {}) {
   const enriched = enrichBaziPillars(profile?.bazi);
   const dm = enriched?.dayMaster;
+  const rawPillars = profile?.bazi?.pillars || {};
 
   app.innerHTML = `
     <main class="bazi-page system-layer system-layer--bazi" data-lane="bazi">
@@ -95,28 +200,27 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
       <header class="page-head" data-section="hero">
         <p class="page-eyebrow">BaZi · Vier Säulen des Schicksals</p>
         <h1 class="page-title bz-h1" data-page-title>Dein ostasiatischer Kern</h1>
-        <p class="page-intro">
-          BaZi beschreibt deine Geburtszeit als vier vertikale Säulen — Jahr, Monat, Tag, Stunde.
-          Jede Säule trägt einen Himmelsstamm (天干 — die obere, klimatische Kraft) und einen
-          Erdzweig (地支 — den verkörperten Bezug, hier als Tier). Der Tagesstamm (Day Master)
-          ist dein Kern; alles andere wird in Bezug zu ihm gelesen.
+        <p class="page-intro" data-bazi-narrative-marker="Leseschluessel">
+          Leseschluessel: BaZi beschreibt deine Geburtszeit als vier vertikale Säulen.
+          Alle Texte sind Interpretationsangebote, keine Festlegungen.
+          Der Tagesstamm (Day Master) ist dein Kern; alles andere wird in Bezug zu ihm gelesen.
         </p>
       </header>
 
-      <section class="bazi-day-master" aria-label="Day Master" data-section="day-master">
+      <section class="bazi-day-master" aria-label="Day Master" data-section="day-master" data-bazi-role="day-master-kern">
         <p class="layer-eyebrow">Day Master · Kern</p>
         <div class="bazi-dm-mount"></div>
       </section>
 
       <section class="bazi-pillars" aria-label="Vier Säulen" data-section="pillars">
-        <p class="layer-eyebrow">Vier Säulen</p>
-        <p class="layer-hint">Tippe für Detail</p>
-        <div class="bazi-pillars-grid"></div>
+        <p class="layer-eyebrow">Vier Säulen — klicken für Details</p>
+        <ul class="bazi-pillars-list" role="list"></ul>
+        <div class="bazi-shared-detail-mount"></div>
       </section>
 
-      <section class="bazi-luck-pillar" aria-label="Glückssäule" data-section="luck-pillar">
+      <section class="bazi-luck-pillar" aria-label="Glückssäule" data-section="luck-pillar" data-bazi-lucky-pillar>
         <p class="layer-eyebrow">Aktuelle Glückssäule (Luck Pillar)</p>
-        <div class="bazi-luck-mount"></div>
+        <p class="bazi-luck-note">nicht von API geliefert — wird in einer kommenden Version ergänzt.</p>
       </section>
 
       <footer class="page-actions">
@@ -144,38 +248,59 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
     stemBlock.append(cjk, meta);
     const textBlock = document.createElement('div');
     textBlock.className = 'bazi-dm-text';
-    const label = document.createElement('h2');
-    label.className = 'bazi-dm-label';
-    label.textContent = [dm.stem, dm.stemElement].filter(Boolean).join(' ');
+    const labelEl = document.createElement('h2');
+    labelEl.className = 'bazi-dm-label';
+    labelEl.textContent = [dm.stem, dm.stemElement].filter(Boolean).join(' ');
     const ressource = document.createElement('p');
     ressource.className = 'bazi-dm-ressource';
     ressource.textContent = dm.ressource || '';
-    const shadow = document.createElement('p');
-    shadow.className = 'bazi-dm-shadow';
-    shadow.textContent = dm.schatten ? `Schatten: ${dm.schatten}` : '';
-    textBlock.append(label, ressource);
-    if (dm.schatten) textBlock.appendChild(shadow);
+    textBlock.append(labelEl, ressource);
+    if (dm.schatten) {
+      const shadow = document.createElement('p');
+      shadow.className = 'bazi-dm-shadow';
+      shadow.textContent = `Schatten: ${dm.schatten}`;
+      textBlock.appendChild(shadow);
+    }
     tile.append(stemBlock, textBlock);
     dmMount.appendChild(tile);
   } else {
     dmMount.appendChild(UnavailableCard({
       title: 'Day Master',
-      reason: 'BaZi-Tagesstamm konnte nicht berechnet werden — Geburtszeit oder Ortskoordinaten prüfen.',
+      reason: 'BaZi-Tagesstamm konnte nicht berechnet werden.',
     }));
   }
 
-  // ── 4-Pillar grid ────────────────────────────────────────────────────────
-  const grid = app.querySelector('.bazi-pillars-grid');
-  for (const role of ['year', 'month', 'day', 'hour']) {
-    grid.appendChild(pillarCard(enriched?.[role], role));
-  }
+  // ── 4-Pillar cards ───────────────────────────────────────────────────────
+  const list = app.querySelector('.bazi-pillars-list');
+  const detailMount = app.querySelector('.bazi-shared-detail-mount');
+  const sharedDetail = buildSharedDetail();
+  detailMount.appendChild(sharedDetail);
 
-  // ── Luck Pillar — deferred (not in current API) ──────────────────────────
-  const luckMount = app.querySelector('.bazi-luck-mount');
-  luckMount.appendChild(UnavailableCard({
-    title:  'Glückssäule',
-    reason: 'Wird in einer kommenden Version berechnet — derzeit nicht im API-Profil enthalten.',
-  }));
+  for (const role of ['year', 'month', 'day', 'hour']) {
+    const rawPillar = rawPillars[role] || null;
+    const li = buildPillarCard(enriched?.[role], role, rawPillar);
+
+    const activate = () => {
+      // Deactivate all pillars
+      list.querySelectorAll('li[data-bazi-pillar]').forEach(el => {
+        el.setAttribute('aria-expanded', 'false');
+        el.classList.remove('bazi-pillar-card--active');
+      });
+      // Activate clicked pillar
+      li.setAttribute('aria-expanded', 'true');
+      li.classList.add('bazi-pillar-card--active');
+      // Show and populate shared detail
+      sharedDetail.removeAttribute('hidden');
+      sharedDetail.setAttribute('data-expanded', 'true');
+      populateDetail(sharedDetail, enriched?.[role], role, enriched);
+    };
+
+    li.addEventListener('click', activate);
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
+    list.appendChild(li);
+  }
 
   // ── Navigation ───────────────────────────────────────────────────────────
   app.querySelector('.nav-wuxing')?.addEventListener('click', () => onNavigate?.('/fusion'));
