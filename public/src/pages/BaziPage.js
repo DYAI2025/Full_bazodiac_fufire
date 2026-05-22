@@ -112,7 +112,7 @@ function populateDetail(panel, pillar, role, enriched) {
 
   const title = document.createElement('h3');
   title.className = 'bazi-detail-title';
-  title.textContent = `${ROLE_LABEL[role]} — ${pillar.stem ?? '?'} ${pillar.branch ?? '?'}`;
+  title.textContent = `${ROLE_LABEL[role] || role} — ${pillar.stem ?? '?'} ${pillar.branch ?? '?'}`;
 
   const age = document.createElement('p');
   age.className = 'bazi-detail-age';
