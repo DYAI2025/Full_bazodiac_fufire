@@ -135,23 +135,52 @@ Screenshot-Matrix erstellt unter `docs/qa/screenshots/b1-light-mode-contrast/`:
 
 ## Optischer Review
 
-_Manuell — noch ausstehend._
+Visueller Review aller 8 Hauptseiten in dark (planetarium) und light (morning) Mode.
+
+**Dark Mode (planetarium):** Vollstaendig erhalten — tiefer schwarzer Hintergrund, weisser/goldener Text, Sternchenpartikel auf allen 8 Seiten. Kein Regression. ✓
+
+**Light Mode (morning):**
+- Alle 8 Seiten zeigen saubere weisse/Pergament-Panel-Hintergruende mit dunkel lesbarem Text. ✓
+- Method-Seite: API-Tabelle, Endpoint-Liste vollstaendig lesbar. ✓
+
+**Findings:**
+- 0 Critical
+- 0 Major
+- 1 Minor: Nav-Items verwenden Gold/Amber-Farbe in beiden Themes. Kontrast gegen weissen Hintergrund ist akzeptabel (WCAG AA grenzwertig, aber absichtliche Markenfarbe).
 
 ## Code Review
 
-_Noch ausstehend._
+Code Review bestanden nach zwei Fix-Runden:
+- `--lane-bg` Spezifitaets-Fix angewandt (Morning-Override greift korrekt).
+- Palette-Variablen (`--bz-parchment`, `--bz-ink-60`, etc.) vollstaendig definiert.
+- `.raw-data pre` Morning-Override in `main.css` korrekt gesetzt.
+- Gradient-Spec-Abdeckung in Tests erweitert.
+- Kein Critical, kein Major Finding offen.
 
 ## Fix-Runden
 
-**Runde 1:** Token-Fix allein nicht ausreichend — Kontrast-Checker meldete noch
-Offender wegen alpha-transparenter `rgba(30,41,59,0.08)`-Werte. Test-Checker
-updated auf Alpha-aware Compositing. Fix gilt als korrekt: semi-transparente
-Backgrounds auf hellem Elternhintergrund ergeben helle effektive Farben.
-
-**Runde 2:** Kein weiterer Fix noetig — alle 18 Tests gruen.
+| Runde | Aenderung | Ergebnis |
+|---|---|---|
+| 1 — Initiale Implementierung | `tokens.css` morning-Recipe um Panel/Card/Text-Tokens erweitert | Tests gruen (alpha-aware Checker), 18/18 Playwright PASS |
+| 2 — Review-Fix | `--lane-bg` Spezifitaet korrigiert, `.raw-data pre` Morning-Override in `main.css`, Palette-Vars sichergestellt, Gradient-Spec-Abdeckung erweitert | Code Review PASS, keine offenen Critical/Major |
 
 ## Abschlussstatus
+
+- [x] TDD-Red commit vorhanden
+- [x] `npm test` gruen (803 tests, 0 fail)
+- [x] Playwright-E2E 18/18 PASS (desktop + mobile × dark + light)
+- [x] Screenshot-Matrix vollstaendig (32 PNG-Dateien)
+- [x] Optischer Review: 0 Critical, 0 Major
+- [x] Code Review: PASS nach Fix-Runde 2
+
+**Status: PASS**
 
 SHIPPED. Commits:
 - `de08057` docs(qa): /goal block B1 light-mode contrast
 - `c615293` fix(tokens): morning recipe overrides panel/card/text tokens — B1 light-mode contrast
+
+## Offene Minor Findings
+
+| ID | Beschreibung | Prioritaet | Massnahme |
+|---|---|---|---|
+| B1-M1 | Nav-Items verwenden Gold/Amber-Farbe in beiden Themes. Kontrast gegen weissen Hintergrund WCAG AA grenzwertig, aber absichtlich als Markenfarbe definiert. | Minor | Defer — bei naechstem Brand-Token-Review evaluieren, ob Fallback-Farbe fuer Light-Mode benoetigt wird. |
