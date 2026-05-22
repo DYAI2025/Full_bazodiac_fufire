@@ -288,3 +288,51 @@ test('OV-I1: missing sections produce human fallbacks, not technical keys', () =
     assert.ok(m.evidenceCards[k].body.length > 0);
   }
 });
+
+// ── OV-I1-T02: Element-Oekonomie summary (no internal field names) ───────────
+
+test('OV-I1: elementSummary has dominant / underrepresented / leverToday / sentence / cta', () => {
+  const m = profileToOverviewModel({
+    fusion: {
+      coherence_index: 0.7,
+      remediation: {
+        distribution: { Holz: 0.45, Feuer: 0.20, Erde: 0.18, Metall: 0.12, Wasser: 0.05 },
+        dominant:  'Holz',
+        deficient: 'Wasser',
+      },
+    },
+  });
+  assert.ok(m.elementSummary, 'elementSummary missing');
+  assert.equal(typeof m.elementSummary.dominantElement, 'string');
+  assert.equal(typeof m.elementSummary.underrepresentedElement, 'string');
+  assert.equal(typeof m.elementSummary.leverToday, 'string');
+  assert.equal(typeof m.elementSummary.sentence, 'string');
+  assert.equal(typeof m.elementSummary.ctaRoute, 'string');
+  assert.equal(m.elementSummary.ctaRoute, '/wuxing');
+});
+
+test('OV-I1: elementSummary uses only human German labels — no internal field names as values', () => {
+  const m = profileToOverviewModel({
+    fusion: {
+      coherence_index: 0.7,
+      remediation: {
+        distribution: { Holz: 0.45, Feuer: 0.20, Erde: 0.18, Metall: 0.12, Wasser: 0.05 },
+        dominant:  'Holz',
+        deficient: 'Wasser',
+      },
+    },
+  });
+  const banned = ['Distribution', 'Dominant', 'Deficient', 'Plan', 'Properties', 'TodayLever'];
+  const fields = [
+    m.elementSummary.dominantElement,
+    m.elementSummary.underrepresentedElement,
+    m.elementSummary.leverToday,
+    m.elementSummary.sentence,
+  ];
+  for (const field of fields) {
+    for (const b of banned) {
+      assert.notEqual(field, b,
+        `elementSummary field must not equal internal key "${b}", got: ${JSON.stringify(field)}`);
+    }
+  }
+});

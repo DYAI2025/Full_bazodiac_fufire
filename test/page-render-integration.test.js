@@ -47,6 +47,23 @@ function assertContainsApiValues(agg, label, expected = EXPECTED_API_STRINGS) {
 }
 
 // ── OverviewPage ─────────────────────────────────────────────────────────────
+
+// OV-I1-T02: REQ-F-OV-004 / REQ-D-003 — Element-Oekonomie summary must never
+// leak internal ViewModel field names (raw capitalized keys from enrichWuxing
+// such as Distribution / Dominant / Deficient / Plan / Properties / TodayLever)
+// into rendered HTML. Whole-word match: "Planeten" must NOT trigger "Plan".
+test('OV-I1: OverviewPage rendered DOM does not contain internal element field names', async () => {
+  const { OverviewPage } = await import('../public/src/pages/OverviewPage.js');
+  const app = freshApp();
+  OverviewPage(app, { profile: SYNTHETIC_PROFILE, onNavigate: () => {} });
+  const agg = cap.aggregate();
+  for (const banned of ['Distribution', 'Dominant', 'Deficient', 'Plan', 'Properties', 'TodayLever']) {
+    const re = new RegExp(`\\b${banned}\\b`);
+    assert.ok(!re.test(agg),
+      `forbidden ViewModel field name "${banned}" surfaced in rendered DOM (whole-word match)`);
+  }
+});
+
 // Skipped: I4 rewrote OverviewPage to the Premium-Hero layout.
 // The new structural assertions live in test/overview-hero-layout.test.js.
 test('OverviewPage renders only API-derived data + passes noFakeDataGuard',

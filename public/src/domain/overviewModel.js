@@ -237,6 +237,48 @@ function buildGuidedDeepDives() {
   ];
 }
 
+// ── OV-I1-T02: UI-safe Element-Oekonomie summary ────────────────────────────
+// Consumes the enrichWuxing output (already produced as elementEconomy) and
+// produces a flat, human-readable summary the OverviewPage can render
+// directly. NEVER exposes internal keys (`distribution`, `plan`, `properties`,
+// `todayLever`) — only German user-facing strings.
+function buildElementSummary(elementEconomy) {
+  if (!elementEconomy || !Array.isArray(elementEconomy.distribution)
+      || elementEconomy.distribution.length === 0) {
+    return {
+      dominantElement:         '',
+      underrepresentedElement: '',
+      leverToday:              'WuXing-Daten noch nicht geliefert.',
+      sentence:                'Element-Übersicht erscheint, sobald die Fusion-Daten geliefert sind.',
+      ctaRoute:                '/wuxing',
+    };
+  }
+
+  const dominantLabel = elementEconomy.dominant?.label ?? '';
+  const deficientLabel = elementEconomy.deficient?.label ?? '';
+  const leverToday = (typeof elementEconomy.todayLever === 'string' && elementEconomy.todayLever)
+    ? elementEconomy.todayLever
+    : (dominantLabel
+        ? `${dominantLabel} ist heute prägend — kleine Gegenakzente halten dich beweglich.`
+        : 'Setze heute einen kleinen, fokussierten Akzent.');
+
+  const sentence = dominantLabel && deficientLabel
+    ? `${dominantLabel} trägt deine Signatur, ${deficientLabel} bleibt unterrepräsentiert.`
+    : dominantLabel
+      ? `${dominantLabel} trägt deine Signatur.`
+      : deficientLabel
+        ? `${deficientLabel} ist unterrepräsentiert und braucht Aufmerksamkeit.`
+        : 'Element-Verteilung wird angezeigt, sobald die Daten geliefert sind.';
+
+  return {
+    dominantElement:         dominantLabel,
+    underrepresentedElement: deficientLabel,
+    leverToday,
+    sentence,
+    ctaRoute:                '/wuxing',
+  };
+}
+
 // ── warnings sub-builder ────────────────────────────────────────────────────
 function buildWarnings(profile, chartWheel) {
   const warnings = [];
@@ -257,6 +299,8 @@ export function profileToOverviewModel(profile) {
   const chartWheel = buildChartWheel(safe.western);
   const topFacts   = buildTopFacts(safe);
   const warnings   = buildWarnings(safe, chartWheel);
+  const elementEconomy = safe?.fusion ? enrichWuxing(safe) : null;
+  const elementSummary = buildElementSummary(elementEconomy);
 
   return {
     identity: {
@@ -274,7 +318,8 @@ export function profileToOverviewModel(profile) {
               ?? safe?.fusion?.fusion_interpretation
               ?? null,
     },
-    elementEconomy: safe?.fusion ? enrichWuxing(safe) : null,
+    elementEconomy,
+    elementSummary,
     signatureHero:   buildSignatureHero(safe),
     fusionEssence:   safe?.fusion?.summary
                    ?? safe?.fusion?.headline
