@@ -155,3 +155,43 @@ test('Detail blocks are collapsed by default (progressive disclosure)', () => {
     assert.ok(summary, 'each <details> needs a <summary>');
   }
 });
+
+// ── OV-I2: signature-hero / meaning-bridge target DOM structure ─────────────
+
+test('OV-I2: signature-hero section exists with wheel-anchor + fusion-signature-panel slots', () => {
+  const root = mountPage(FIXTURE);
+  const hero = root.querySelector('[data-section="signature-hero"]');
+  assert.ok(hero, 'signature-hero section missing');
+
+  const slots = Array.from(hero.querySelectorAll(':scope > [data-hero-slot]'))
+    .map((el) => el.getAttribute('data-hero-slot'));
+  assert.deepEqual(
+    slots,
+    ['wheel-anchor', 'fusion-signature-panel'],
+    `signature-hero slot order mismatch. Got: ${slots.join(', ')}`,
+  );
+});
+
+test('OV-I2: meaning-bridge appears after signature-hero in document order', () => {
+  const root = mountPage(FIXTURE);
+  const heroIdx   = Array.from(root.querySelectorAll('[data-section]'))
+    .findIndex((el) => el.getAttribute('data-section') === 'signature-hero');
+  const bridgeIdx = Array.from(root.querySelectorAll('[data-section]'))
+    .findIndex((el) => el.getAttribute('data-section') === 'meaning-bridge');
+
+  assert.ok(heroIdx > -1,   'signature-hero section missing');
+  assert.ok(bridgeIdx > -1, 'meaning-bridge section missing');
+  assert.ok(heroIdx < bridgeIdx, 'meaning-bridge must appear after signature-hero');
+});
+
+test('OV-I2: signature-hero is the first data-section in the page', () => {
+  const root = mountPage(FIXTURE);
+  const sections = Array.from(root.querySelectorAll('[data-section]'))
+    .map((el) => el.getAttribute('data-section'));
+  assert.ok(sections.length > 0, 'no sections rendered');
+  assert.equal(
+    sections[0],
+    'signature-hero',
+    `signature-hero must be first data-section; got: ${sections[0]}`,
+  );
+});
