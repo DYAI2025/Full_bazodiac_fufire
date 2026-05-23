@@ -275,3 +275,18 @@ test('normalizeAzodiacResult: body without longitude is skipped, NOT normalized 
   assert.ok(!('Moon' in vm.western.bodies) || vm.western.bodies.Moon.longitude !== 0,
     'Body with missing longitude must not appear with longitude: 0 in ViewModel');
 });
+
+test('normalizeAzodiacResult: array-form houses normalized to 1-based string-keyed object', () => {
+  const vm = normalizeAzodiacResult({
+    western: {
+      bodies: { Sun: { longitude: 45.0, sign: 'Taurus' } },
+      houses: [283.4, 314.1, 344.2, 15.0, 45.0, 75.0, 103.4, 134.1, 164.2, 195.0, 225.0, 255.0],
+    },
+    bazi: null, fusion: null, _meta: {},
+  });
+  // After normalization, houses must be a 1-based string-keyed object, not an array
+  assert.ok(!Array.isArray(vm.western.houses), 'houses must not be an array after normalization');
+  assert.ok(vm.western.houses['1'], 'house "1" must be present');
+  assert.ok(vm.western.houses['12'], 'house "12" must be present');
+  assert.equal(vm.western.houses['1'].longitude, 283.4, 'house 1 must map to first array entry');
+});

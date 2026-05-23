@@ -398,12 +398,15 @@ export function NatalChartWheel({ wheel }) {
 
   // ── Layer 3: bodies-aspects (aspect lines + planet nodes) ────────────────
   if (Array.isArray(w.aspects)) {
+    const bodyByKey = new Map(
+      (w.bodies || []).map((b) => [b.key ?? b.name, b])
+    );
     for (const asp of w.aspects) {
       if (!MAJOR_ASPECTS.has(asp.type)) continue;
       const srcKey = asp.sourceKey ?? asp.source;
       const tgtKey = asp.targetKey ?? asp.target;
-      const src = w.bodies.find((b) => (b.key ?? b.name) === srcKey);
-      const tgt = w.bodies.find((b) => (b.key ?? b.name) === tgtKey);
+      const src = bodyByKey.get(srcKey);
+      const tgt = bodyByKey.get(tgtKey);
       if (!src || !tgt) continue;
       if (typeof src.longitude !== 'number' || typeof tgt.longitude !== 'number') continue;
       const a = lonToXYAsc(src.longitude, R_ASPECT, ascDeg);

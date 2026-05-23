@@ -240,11 +240,11 @@ function installWheelAuditLink(root) {
     // <li> highlight would never appear. Scope to non-metadata nodes.
     const isVisibleRow = (n) => n && n.tagName && n.tagName.toLowerCase() !== 'metadata';
     const previouslyActive = Array.from(
-      root.querySelectorAll('[data-audit-row][data-active="true"]'),
-    ).filter(isVisibleRow);
+      root.querySelectorAll('li[data-audit-row][data-active="true"]'),
+    );
     for (const node of previouslyActive) node.removeAttribute('data-active');
     if (detail.active === false) return;
-    const candidates = Array.from(root.querySelectorAll(`[data-audit-row="${detail.key}"]`)).filter(isVisibleRow);
+    const candidates = Array.from(root.querySelectorAll(`li[data-audit-row="${detail.key}"]`));
     if (candidates[0]) candidates[0].setAttribute('data-active', 'true');
   });
 }

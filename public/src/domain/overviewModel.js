@@ -227,8 +227,8 @@ function buildTopMovements(profile) {
   // the chart wheel — keeps payload small without losing the long tail.
   const limited = raw.slice(0, 12);
   return limited.map((a) => ({
-    sourceKey: PLANET_DE_CLEAN[a.planet1] ?? a.planet1,
-    targetKey: PLANET_DE_CLEAN[a.planet2] ?? a.planet2,
+    sourceKey: PLANET_DE_CLEAN[a.planet1] ?? a.planet1 ?? '?',
+    targetKey: PLANET_DE_CLEAN[a.planet2] ?? a.planet2 ?? '?',
     typeDE:    (typeof a.type === 'string' && a.type) || 'aspekt',
     tone:      aspectTone(a.type),
     orb:       num(a.orb),
