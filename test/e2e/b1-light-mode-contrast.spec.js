@@ -162,6 +162,6 @@ for (const pg of PAGES) {
 
 test('B1 captures 4-variant screenshot matrix for all 8 pages', async ({ browser }) => {
   for (const pg of PAGES) {
-    await captureMatrix({ browser, page: pg.slug, path: pg.path, dir: DIR });
+    await captureMatrix({ browser, slug: pg.slug, path: pg.path, dir: DIR });
   }
 });

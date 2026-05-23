@@ -1,13 +1,4 @@
 // public/src/pages/BaziPage.js
-// B2 restructure: Day Master kern, 4-pillar line, shared detail panel, provenance labels.
-//
-// Key changes from B1:
-//   - data-bazi-role="day-master-kern" on Day Master section
-//   - 4 pillar <li> cards with data-bazi-pillar attribute, no per-card <details> drawer
-//   - Single [data-bazi-shared-detail] panel below pillars, toggled by pillar click
-//   - data-bazi-hidden-stems-source per pillar: "API" or "aus Branch-Tabelle abgeleitet"
-//   - data-bazi-lucky-pillar with "nicht von API geliefert"
-//   - data-bazi-narrative-marker="Leseschluessel" on intro paragraph
 
 import { enrichBaziPillars } from '../domain/baziPillarEnrichment.js';
 import { UnavailableCard }    from '../components/UnavailableCard.js';
