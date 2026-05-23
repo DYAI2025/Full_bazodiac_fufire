@@ -448,13 +448,18 @@ export function normalizeAzodiacResult(raw) {
         const raw = w.houses;
         if (!raw) return [];
         if (Array.isArray(raw)) {
-          return raw.map(entry =>
-            typeof entry === 'number'
+          // Normalize 0-indexed array to 1-based string-keyed object so
+          // computeBodyHouse (which iterates cusps[1]..cusps[12]) works correctly.
+          const result = {};
+          raw.forEach((entry, idx) => {
+            const k = String(idx + 1);
+            result[k] = typeof entry === 'number'
               ? { longitude: entry, sign: lonToSign(entry) }
               : (entry && entry.sign == null && entry.longitude != null
                   ? { ...entry, sign: lonToSign(entry.longitude) }
-                  : entry)
-          );
+                  : entry);
+          });
+          return result;
         }
         // Object form: {"1": 283.4, ...} or {"1": {cusp: 283.4}, ...}
         const result = {};
@@ -926,7 +931,7 @@ export function makeGeoCache({ maxSize = 200, ttlMs = 86_400_000 } = {}) {
 }
 
 // ── Geocode Rate Limiter (sliding window per IP) ──────────────────────────
-export function geocodeRateLimiter({ maxPerMinute = 10 } = {}) {
+export function geocodeRateLimiter({ maxPerMinute = 10, maxTrackedIPs = 10_000 } = {}) {
   const windows = new Map(); // ip → timestamps[]
   return {
     allow(ip) {
@@ -935,6 +940,11 @@ export function geocodeRateLimiter({ maxPerMinute = 10 } = {}) {
       const timestamps = (windows.get(ip) || []).filter(t => t > cutoff);
       if (timestamps.length >= maxPerMinute) return false;
       timestamps.push(now);
+      // Evict oldest entry when the map grows too large (prevents memory exhaustion
+      // from IP-spoofed X-Forwarded-For flood).
+      if (!windows.has(ip) && windows.size >= maxTrackedIPs) {
+        windows.delete(windows.keys().next().value);
+      }
       windows.set(ip, timestamps);
       return true;
     },

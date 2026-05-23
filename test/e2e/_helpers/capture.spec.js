@@ -9,7 +9,7 @@ const OUT = 'docs/qa/screenshots/_helper-smoke';
 test.beforeAll(() => { try { rmSync(OUT, { recursive: true }); } catch {} });
 
 test('captureMatrix writes 4 non-empty PNGs (desktop+mobile × dark+light)', async ({ browser }) => {
-  await captureMatrix({ browser, page: 'overview', path: '/#/overview', dir: OUT });
+  await captureMatrix({ browser, slug: 'overview', path: '/#/overview', dir: OUT });
   for (const name of [
     'overview-desktop-dark.png',
     'overview-desktop-light.png',

@@ -254,10 +254,10 @@ test('OV-I1: model exposes meaningBridge.carries / friction / todayLever', () =>
   }
 });
 
-test('OV-I1: model exposes topMovements (default top 3) and guidedDeepDives (4 intents)', () => {
+test('OV-I1: model exposes topMovements (up to 12, sliced by component) and guidedDeepDives (4 intents)', () => {
   const m = profileToOverviewModel(OV_I1_FIXTURE);
   assert.ok(Array.isArray(m.topMovements));
-  assert.ok(m.topMovements.length <= 3);
+  assert.ok(m.topMovements.length <= 12);
   assert.ok(Array.isArray(m.guidedDeepDives));
   assert.equal(m.guidedDeepDives.length, 4);
   for (const dd of m.guidedDeepDives) {
@@ -335,4 +335,29 @@ test('OV-I1: elementSummary uses only human German labels — no internal field 
         `elementSummary field must not equal internal key "${b}", got: ${JSON.stringify(field)}`);
     }
   }
+});
+
+test('buildTopMovements: null planet fields produce "?" keys, not null/undefined', () => {
+  const m = profileToOverviewModel({
+    western: {
+      aspects: [
+        { planet1: null, planet2: 'Moon', type: 'trine', orb: 1.0 },
+        { planet1: 'Sun', planet2: undefined, type: 'sextile', orb: 2.5 },
+      ],
+    },
+  });
+  assert.ok(Array.isArray(m.topMovements));
+  assert.equal(m.topMovements.length, 2);
+  assert.equal(typeof m.topMovements[0].sourceKey, 'string');
+  assert.equal(typeof m.topMovements[0].targetKey, 'string');
+  assert.equal(m.topMovements[0].sourceKey, '?');
+  assert.equal(typeof m.topMovements[1].targetKey, 'string');
+  assert.equal(m.topMovements[1].targetKey, '?');
+});
+
+test('fusionSummary.statement uses fusion_interpretation when headline and summary absent', () => {
+  const m = profileToOverviewModel({
+    fusion: { fusion_interpretation: 'Tiefe Resonanz.' },
+  });
+  assert.equal(m.fusionSummary.statement, 'Tiefe Resonanz.');
 });
