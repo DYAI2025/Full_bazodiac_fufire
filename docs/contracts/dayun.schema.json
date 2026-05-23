@@ -2,18 +2,80 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://fufire.example/schemas/calculate/bazi/dayun.response.schema.json",
   "title": "DaYunResponse",
-  "description": "Successful response contract for POST /calculate/bazi/dayun. Returns the resolved decade pillars (Da Yun), provenance, precision metadata and any non-fatal warnings. Error responses (e.g. missing direction basis under strict=true) are described by dayun.error.schema.json.",
+  "description": "Successful response contract for POST /calculate/bazi/dayun. Returns the resolved decade pillars (Da Yun), provenance, precision metadata and any non-fatal warnings. Error responses (e.g. missing direction basis under strict=true) are described by dayun.error.schema.json. Mirrored byte-identically at `bazodiac-dayun/docs/contracts/dayun.schema.json` — keep in sync (CI check pending). TODO: replace `$id` host before production release.",
   "type": "object",
   "additionalProperties": false,
   "required": ["dayun", "provenance", "precision", "warnings"],
   "$defs": {
+    "StemEnum": {
+      "type": "string",
+      "description": "Ten Heavenly Stems in Pinyin (Jia, Yi, Bing, Ding, Wu, Ji, Geng, Xin, Ren, Gui). Note: stem `Wu` (Pinyin for 戊, yang earth) is spelt identically to branch `Wu` (Pinyin for 午, horse) — they are different characters and live in different fields, so there is no contract collision.",
+      "enum": ["Jia", "Yi", "Bing", "Ding", "Wu", "Ji", "Geng", "Xin", "Ren", "Gui"]
+    },
+    "BranchEnum": {
+      "type": "string",
+      "description": "Twelve Earthly Branches in Pinyin (Zi, Chou, Yin, Mao, Chen, Si, Wu, Wei, Shen, You, Xu, Hai). See StemEnum description for the Wu/Wu spelling collision note.",
+      "enum": ["Zi", "Chou", "Yin", "Mao", "Chen", "Si", "Wu", "Wei", "Shen", "You", "Xu", "Hai"]
+    },
+    "TenGodEnum": {
+      "type": "string",
+      "description": "Canonical ten Shen (Ten Gods) in Pinyin with a space between syllables.",
+      "enum": [
+        "Bi Jian",
+        "Jie Cai",
+        "Shi Shen",
+        "Shang Guan",
+        "Pian Cai",
+        "Zheng Cai",
+        "Qi Sha",
+        "Zheng Guan",
+        "Pian Yin",
+        "Zheng Yin"
+      ]
+    },
+    "JieqiEnum": {
+      "type": "string",
+      "description": "Twenty-four solar terms (jieqi) in Pinyin, two-syllable names separated by a space. Ordered starting from Li Chun (Start of Spring).",
+      "enum": [
+        "Li Chun",
+        "Yu Shui",
+        "Jing Zhe",
+        "Chun Fen",
+        "Qing Ming",
+        "Gu Yu",
+        "Li Xia",
+        "Xiao Man",
+        "Mang Zhong",
+        "Xia Zhi",
+        "Xiao Shu",
+        "Da Shu",
+        "Li Qiu",
+        "Chu Shu",
+        "Bai Lu",
+        "Qiu Fen",
+        "Han Lu",
+        "Shuang Jiang",
+        "Li Dong",
+        "Xiao Xue",
+        "Da Xue",
+        "Dong Zhi",
+        "Xiao Han",
+        "Da Han"
+      ]
+    },
     "Pillar": {
       "type": "object",
       "additionalProperties": false,
       "required": ["stem", "branch", "element", "polarity", "index60"],
       "properties": {
-        "stem": { "type": "string", "description": "Heavenly stem in pinyin (e.g. 'Jia')." },
-        "branch": { "type": "string", "description": "Earthly branch in pinyin (e.g. 'Chen')." },
+        "stem": {
+          "allOf": [{ "$ref": "#/$defs/StemEnum" }],
+          "description": "Heavenly stem in pinyin (e.g. 'Jia')."
+        },
+        "branch": {
+          "allOf": [{ "$ref": "#/$defs/BranchEnum" }],
+          "description": "Earthly branch in pinyin (e.g. 'Chen')."
+        },
         "stem_cn": { "type": "string", "description": "Heavenly stem in Chinese characters." },
         "branch_cn": { "type": "string", "description": "Earthly branch in Chinese characters." },
         "element": {
@@ -38,8 +100,14 @@
       "additionalProperties": false,
       "required": ["day_master", "ten_god", "element_relation", "label_de"],
       "properties": {
-        "day_master": { "type": "string", "description": "Pinyin name of the day-master stem (e.g. 'Wu')." },
-        "ten_god": { "type": "string", "description": "Ten-Gods label for this decade pillar's stem relative to the day master (e.g. 'Qi Sha')." },
+        "day_master": {
+          "allOf": [{ "$ref": "#/$defs/StemEnum" }],
+          "description": "Pinyin name of the day-master stem (e.g. 'Wu')."
+        },
+        "ten_god": {
+          "allOf": [{ "$ref": "#/$defs/TenGodEnum" }],
+          "description": "Ten-Gods label for this decade pillar's stem relative to the day master (e.g. 'Qi Sha')."
+        },
         "element_relation": {
           "type": "string",
           "enum": [
@@ -109,7 +177,10 @@
       "additionalProperties": false,
       "required": ["name", "direction", "local_dt"],
       "properties": {
-        "name": { "type": "string", "description": "Pinyin name of the solar term used as anchor (e.g. 'Xiao Shu')." },
+        "name": {
+          "allOf": [{ "$ref": "#/$defs/JieqiEnum" }],
+          "description": "Pinyin name of the solar term used as anchor (e.g. 'Xiao Shu')."
+        },
         "direction": {
           "type": "string",
           "enum": ["next", "previous"],
