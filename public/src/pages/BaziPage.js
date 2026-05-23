@@ -294,7 +294,7 @@ export function BaziPage(app, { profile, onNavigate } = {}) {
   }
 
   // ── Navigation ───────────────────────────────────────────────────────────
-  app.querySelector('.nav-wuxing')?.addEventListener('click', () => onNavigate?.('/fusion'));
+  app.querySelector('.nav-wuxing')?.addEventListener('click', () => onNavigate?.('/wuxing'));
   app.querySelector('.nav-fusion')?.addEventListener('click', () => onNavigate?.('/fusion'));
 
   return heroCleanup;

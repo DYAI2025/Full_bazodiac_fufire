@@ -84,9 +84,10 @@ export function renderRawData(raw) {
   const safe = redactSensitive(raw ?? {});
   let json;
   try { json = JSON.stringify(safe, null, 2); } catch { json = '(unable to stringify)'; }
+  const escaped = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<details class="raw-data">
   <summary>Rohdaten (nur für Debugging)</summary>
-  <pre>${json}</pre>
+  <pre>${escaped}</pre>
 </details>`;
 }
 

@@ -210,7 +210,7 @@ function buildMeaningBridge(profile) {
     todayLever: {
       title:  'Was heute hilft',
       body:   'Beginne den Tag mit einer kurzen, fokussierten Handlung statt mit Recherche.',
-      source: 'todayLever (heuristic placeholder)',
+      source: 'Allgemeine Empfehlung',
     },
   };
 }
@@ -227,8 +227,8 @@ function buildTopMovements(profile) {
   // the chart wheel — keeps payload small without losing the long tail.
   const limited = raw.slice(0, 12);
   return limited.map((a) => ({
-    sourceKey: a.planet1,
-    targetKey: a.planet2,
+    sourceKey: PLANET_DE_CLEAN[a.planet1] ?? a.planet1,
+    targetKey: PLANET_DE_CLEAN[a.planet2] ?? a.planet2,
     typeDE:    (typeof a.type === 'string' && a.type) || 'aspekt',
     tone:      aspectTone(a.type),
     orb:       num(a.orb),

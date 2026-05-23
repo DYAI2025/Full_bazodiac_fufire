@@ -360,6 +360,7 @@
   --surface-elevated: var(--bz-ink-06);
   --border-subtle:    var(--bz-ink-10);
   --muted:            var(--bz-fg-3);
+  --gold-light:       var(--bz-gold-deep);
 }
 
 /* ════════════════════════════════════════════════════════════════════════
