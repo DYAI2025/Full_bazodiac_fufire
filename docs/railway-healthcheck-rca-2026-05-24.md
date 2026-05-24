@@ -49,7 +49,7 @@ Warum:
 4. Falls Crash vor Listen:
    - Fonts testweise auf lokale/self-hosted Fonts umstellen oder Font-Imports deaktivieren.
 5. Falls Artefaktproblem vermutet:
-   - sicherstellen, dass nach `npm run build` kein Schritt `.next` überschreibt/entfernt.
+   - Sicherstellen, dass nach `npm run build` kein Schritt `.next` überschreibt/entfernt.
 
 ## Remediation-Vorschlag (niedriges Risiko)
 - Kurzfristig: Healthcheck auf minimal unabhängigen Pfad belassen (`/health`, bereits ok), Runtime-Logs erzwingen.
