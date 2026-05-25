@@ -83,6 +83,7 @@ export function installCaptureDom() {
       dataset: {},
       appendChild(c) { this._children.push(c); return c; },
       append(...kids) { for (const k of kids) this._children.push(k); },
+      replaceChildren(...kids) { this._children.length = 0; for (const k of kids) this._children.push(k); },
       replaceWith(other) { /* tracked but no parent linkage */ if (other && typeof other === 'object') this._children.push(other); },
       before(...kids) { for (const k of kids) this._children.push(k); },
       after(...kids)  { for (const k of kids) this._children.push(k); },

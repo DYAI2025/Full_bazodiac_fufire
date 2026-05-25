@@ -28,14 +28,20 @@ export function renderHero() {
 </section>`;
 }
 
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 export function renderProvenanceTable(entries) {
   const rows = (entries || []).map(e => {
-    const pill      = `<span class="${statusPillClass(e.status)}">${e.status}</span>`;
-    const consumers = Array.isArray(e.consumers) && e.consumers.length ? e.consumers.join(', ') : '—';
+    const pill      = `<span class="${statusPillClass(e.status)}">${esc(e.status)}</span>`;
+    const consumers = Array.isArray(e.consumers) && e.consumers.length
+      ? e.consumers.map(esc).join(', ')
+      : '—';
     return `<tr>
-      <td><code>${e.endpoint}</code></td>
-      <td>${e.method}</td>
-      <td>${e.source}</td>
+      <td><code>${esc(e.endpoint)}</code></td>
+      <td>${esc(e.method)}</td>
+      <td>${esc(e.source)}</td>
       <td>${pill}</td>
       <td>${consumers}</td>
     </tr>`;
@@ -58,7 +64,7 @@ export function renderLiveStatus(health) {
   const pill = health.upstream_ok
     ? '<span class="pill pill--ok">upstream ok</span>'
     : '<span class="pill pill--warn">upstream fallback</span>';
-  const url = health.fufire_base_url ?? '—';
+  const url = esc(health.fufire_base_url ?? '—');
   return `<div class="live-status">
   ${pill}
   <p>Base URL: <code>${url}</code></p>
@@ -74,8 +80,8 @@ export function renderUsage(entries) {
     }
   }
   const items = Object.entries(byPage).map(([page, eps]) => {
-    const epList = eps.map(ep => `<li><code>${ep}</code></li>`).join('');
-    return `<li class="usage-page"><strong>${page}</strong><ul>${epList}</ul></li>`;
+    const epList = eps.map(ep => `<li><code>${esc(ep)}</code></li>`).join('');
+    return `<li class="usage-page"><strong>${esc(page)}</strong><ul>${epList}</ul></li>`;
   }).join('');
   return `<ul class="usage-pages">${items}</ul>`;
 }
@@ -84,9 +90,10 @@ export function renderRawData(raw) {
   const safe = redactSensitive(raw ?? {});
   let json;
   try { json = JSON.stringify(safe, null, 2); } catch { json = '(unable to stringify)'; }
+  const escaped = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<details class="raw-data">
   <summary>Rohdaten (nur für Debugging)</summary>
-  <pre>${json}</pre>
+  <pre>${escaped}</pre>
 </details>`;
 }
 
@@ -114,7 +121,7 @@ function replaceHTML(el, html) {
 
 // ─── Page mount ──────────────────────────────────────────────────────────────
 
-export async function MethodPage(root, _opts = {}) {
+export function MethodPage(root, _opts = {}) {
   root.innerHTML = '';
 
   const page = document.createElement('div');
@@ -124,7 +131,7 @@ export async function MethodPage(root, _opts = {}) {
 
   // Hero — renderHero emits a <h1 data-page-title>; wireHeroRolling replaces it.
   mountHTML(page, renderHero());
-  wireHeroRolling(page);
+  const heroCleanup = wireHeroRolling(page);
 
   // Live status placeholder
   const statusSection = document.createElement('section');
@@ -168,15 +175,17 @@ export async function MethodPage(root, _opts = {}) {
   rawSection.appendChild(rawSlot);
   page.appendChild(rawSection);
 
-  // Async fill
-  const [healthRes, configRes] = await Promise.allSettled([getHealth(), getConfig()]);
+  // Async fill — detached so the router receives a real cleanup function
+  Promise.allSettled([getHealth(), getConfig()]).then(([healthRes, configRes]) => {
+    if (!page.isConnected) return;
+    const health  = healthRes.status === 'fulfilled' && healthRes.value?.ok ? healthRes.value.data  : null;
+    const catalog = configRes.status  === 'fulfilled' && configRes.value?.ok  ? catalogFromConfig(configRes.value.data) : [];
+    replaceHTML(statusEl,  renderLiveStatus(health));
+    const entries = buildProvenance(catalog, health, FRONTEND_CONSUMERS);
+    replaceHTML(tableEl,   renderProvenanceTable(entries));
+    usageSlot.innerHTML  = renderUsage(entries);
+    rawSlot.innerHTML    = renderRawData(health ?? {});
+  });
 
-  const health  = healthRes.status === 'fulfilled' && healthRes.value?.ok ? healthRes.value.data  : null;
-  const catalog = configRes.status  === 'fulfilled' && configRes.value?.ok  ? catalogFromConfig(configRes.value.data) : [];
-
-  replaceHTML(statusEl,  renderLiveStatus(health));
-  const entries = buildProvenance(catalog, health, FRONTEND_CONSUMERS);
-  replaceHTML(tableEl,   renderProvenanceTable(entries));
-  usageSlot.innerHTML  = renderUsage(entries);
-  rawSlot.innerHTML    = renderRawData(health ?? {});
+  return heroCleanup;
 }

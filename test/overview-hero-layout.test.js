@@ -83,41 +83,48 @@ test('OverviewPage renders all hero sections in correct order', () => {
   const sections = Array.from(root.querySelectorAll('[data-section]'));
   const ids = sections.map((el) => el.getAttribute('data-section'));
 
+  // OV-I2 fix: SignatureHero is the dominant first section and owns the wheel
+  // directly via [data-hero-slot="wheel-anchor"]. The legacy nested hero
+  // wrapper + fusion-narrative duplication have been removed; key-facts and
+  // birthchart-wheel remain as their own sibling sections for audit tooling.
   assert.deepEqual(ids, [
-    'hero',
+    'signature-hero',
     'key-facts',
     'birthchart-wheel',
-    'fusion-narrative',
+    'meaning-bridge',
+    'top-movements',
     'bazi-pillars',
     'western-core',
     'fusion-coherence',
     'element-economy',
-    'deep-dive',
+    'guided-deep-dive',
   ], `Section order mismatch. Got: ${ids.join(', ')}`);
 });
 
-test('Hero section contains wheel on left and fusion narrative on right', () => {
+test('Signature hero contains wheel-anchor and fusion-signature-panel slots in order', () => {
   const root = mountPage(FIXTURE);
-  const hero = root.querySelector('[data-section="hero"]');
-  assert.ok(hero, 'hero section missing');
+  const hero = root.querySelector('[data-section="signature-hero"]');
+  assert.ok(hero, 'signature-hero section missing');
 
-  const wheel     = hero.querySelector('[data-hero-slot="wheel"]');
-  const narrative = hero.querySelector('[data-hero-slot="narrative"]');
-  assert.ok(wheel,     'hero wheel slot missing');
-  assert.ok(narrative, 'hero narrative slot missing');
+  const wheelAnchor = hero.querySelector('[data-hero-slot="wheel-anchor"]');
+  const panel       = hero.querySelector('[data-hero-slot="fusion-signature-panel"]');
+  assert.ok(wheelAnchor, 'signature-hero wheel-anchor slot missing');
+  assert.ok(panel,       'signature-hero fusion-signature-panel slot missing');
 
-  const slots = Array.from(hero.querySelectorAll('[data-hero-slot]'));
-  assert.equal(slots[0].getAttribute('data-hero-slot'), 'wheel');
-  assert.equal(slots[1].getAttribute('data-hero-slot'), 'narrative');
+  const slots = Array.from(hero.querySelectorAll(':scope > [data-hero-slot]'));
+  assert.equal(slots[0].getAttribute('data-hero-slot'), 'wheel-anchor');
+  assert.equal(slots[1].getAttribute('data-hero-slot'), 'fusion-signature-panel');
 });
 
-test('Hero narrative contains RollingText headline + 3 evidence cards', () => {
-  const root      = mountPage(FIXTURE);
-  const narrative = root.querySelector('[data-hero-slot="narrative"]');
-  const rolling   = narrative.querySelector('[data-rolling-text]');
-  assert.ok(rolling, 'RollingText must render in narrative');
+test('Signature panel contains the essence headline + 3 evidence cards', () => {
+  const root  = mountPage(FIXTURE);
+  const panel = root.querySelector('[data-hero-slot="fusion-signature-panel"]');
+  assert.ok(panel, 'fusion-signature-panel slot missing');
 
-  const evidenceCards = narrative.querySelectorAll('[data-evidence-card]');
+  const essence = panel.querySelector('.bz-hero__essence');
+  assert.ok(essence, 'essence headline must render in signature panel');
+
+  const evidenceCards = panel.querySelectorAll('[data-evidence]');
   assert.equal(evidenceCards.length, 3, 'must have exactly 3 evidence cards');
 });
 
@@ -132,8 +139,9 @@ test('Key Facts strip renders as compact pills above hero content', () => {
 
 test('Deep-Dive section renders tiles that link to detail routes', () => {
   const root = mountPage(FIXTURE);
-  const deep = root.querySelector('[data-section="deep-dive"]');
-  assert.ok(deep, 'deep-dive section missing');
+  // OV-I4-T12: deep-dive section renamed to guided-deep-dive.
+  const deep = root.querySelector('[data-section="guided-deep-dive"]');
+  assert.ok(deep, 'guided-deep-dive section missing');
 
   const tiles = Array.from(deep.querySelectorAll('a[data-deep-dive-tile]'));
   assert.ok(tiles.length >= 3, `expected >= 3 deep-dive tiles, got ${tiles.length}`);
@@ -153,5 +161,72 @@ test('Detail blocks are collapsed by default (progressive disclosure)', () => {
     assert.equal(d.hasAttribute('open'), false, 'progressive details must start closed');
     const summary = d.querySelector('summary');
     assert.ok(summary, 'each <details> needs a <summary>');
+  }
+});
+
+// ── OV-I2: signature-hero / meaning-bridge target DOM structure ─────────────
+
+test('OV-I2: signature-hero section exists with wheel-anchor + fusion-signature-panel slots', () => {
+  const root = mountPage(FIXTURE);
+  const hero = root.querySelector('[data-section="signature-hero"]');
+  assert.ok(hero, 'signature-hero section missing');
+
+  const slots = Array.from(hero.querySelectorAll(':scope > [data-hero-slot]'))
+    .map((el) => el.getAttribute('data-hero-slot'));
+  assert.deepEqual(
+    slots,
+    ['wheel-anchor', 'fusion-signature-panel'],
+    `signature-hero slot order mismatch. Got: ${slots.join(', ')}`,
+  );
+});
+
+test('OV-I2: meaning-bridge appears after signature-hero in document order', () => {
+  const root = mountPage(FIXTURE);
+  const heroIdx   = Array.from(root.querySelectorAll('[data-section]'))
+    .findIndex((el) => el.getAttribute('data-section') === 'signature-hero');
+  const bridgeIdx = Array.from(root.querySelectorAll('[data-section]'))
+    .findIndex((el) => el.getAttribute('data-section') === 'meaning-bridge');
+
+  assert.ok(heroIdx > -1,   'signature-hero section missing');
+  assert.ok(bridgeIdx > -1, 'meaning-bridge section missing');
+  assert.ok(heroIdx < bridgeIdx, 'meaning-bridge must appear after signature-hero');
+});
+
+test('OV-I2: signature-hero is the first data-section in the page', () => {
+  const root = mountPage(FIXTURE);
+  const sections = Array.from(root.querySelectorAll('[data-section]'))
+    .map((el) => el.getAttribute('data-section'));
+  assert.ok(sections.length > 0, 'no sections rendered');
+  assert.equal(
+    sections[0],
+    'signature-hero',
+    `signature-hero must be first data-section; got: ${sections[0]}`,
+  );
+});
+
+// ── OV-I4-T12: GuidedDeepDive 4 intent-driven CTAs ──────────────────────────
+
+test('OV-I4-T12: page renders all 4 guided-deep-dive intent strings', () => {
+  const root = mountPage(FIXTURE);
+  const text = root.textContent || '';
+  for (const intent of [
+    'Ich will mich verstehen',
+    'Ich will es heute anwenden',
+    'Ich will Beziehungsmuster sehen',
+    'Ich will die Berechnung prüfen',
+  ]) {
+    assert.ok(text.includes(intent), `intent string missing: "${intent}"`);
+  }
+});
+
+test('OV-I4-T12: guided-deep-dive section contains 4 internal hash anchors', () => {
+  const root = mountPage(FIXTURE);
+  const section = root.querySelector('[data-section="guided-deep-dive"]');
+  assert.ok(section, 'guided-deep-dive section missing');
+  const anchors = Array.from(section.querySelectorAll('a[href]'));
+  assert.ok(anchors.length >= 4, `expected >=4 anchors, got ${anchors.length}`);
+  for (const a of anchors) {
+    const href = a.getAttribute('href') || '';
+    assert.ok(href.startsWith('#/'), `anchor href must start with "#/", got: ${href}`);
   }
 });

@@ -11,9 +11,12 @@
 import { profileToOverviewModel }                  from '../domain/overviewModel.js';
 import { NatalChartWheel }                          from '../components/NatalChartWheel.js';
 import { NatalChartAudit }                          from '../components/NatalChartAudit.js';
-import { RollingText }                              from '../components/RollingText.js';
+import { NatalChartAuditTabs }                      from '../components/NatalChartAuditTabs.js';
 import { SectionHeader }                            from '../components/SectionHeader.js';
 import { LuxuryCard }                               from '../components/LuxuryCard.js';
+import { renderSignatureHero }                      from '../components/SignatureHero.js';
+import { renderMeaningBridge }                      from '../components/MeaningBridge.js';
+import { renderTopMovements }                       from '../components/TopMovements.js';
 
 // ── Public export ────────────────────────────────────────────────────────────
 
@@ -21,6 +24,9 @@ export function OverviewPage(root, input) {
   // Normalise input to a hero viewModel.
   const vm = resolveViewModel(input);
   root.replaceChildren(renderPage(vm));
+  // OV-I3-T09: wire wheel:body:active → data-active on matching audit rows.
+  // Idempotent — adding the same listener twice is a no-op.
+  installWheelAuditLink(root);
 }
 
 // ── Input normalisation ──────────────────────────────────────────────────────
@@ -28,10 +34,57 @@ export function OverviewPage(root, input) {
 function resolveViewModel(input) {
   if (!input) return buildHeroViewModel(null);
   // Already a viewModel — has keyFacts property.
-  if (input.keyFacts) return input;
+  if (input.keyFacts) return withSignatureHeroFallback(input);
   // Legacy mountWithProfile format: { profile, onNavigate, … }
   const raw = input.profile !== undefined ? input.profile : input;
   return buildHeroViewModel(raw);
+}
+
+// OV-I2: pre-mapped fixtures (test inputs) may not carry signatureHero /
+// evidenceCards / meaningBridge. Provide sensible fallbacks derived from the
+// fixture's own fusionNarrative + keyFacts so the SignatureHero can still render.
+function withSignatureHeroFallback(vm) {
+  const out = { ...vm };
+  if (!out.signatureHero) {
+    out.signatureHero = {
+      essence: vm?.fusionNarrative?.headline || 'Signatur noch nicht vollständig geliefert.',
+      ctas: [
+        { label: 'Heute anwenden',   route: '/daily' },
+        { label: 'In Beziehung sehen', route: '/synastry' },
+      ],
+    };
+  }
+  if (!out.evidenceCards) {
+    const ev = Array.isArray(vm?.fusionNarrative?.evidence) ? vm.fusionNarrative.evidence : [];
+    const find = (title) => ev.find((e) => (e?.title || '').toLowerCase().includes(title));
+    const west   = find('west');
+    const bazi   = find('bazi');
+    const fusion = find('resonanz') || find('fusion');
+    out.evidenceCards = {
+      western: { title: 'Westliches Chart', body: west?.body   || 'Westliches Chart noch nicht geliefert.' },
+      bazi:    { title: 'BaZi',             body: bazi?.body   || 'BaZi noch nicht geliefert.' },
+      fusion:  { title: 'Fusion',           body: fusion?.body || 'Fusion-Layer noch nicht geliefert.' },
+    };
+  }
+  if (!out.meaningBridge) {
+    out.meaningBridge = {
+      carries:    { title: 'Was dich trägt',   body: 'Tragende Achse wird angezeigt, sobald Sonne und Day Master geliefert sind.', source: 'fallback' },
+      friction:   { title: 'Was reibt',        body: 'Reibungsachse wird angezeigt, sobald der Mond geliefert ist.',               source: 'fallback' },
+      todayLever: { title: 'Was heute hilft',  body: 'Beginne den Tag mit einer kurzen, fokussierten Handlung statt mit Recherche.', source: 'fallback' },
+    };
+  }
+  if (!Array.isArray(out.topMovements)) {
+    out.topMovements = [];
+  }
+  if (!Array.isArray(out.guidedDeepDives) || out.guidedDeepDives.length === 0) {
+    out.guidedDeepDives = [
+      { intent: 'Ich will mich verstehen',         route: '/personality' },
+      { intent: 'Ich will es heute anwenden',      route: '/daily'       },
+      { intent: 'Ich will Beziehungsmuster sehen', route: '/synastry'    },
+      { intent: 'Ich will die Berechnung prüfen',  route: '/method'      },
+    ];
+  }
+  return out;
 }
 
 // Maps a raw API profile to the hero viewModel shape.
@@ -92,10 +145,17 @@ function buildHeroViewModel(profile) {
       rotations: [],
       evidence:  evidence.slice(0, 3),
     },
+    // OV-I2: SignatureHero + MeaningBridge inputs from the ViewModel.
+    signatureHero: existing.signatureHero,
+    evidenceCards: existing.evidenceCards,
+    meaningBridge: existing.meaningBridge,
+    elementSummary: existing.elementSummary,
     baziPillars:      existing.baziPillars,
     westernCore:      { bodies: existing.westernFactors },
     fusionCoherence:  existing.fusionSummary,
     elementEconomy:   existing.elementEconomy,
+    topMovements:     existing.topMovements,
+    guidedDeepDives:  existing.guidedDeepDives,
     deepDive: [
       { id: 'bazi',    title: 'BaZi — Vier Säulen',   href: '#/bazi'    },
       { id: 'western', title: 'Westliche Signatur',    href: '#/western' },
@@ -113,8 +173,18 @@ function renderPage(vm) {
   const wrap = document.createElement('div');
   wrap.className = 'overview-page';
 
+  // OV-I2 fix: SignatureHero owns the wheel directly via wheel-anchor.
+  // The legacy data-section="hero" wrapper is dismantled — the key-facts strip
+  // and the birthchart-wheel audit panel are now their own sibling sections
+  // beneath signature-hero. The duplicated fusion-narrative block (which
+  // repeated the essence headline + evidence cards already shown in the
+  // signature panel) is removed entirely.
   wrap.append(
-    renderHero(vm),
+    renderSignatureHeroWithWheel(vm),
+    renderKeyFacts(vm),
+    renderBirthchartWheelDetail(vm),
+    renderMeaningBridge(vm),
+    renderTopMovements(vm),
     renderBaziPillars(vm),
     renderWesternCore(vm),
     renderFusionCoherence(vm),
@@ -124,71 +194,59 @@ function renderPage(vm) {
   return wrap;
 }
 
-// ── Hero section (data-section="hero")
-// Contains: key-facts strip, then a CSS-grid with wheel (left) and narrative (right).
-// key-facts comes first in DOM → document order: hero → key-facts → birthchart-wheel → fusion-narrative.
-
-function renderHero(vm) {
-  const hero = document.createElement('section');
-  hero.dataset.section = 'hero';
-  hero.className = 'overview-hero';
-
-  // 1. Key-facts strip inside hero (first in source order so it appears first in querySelectorAll).
-  hero.append(renderKeyFacts(vm));
-
-  // 2. Two-column grid.
-  const grid = document.createElement('div');
-  grid.className = 'overview-hero__grid';
-
-  // Left — birthchart wheel.
-  const wheelSlot = document.createElement('div');
-  wheelSlot.dataset.heroSlot = 'wheel';
-  wheelSlot.className = 'overview-hero__wheel';
-
-  const wheelSection = document.createElement('div');
-  wheelSection.dataset.section = 'birthchart-wheel';
+// OV-I2 fix: build the wheel as a single node and inject it directly into the
+// SignatureHero's wheel-anchor. No legacy hero wrapper.
+function renderSignatureHeroWithWheel(vm) {
+  let wheelNode = null;
   if (vm.wheel) {
-    wheelSection.append(NatalChartWheel({ wheel: vm.wheel }));
-    wheelSection.append(NatalChartAudit({ wheel: vm.wheel }));
+    wheelNode = NatalChartWheel({ wheel: vm.wheel });
   }
-  wheelSlot.append(wheelSection);
+  return renderSignatureHero(vm, { wheelNode });
+}
 
-  // Right — fusion narrative.
-  const narrativeSlot = document.createElement('div');
-  narrativeSlot.dataset.heroSlot = 'narrative';
-  narrativeSlot.className = 'overview-hero__narrative';
+// ── Birthchart wheel audit detail (data-section="birthchart-wheel") ─────────
+// Kept as its own section for audit tooling + provenance verification. The
+// actual wheel is rendered above inside signature-hero's wheel-anchor.
+function renderBirthchartWheelDetail(vm) {
+  const section = document.createElement('section');
+  section.dataset.section = 'birthchart-wheel';
+  section.className = 'overview-section overview-section--birthchart-wheel';
+  if (vm.wheel) {
+    // OV-I3-T09 / OV-I4-T11: AuditTabs with 4 tabs (Top 3 / Planeten /
+    // Häuser / Aspekte) — emits [data-audit-row="<key>"] targets for every
+    // body + every axis so the wheel's hover/click linking has a landing
+    // spot. Sits above the legacy NatalChartAudit which is kept for
+    // backwards-compatible smoke tests.
+    section.append(NatalChartAuditTabs({ wheel: vm.wheel, topMovements: vm.topMovements }));
+    section.append(NatalChartAudit({ wheel: vm.wheel }));
+  }
+  return section;
+}
 
-  const narrativeSection = document.createElement('div');
-  narrativeSection.dataset.section = 'fusion-narrative';
-
-  const rollingEl = RollingText({
-    text:    vm.fusionNarrative.headline,
-    tagName: 'h2',
-    className: 'overview-hero__headline',
+// OV-I3-T09: page-level event listener. The wheel dispatches
+// `wheel:body:active` { kind, key, active } on planet circles + axis
+// markers; we mirror it onto the matching [data-audit-row] node.
+function installWheelAuditLink(root) {
+  if (!root || typeof root.addEventListener !== 'function') return;
+  if (root.__wheelAuditLinkInstalled) return;
+  root.__wheelAuditLinkInstalled = true;
+  root.addEventListener('wheel:body:active', (e) => {
+    const detail = e && e.detail;
+    if (!detail || !detail.key) return;
+    // Clear any previously active row first. Exclude the inline SVG
+    // <metadata data-audit-row> markers the wheel emits for screen readers —
+    // their DOM order precedes the visible <li> audit rows, so a plain
+    // querySelector would land data-active on an invisible node and the
+    // <li> highlight would never appear. Scope to non-metadata nodes.
+    const isVisibleRow = (n) => n && n.tagName && n.tagName.toLowerCase() !== 'metadata';
+    const previouslyActive = Array.from(
+      root.querySelectorAll('li[data-audit-row][data-active="true"]'),
+    );
+    for (const node of previouslyActive) node.removeAttribute('data-active');
+    if (detail.active === false) return;
+    const candidates = Array.from(root.querySelectorAll(`li[data-audit-row="${detail.key}"]`));
+    if (candidates[0]) candidates[0].setAttribute('data-active', 'true');
   });
-  rollingEl.setAttribute('data-rolling-text', 'hero-headline');
-
-  narrativeSection.append(rollingEl);
-
-  const evidenceGrid = document.createElement('div');
-  evidenceGrid.className = 'overview-hero__evidence';
-  for (const ev of vm.fusionNarrative.evidence.slice(0, 3)) {
-    const card = LuxuryCard({ lane: 'west' });
-    card.dataset.evidenceCard = ev.title.toLowerCase();
-    const header = document.createElement('strong');
-    header.textContent = ev.title;
-    const body = document.createElement('p');
-    body.textContent = ev.body;
-    card.body.append(header, body);
-    evidenceGrid.append(card);
-  }
-  narrativeSection.append(evidenceGrid);
-  narrativeSlot.append(narrativeSection);
-
-  grid.append(wheelSlot, narrativeSlot);
-  hero.append(grid);
-
-  return hero;
 }
 
 // ── Key facts strip (data-section="key-facts") ──────────────────────────────
@@ -263,50 +321,104 @@ function renderElementEconomy(vm) {
   section.className = 'overview-section';
   section.append(SectionHeader({ eyebrow: 'Holz · Feuer · Erde · Metall · Wasser', headline: 'Element-Ökonomie', anchor: 'element-economy', lane: 'fusion' }));
 
-  const bars = document.createElement('div');
-  bars.className = 'element-bars';
-  if (vm.elementEconomy) {
-    for (const [key, value] of Object.entries(vm.elementEconomy)) {
-      const row = document.createElement('div');
-      row.className = 'element-bar-row';
-      const label = document.createElement('span');
-      label.className = 'element-bar-label';
-      label.textContent = key;
-      const bar = document.createElement('span');
-      bar.className = 'element-bar-fill';
-      bar.style.width = `${Math.round((value ?? 0) * 100)}%`;
-      row.append(label, bar);
-      bars.append(row);
+  const summary = vm.elementSummary;
+  if (summary) {
+    const wrap = document.createElement('div');
+    wrap.className = 'element-summary';
+
+    const sentence = document.createElement('p');
+    sentence.className = 'element-summary-sentence';
+    sentence.textContent = summary.sentence;
+    wrap.append(sentence);
+
+    if (summary.dominantElement || summary.underrepresentedElement) {
+      const facts = document.createElement('dl');
+      facts.className = 'element-summary-facts';
+      if (summary.dominantElement) {
+        const dt = document.createElement('dt'); dt.textContent = 'Tragendes Element';
+        const dd = document.createElement('dd'); dd.textContent = summary.dominantElement;
+        facts.append(dt, dd);
+      }
+      if (summary.underrepresentedElement) {
+        const dt = document.createElement('dt'); dt.textContent = 'Unterrepräsentiert';
+        const dd = document.createElement('dd'); dd.textContent = summary.underrepresentedElement;
+        facts.append(dt, dd);
+      }
+      wrap.append(facts);
     }
+
+    if (summary.leverToday) {
+      const lever = document.createElement('p');
+      lever.className = 'element-summary-lever';
+      lever.textContent = `Heute: ${summary.leverToday}`;
+      wrap.append(lever);
+    }
+
+    const cta = document.createElement('a');
+    cta.className = 'element-summary-cta';
+    cta.href = `#${summary.ctaRoute || '/wuxing'}`;
+    cta.textContent = 'Wu-Xing vertiefen';
+    wrap.append(cta);
+
+    section.append(wrap);
   }
-  section.append(bars);
   return section;
 }
 
-// ── Deep Dive ────────────────────────────────────────────────────────────────
+// ── Guided Deep Dive (OV-I4-T12) ─────────────────────────────────────────────
+//
+// Four intent-driven cards built from vm.guidedDeepDives. Each carries a
+// user-language intent ("Ich will …") instead of an internal page name, plus
+// an internal hash route (#/personality, #/daily, …). The legacy
+// data-deep-dive-tile attribute is preserved so existing layout tests that
+// look for tile anchors keep working.
 
 function renderDeepDive(vm) {
   const section = document.createElement('section');
-  section.dataset.section = 'deep-dive';
-  section.className = 'overview-section';
-  section.append(SectionHeader({ eyebrow: 'Wo geht es weiter?', headline: 'Vertiefung', anchor: 'deep-dive', lane: 'west' }));
+  section.dataset.section = 'guided-deep-dive';
+  section.className = 'overview-section bz-guided-deep-dive';
+  section.append(SectionHeader({
+    eyebrow:  'Wo geht es weiter?',
+    headline: 'Geführte Vertiefung',
+    anchor:   'guided-deep-dive',
+    lane:     'west',
+  }));
 
   const grid = document.createElement('div');
-  grid.className = 'deep-dive-grid';
+  // Keep legacy `deep-dive-grid` class for backwards-compat with the
+  // Sprint-K responsive CSS block, alongside the new BEM root.
+  grid.className = 'bz-guided-deep-dive__grid deep-dive-grid';
 
-  for (const tile of vm.deepDive) {
+  const intents = Array.isArray(vm.guidedDeepDives) && vm.guidedDeepDives.length
+    ? vm.guidedDeepDives
+    : [
+        { intent: 'Ich will mich verstehen',         route: '/personality' },
+        { intent: 'Ich will es heute anwenden',      route: '/daily'       },
+        { intent: 'Ich will Beziehungsmuster sehen', route: '/synastry'    },
+        { intent: 'Ich will die Berechnung prüfen',  route: '/method'      },
+      ];
+
+  for (const dd of intents) {
+    const route = (dd.route || '').startsWith('/') ? dd.route : `/${dd.route || ''}`;
     const a = document.createElement('a');
-    a.dataset.deepDiveTile = tile.id;
-    a.className = 'deep-dive-tile';
-    a.href = tile.href;
-    const title = document.createElement('span');
-    title.className = 'deep-dive-tile__title';
-    title.textContent = tile.title;
+    a.className = 'bz-deep-dive-card deep-dive-tile';
+    a.href = `#${route}`;
+    // Backcompat: layout tests look for data-deep-dive-tile anchors.
+    a.dataset.deepDiveTile = (route.replace(/^\//, '') || dd.intent.slice(0, 16))
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-');
+
+    const heading = document.createElement('h4');
+    heading.className = 'bz-deep-dive-card__intent';
+    heading.textContent = dd.intent;
+    a.append(heading);
+
     const arrow = document.createElement('span');
-    arrow.className = 'deep-dive-tile__arrow';
+    arrow.className = 'bz-deep-dive-card__arrow';
     arrow.setAttribute('aria-hidden', 'true');
     arrow.textContent = '→';
-    a.append(title, arrow);
+    a.append(arrow);
+
     grid.append(a);
   }
   section.append(grid);

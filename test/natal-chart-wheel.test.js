@@ -288,3 +288,136 @@ test('NatalChartWheel: solitary body has data-lane-offset="0" and no leader-line
   assert.ok(s.includes('data-lane-offset="0"'), 'lone body must be on lane 0');
   assert.ok(!s.includes('data-leader-line="true"'), 'lone body must NOT emit a leader-line');
 });
+
+// ── OV-I3-T06 RED tests — wheel geometry + provenance ───────────────────────
+
+test('OV-I3: missing longitude is never rendered as 0deg', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Sun',  name: 'Sun',  longitude: null,    glyph: '☉', source: 'missing' },
+      { key: 'Moon', name: 'Moon', longitude: 158.23,  glyph: '☽', source: 'api'     },
+    ],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  // The Sun must NOT appear as a positioned body marker.
+  assert.ok(!/data-body-key="Sun"[^>\n]*data-pos=/.test(s),
+    'Sun (source=missing) must NOT emit a positioned body marker');
+  // Moon must still render.
+  assert.ok(s.includes('data-body-key="Moon"'),
+    'Moon (source=api) must emit a positioned body marker');
+});
+
+test('OV-I3: every body in audit list carries source pill', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'Sun',  name: 'Sun',  longitude: 12.0,  glyph: '☉', source: 'api'     },
+      { key: 'Moon', name: 'Moon', longitude: null,  glyph: '☽', source: 'missing' },
+    ],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  // Audit list inside the wheel SVG carries data-audit-source per row.
+  assert.ok(/data-audit-source="(api|derived|missing)"/.test(s),
+    'audit rows must carry data-audit-source');
+});
+
+test('OV-I3: rotation root emits data-asc-rotation="-{asc}" with asc=27.71', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, dsc: 207.71, ic: 100.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.match(s, /data-asc-rotation="-27\.71"/,
+    'rotation root must carry data-asc-rotation as the negative ASC offset');
+});
+
+test('OV-I3: DSC and IC derived consistently from ASC and MC (asc=27.71, mc=280.66)', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  assert.match(s, /data-angle-dsc="207\.71"/, 'DSC = (asc+180) mod 360 = 207.71');
+  assert.match(s, /data-angle-ic="100\.66"/,  'IC  = (mc +180) mod 360 = 100.66');
+});
+
+// ── OV-I3-T08 RED tests — color semantics ───────────────────────────────────
+
+test('OV-I3: zodiac sectors carry element classes (fire/earth/air/water)', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [], asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  for (const klass of ['bz-sector--fire', 'bz-sector--earth', 'bz-sector--air', 'bz-sector--water']) {
+    assert.match(s, new RegExp(klass), `missing sector element class ${klass}`);
+  }
+});
+
+test('OV-I3: aspect tones carry hard/soft/neutral classes', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [
+      { key: 'A', name: 'A', longitude:   0, glyph: '○', source: 'api' },
+      { key: 'B', name: 'B', longitude:  60, glyph: '○', source: 'api' },
+      { key: 'C', name: 'C', longitude: 120, glyph: '○', source: 'api' },
+      { key: 'D', name: 'D', longitude: 180, glyph: '○', source: 'api' },
+    ],
+    asc: 0, mc: 90,
+    angles: { asc: 0, mc: 90, source: 'api' },
+    houses: [],
+    aspects: [
+      { sourceKey: 'A', targetKey: 'B', source: 'A', target: 'B', type: 'square',      tone: 'hard'    },
+      { sourceKey: 'A', targetKey: 'C', source: 'A', target: 'C', type: 'trine',       tone: 'soft'    },
+      { sourceKey: 'A', targetKey: 'D', source: 'A', target: 'D', type: 'conjunction', tone: 'neutral' },
+    ],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  for (const t of ['hard', 'soft', 'neutral']) {
+    assert.match(s, new RegExp(`bz-aspect--${t}`), `missing aspect tone class bz-aspect--${t}`);
+  }
+});
+
+// ── OV-I3-T07 RED tests — three SVG layers ──────────────────────────────────
+
+test('OV-I3: wheel has four named SVG layers in order', () => {
+  cap.reset();
+  const wheel = {
+    bodies: [{ key: 'Sun', name: 'Sun', longitude: 12.0, glyph: '☉', source: 'api' }],
+    asc: 27.71, mc: 280.66,
+    angles: { asc: 27.71, mc: 280.66, source: 'api' },
+    houses: [], aspects: [],
+  };
+  const root = NatalChartWheel({ wheel });
+  const s = serializeFakeTree(root);
+  for (const layer of ['zodiac-ring', 'houses-axes', 'bodies-aspects', 'labels']) {
+    assert.match(s, new RegExp(`data-layer="${layer}"`), `layer ${layer} missing`);
+  }
+  // Order check: zodiac-ring before houses-axes before bodies-aspects before labels.
+  const idxZodiac = s.indexOf('data-layer="zodiac-ring"');
+  const idxHouses = s.indexOf('data-layer="houses-axes"');
+  const idxBodies = s.indexOf('data-layer="bodies-aspects"');
+  const idxLabels = s.indexOf('data-layer="labels"');
+  assert.ok(idxZodiac < idxHouses, 'zodiac-ring must precede houses-axes');
+  assert.ok(idxHouses < idxBodies, 'houses-axes must precede bodies-aspects');
+  assert.ok(idxBodies < idxLabels, 'bodies-aspects must precede labels');
+});
