@@ -15,7 +15,10 @@ const VIEWPORTS = {
 };
 const THEMES = { dark: 'planetarium', light: 'morning' };
 
-export async function captureMatrix({ browser, slug, path, dir, beforeShot }) {
+export async function captureMatrix({ browser, slug, page, path, dir, beforeShot }) {
+  const name = slug ?? page;
+  if (!name) throw new Error('captureMatrix requires either "slug" or legacy "page".');
+
   mkdirSync(dir, { recursive: true });
   const variants = Object.entries(VIEWPORTS).flatMap(([vpName, vp]) =>
     Object.entries(THEMES).map(([themeName, themeVal]) => ({ vpName, vp, themeName, themeVal }))
@@ -29,7 +32,7 @@ export async function captureMatrix({ browser, slug, path, dir, beforeShot }) {
       await p.locator('#app > *').first().waitFor({ state: 'attached', timeout: 10_000 });
       if (typeof beforeShot === 'function') await beforeShot(p);
       await p.screenshot({
-        path: join(dir, `${slug}-${vpName}-${themeName}.png`),
+        path: join(dir, `${name}-${vpName}-${themeName}.png`),
         fullPage: true,
       });
     } finally {
