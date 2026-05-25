@@ -1,0 +1,409 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Bazodiac — Colors & Type
+   Fused Firmament · DYAI2025
+   Source: Astro-Noctum repo (src/index.css) + BRAND_VOICE.md
+   ════════════════════════════════════════════════════════════════════════ */
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Sora:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap");
+
+:root {
+  /* ── CORE PALETTE ─────────────────────────────────────────────────── */
+  /* Dark (Planetarium) — default, OLED-deep */
+  --bz-obsidian:      #00050A;   /* primary background, "der Kern" */
+  --bz-cosmic-blue:   #020617;   /* landing gradient top */
+  --bz-ash:           #1A1C1E;   /* secondary surfaces, cards */
+
+  /* Gold — the only color that appears everywhere. The "göttliche Funke" */
+  --bz-gold:          #D4AF37;   /* CTA, accent, signature highlight */
+  --bz-gold-light:    #F0D060;   /* hover, glow, secondary accent */
+  --bz-gold-deep:     #8B6914;   /* text on light bg */
+  --bz-gold-antique:  #A77D38;   /* borders, patina */
+  --bz-gold-muted:    rgba(212, 175, 55, 0.5);
+  --bz-gold-glow:     rgba(212, 175, 55, 0.4);
+
+  /* I1 — Premium Accent (warm gold/ember replaces legacy blue/lila) */
+  --bz-ember:         #E8893D;
+  --bz-ember-light:   #FFB070;
+  --bz-ember-deep:    #8B4513;
+  --bz-amber:         #F0B860;
+
+  /* Morning (Light) */
+  --bz-dawn:          #F8FAFC;   /* light bg */
+  --bz-dawn-deep:     #E2E8F0;
+  --bz-parchment:     #faf8f3;   /* card morning bg */
+  --bz-ink:           #1E293B;   /* primary text on light */
+  --bz-ink-60:        rgba(30, 41, 59, 0.60);
+  --bz-ink-06:        rgba(30, 41, 59, 0.06);
+  --bz-ink-08:        rgba(30, 41, 59, 0.08);
+  --bz-ink-10:        rgba(30, 41, 59, 0.10);
+  --bz-ink-15:        rgba(30, 41, 59, 0.15);
+  --bz-ink-18:        rgba(30, 41, 59, 0.18);
+
+  /* Information / semantics */
+  --bz-saphir:        #3b82f6;   /* myzel filaments, data, links */
+  --bz-emerald:       #10B981;   /* success, growth */
+  --bz-emerald-deep:  #053B3F;   /* QuizzMe primary */
+  --bz-copper:        #B87333;   /* errors — NEVER red */
+  --bz-cosmic-orange: #FF9800;   /* space-weather alerts */
+
+  /* ── WU-XING ELEMENT COLORS ───────────────────────────────────────── */
+  /* Functional only — appear where a calculated element assignment lives */
+  --bz-wood:          #3D8B37;   /* 木 Holz */
+  --bz-wood-glow:     #66BB6A;
+  --bz-fire:          #C53030;   /* 火 Feuer */
+  --bz-fire-glow:     #FF9800;
+  --bz-earth:         #D69E2E;   /* 土 Erde */
+  --bz-earth-glow:    #FFD54F;
+  --bz-metal:         #718096;   /* 金 Metall */
+  --bz-metal-glow:    #CFD8DC;
+  --bz-water:         #2B6CB0;   /* 水 Wasser */
+  --bz-water-glow:    #42A5F5;
+
+  /* ── SEMANTIC FG/BG TOKENS ────────────────────────────────────────── */
+  /* Dark default */
+  --bz-bg-1:          var(--bz-obsidian);
+  --bz-bg-2:          var(--bz-ash);
+  --bz-bg-glass:      rgba(26, 28, 30, 0.55);
+  --bz-fg-1:          rgba(255, 255, 255, 0.95);
+  --bz-fg-2:          rgba(255, 255, 255, 0.75);
+  --bz-fg-3:          rgba(255, 255, 255, 0.50);
+  --bz-border-1:      rgba(212, 175, 55, 0.15);
+  --bz-border-2:      rgba(212, 175, 55, 0.30);
+  --bz-accent:        var(--bz-gold);              /* primary accent — gold */
+  --bz-accent-warm:   var(--bz-ember);             /* warm secondary accent */
+  --bz-accent-soft:   var(--bz-amber);             /* soft tertiary accent */
+  --bz-link:          var(--bz-gold);
+
+  /* ── TYPOGRAPHY (B3: serif → Cormorant Garamond, UI/sans → Sora) */
+  --bz-font-serif:    "Cormorant Garamond", ui-serif, Georgia, "Times New Roman", serif;
+  --bz-font-display:  "Cormorant Garamond", ui-serif, Georgia, serif;
+  --bz-font-sans:     "Sora", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --bz-font-ui:       "Sora", system-ui, -apple-system, sans-serif;
+  --bz-font-mono:     ui-monospace, "SF Mono", Menlo, "Courier New", monospace;
+  --bz-font-cjk:      "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale — serif is for "bedeutungsvolle Momente" only */
+  --bz-display:       clamp(2.5rem, 5vw, 4.5rem);   /* 72 Cormorant 500 */
+  --bz-h1:            clamp(2rem, 4vw, 3.5rem);     /* 56 Cormorant 500 */
+  --bz-h2:            clamp(1.5rem, 3vw, 2.4rem);   /* 38 Cormorant 500 */
+  --bz-h3:            1.5rem;                       /* 24 Cormorant 500 */
+  --bz-h4:            1.25rem;                      /* 20 Cormorant 600 */
+  --bz-body:          1rem;                         /* 16 Sora 400 */
+  --bz-body-sm:       0.875rem;                     /* 14 Sora 400 */
+  --bz-caption:       0.75rem;                      /* 12 Inter 500 */
+  --bz-overline:      0.6875rem;                    /* 11 Inter 600 letterspace */
+  --bz-data:          0.875rem;                     /* 14 monospace 400 */
+
+  /* Letter-spacing rules: h1–h6 get 0.05em per repo index.css */
+  --bz-ls-display:    0.01em;
+  --bz-ls-heading:    0.05em;
+  --bz-ls-overline:   0.2em;
+  --bz-ls-body:       0em;
+
+  /* Line height */
+  --bz-lh-display:    1.1;
+  --bz-lh-heading:    1.2;
+  --bz-lh-body:       1.7;
+
+  /* ── SPACING ──────────────────────────────────────────────────────── */
+  --bz-space-1:       4px;
+  --bz-space-2:       8px;
+  --bz-space-3:       12px;
+  --bz-space-4:       16px;
+  --bz-space-5:       24px;
+  --bz-space-6:       32px;
+  --bz-space-7:       48px;
+  --bz-space-8:       64px;
+  --bz-space-section: 80px;
+  --bz-space-sm:      0.5rem;    /* 8px — tight gaps */
+  --bz-space-md:      1rem;      /* 16px — standard gaps */
+  --bz-space-lg:      2rem;      /* 32px — section gaps */
+
+  /* ── I3: Semantic color aliases (wheel aspects, provenance pills) ───── */
+  --bg-base:              #0c0c10;
+  --color-aspect-hard:    #b94a4a;
+  --color-aspect-soft:    #4a9b6f;
+  --color-aspect-neutral: #888888;
+  --color-warn:           #d49e4a;
+  --color-ok:             #4a9b6f;
+  --color-info:           #6f8fb9;
+
+  /* ── OV-I3-T08: Wheel element + aspect palette ──────────────────────── */
+  /* Element sectors on the natal wheel — low-opacity fills. */
+  --bz-elem-fire:         #c2733b;
+  --bz-elem-earth:        #b48a3e;
+  --bz-elem-air:          #6b6db3;
+  --bz-elem-water:        #2f6f86;
+  /* Aspect tones — full-opacity strokes. */
+  --bz-aspect-hard:       #c44b3b;
+  --bz-aspect-soft:       #4e9a73;
+  --bz-aspect-neutral:    #a39059;
+
+  /* ── RADII ────────────────────────────────────────────────────────── */
+  --bz-radius-sm:     4px;      /* stele cards (BaZi pillars) */
+  --bz-radius-md:     12px;     /* default cards */
+  --bz-radius-lg:     16px;     /* feature cards, glass cards */
+  --bz-radius-xl:     24px;     /* cosmic tiles */
+  --bz-radius-2xl:    32px;     /* kohaerenz hero */
+  --bz-radius-full:   9999px;   /* CTA pills, badges */
+
+  /* ── SHADOWS & GLOW ───────────────────────────────────────────────── */
+  --bz-shadow-sm:     0 1px 3px rgba(0, 0, 0, 0.2);
+  --bz-shadow-md:     0 4px 24px rgba(0, 0, 0, 0.04);
+  --bz-shadow-lg:     0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  --bz-shadow-tile:   0 4px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(212, 175, 55, 0.10);
+  --bz-shadow-hero:   0 4px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.06);
+  --bz-glow-gold:     0 0 20px rgba(212, 175, 55, 0.15), 0 0 60px rgba(212, 175, 55, 0.04);
+  --bz-glow-hover:    0 0 50px -12px rgba(212, 175, 55, 0.6);
+
+  /* ── TOUCH TARGETS ────────────────────────────────────────────────── */
+  --bz-touch-min:     44px;
+  --bz-touch-input:   48px;
+
+  /* ── MOTION ───────────────────────────────────────────────────────── */
+  --bz-ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --bz-ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --bz-ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --bz-dur-fast:      0.2s;
+  --bz-dur-base:      0.3s;
+  --bz-dur-slow:      0.6s;
+  --bz-dur-reveal:    3s;     /* ephemeris unroll */
+
+  /* ── BACKGROUND RECIPES ──────────────────────────────────────────── */
+  --bz-bg-planetarium:
+    radial-gradient(ellipse at 50% 0%, rgba(20, 55, 130, 0.15) 0%, transparent 70%),
+    linear-gradient(180deg, #020509 0%, #030a18 50%, #040c1f 100%);
+
+  --bz-bg-hero:
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(212, 175, 55, 0.06) 0%, transparent 70%),
+    linear-gradient(180deg, var(--bz-obsidian) 0%, var(--bz-ash) 100%);
+
+  --bz-bg-kohaerenz-dark:
+    linear-gradient(160deg, rgba(8, 10, 18, 0.96) 0%, rgba(18, 14, 8, 0.92) 100%);
+
+  --bz-bg-morning:
+    linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 30%, #E2E8F0 100%);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SEMANTIC UTILITY CLASSES
+   Use these instead of tokens wherever possible
+   ════════════════════════════════════════════════════════════════════════ */
+
+.bz-display { font-family: var(--bz-font-serif); font-weight: 500; font-size: var(--bz-display); line-height: var(--bz-lh-display); letter-spacing: var(--bz-ls-display); }
+.bz-h1      { font-family: var(--bz-font-serif); font-weight: 500; font-size: var(--bz-h1); line-height: var(--bz-lh-heading); letter-spacing: var(--bz-ls-heading); }
+.bz-h2      { font-family: var(--bz-font-serif); font-weight: 500; font-size: var(--bz-h2); line-height: var(--bz-lh-heading); letter-spacing: var(--bz-ls-heading); }
+.bz-h3      { font-family: var(--bz-font-serif); font-weight: 500; font-size: var(--bz-h3); line-height: var(--bz-lh-heading); letter-spacing: var(--bz-ls-heading); }
+.bz-h4      { font-family: var(--bz-font-serif); font-weight: 600; font-size: var(--bz-h4); line-height: var(--bz-lh-heading); letter-spacing: var(--bz-ls-heading); }
+
+.bz-body    { font-family: var(--bz-font-sans); font-weight: 400; font-size: var(--bz-body); line-height: var(--bz-lh-body); }
+.bz-body-sm { font-family: var(--bz-font-sans); font-weight: 400; font-size: var(--bz-body-sm); line-height: 1.6; }
+.bz-caption { font-family: var(--bz-font-ui); font-weight: 500; font-size: var(--bz-caption); line-height: 1.4; }
+.bz-overline{ font-family: var(--bz-font-ui); font-weight: 600; font-size: var(--bz-overline); line-height: 1; letter-spacing: var(--bz-ls-overline); text-transform: uppercase; }
+.bz-data    { font-family: var(--bz-font-mono); font-weight: 400; font-size: var(--bz-data); font-variant-numeric: tabular-nums; }
+.bz-cjk     { font-family: var(--bz-font-cjk); }
+
+/* Theme modes */
+.bz-dark {
+  background: var(--bz-obsidian);
+  color: var(--bz-fg-1);
+}
+.bz-planetarium {
+  background: var(--bz-bg-planetarium);
+  color: var(--bz-fg-1);
+}
+.bz-morning {
+  background: var(--bz-bg-morning);
+  color: var(--bz-ink);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LEGACY ALIAS BRIDGE  (Sprint H1 backwards-compat)
+   main.css currently consumes generic var-names like --gold-light, --accent,
+   --bg, etc. Until H2 migrates main.css to the --bz-* prefix system, every
+   legacy token resolves through this layer. Removing aliases here without
+   updating main.css = broken styling.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg:           var(--bz-obsidian);
+  --fg:           var(--bz-fg-1);
+  --text:         var(--bz-fg-1);
+  --muted:        var(--bz-fg-3);
+  --panel:        var(--bz-ash);
+  --panel2:       var(--bz-bg-glass);
+  --card:         rgba(26, 28, 30, 0.55);
+  --border:       var(--bz-border-1);
+  --accent:       var(--bz-gold);
+  --accent2:      var(--bz-ember);
+  /* I4: spacing + typography aliases */
+  --space-md:     var(--bz-space-md);
+  --space-lg:     var(--bz-space-lg);
+  --space-xl:     3rem;
+  --font-display: var(--bz-font-display);
+  --radius-lg:    var(--bz-radius-lg);
+  /* I4: surface + text aliases */
+  --surface-elevated: rgba(255,255,255,0.06);
+  --border-subtle:    rgba(255,255,255,0.08);
+  --text-muted:       rgba(255,255,255,0.6);
+  --text-strong:      #fff;
+  --gold:         var(--bz-gold);
+  --gold-light:   var(--bz-gold-light);
+  --ok:           var(--bz-emerald);
+  --warn:         var(--bz-cosmic-orange);
+  --bad:          var(--bz-copper);
+  --radius:       var(--bz-radius-md);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SPRINT H2 — THREE-LANE RECIPES
+   Each FuFire system gets a distinct chromatic identity. Use `--lane-*`
+   tokens inside components; they re-bind at `[data-lane]` scope so a single
+   component can render in BaZi-gold, Western-blue, or Fusion-hybrid by
+   moving the data-lane attribute up the tree.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Default (fusion / fallback) */
+  --lane-fg:        var(--bz-gold-light);
+  --lane-fg-2:      var(--bz-gold);
+  --lane-bg:        var(--bz-bg-glass);
+  --lane-border:    var(--bz-border-1);
+  --lane-glow:      var(--bz-glow-gold);
+}
+
+[data-lane="bazi"] {
+  /* Ost · warm · gold-erden — Siegel-Ästhetik */
+  --lane-fg:      var(--bz-gold-light);
+  --lane-fg-2:    var(--bz-gold);
+  --lane-bg:      linear-gradient(180deg, rgba(60,46,22,.35), rgba(30,22,12,.45));
+  --lane-border:  var(--bz-gold-antique);
+  --lane-glow:    var(--bz-glow-gold);
+}
+
+[data-lane="west"] {
+  /* Hellenistisch · kühl · saphir-blau — Orbital-Ästhetik */
+  --lane-fg:      #8AA6FF;
+  --lane-fg-2:    var(--bz-saphir);
+  --lane-bg:      linear-gradient(180deg, rgba(20,28,60,.25), rgba(10,14,30,.45));
+  --lane-border:  rgba(59,130,246,.30);
+  --lane-glow:    0 0 20px rgba(59,130,246,.15);
+}
+
+[data-lane="fusion"] {
+  /* Hybrid · Bridge · Gradient — verbindet Ost und West */
+  --lane-fg:      var(--bz-gold-light);
+  --lane-fg-2:    #C0A7DA;
+  --lane-bg:      linear-gradient(135deg, rgba(60,46,22,.30), rgba(20,28,60,.30));
+  --lane-border:  rgba(192,167,218,.30);
+  --lane-glow:    0 0 20px rgba(192,167,218,.15);
+}
+
+[data-lane="wuxing"] {
+  /* Element-Ökonomie · 5-Farben — Übergeordnet warm wie Fusion */
+  --lane-fg:      var(--bz-gold-light);
+  --lane-fg-2:    var(--bz-emerald);
+  --lane-bg:      var(--bz-bg-glass);
+  --lane-border:  var(--bz-border-2);
+  --lane-glow:    var(--bz-glow-gold);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   B1: Morning-mode lane-bg overrides — must be more specific than
+   [data-lane] alone so element-scope custom property declarations are
+   overridden correctly in morning theme.
+   ════════════════════════════════════════════════════════════════════════ */
+:root[data-theme="morning"] [data-lane="bazi"],
+:root[data-theme="morning"] [data-lane="west"],
+:root[data-theme="morning"] [data-lane="fusion"],
+:root[data-theme="morning"] [data-lane="wuxing"] {
+  --lane-bg:     var(--bz-parchment);
+  --lane-border: rgba(30, 41, 59, 0.15);
+  --lane-fg:     var(--bz-ink);
+  --lane-fg-2:   var(--bz-ink-60);
+  --lane-glow:   none;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SPRINT H5 — THEME RECIPES (planetarium dark / morning light)
+   Activated via <html data-theme="planetarium"|"morning">. data-theme is
+   set by ThemeToggle bootstrapTheme() before any page mounts.
+   ════════════════════════════════════════════════════════════════════════ */
+:root[data-theme="planetarium"] {
+  --bz-bg-1:    var(--bz-obsidian);
+  --bz-bg-2:    var(--bz-ash);
+  --bz-fg-1:    rgba(255, 255, 255, 0.95);
+  --bz-fg-2:    rgba(255, 255, 255, 0.75);
+  --bz-fg-3:    rgba(255, 255, 255, 0.50);
+  --bg:         var(--bz-obsidian);
+  --fg:         rgba(255, 255, 255, 0.95);
+  color-scheme: dark;
+}
+
+:root[data-theme="morning"] {
+  --bz-bg-1:    var(--bz-dawn);
+  --bz-bg-2:    var(--bz-parchment);
+  --bz-fg-1:    var(--bz-ink);
+  --bz-fg-2:    rgba(30, 41, 59, 0.75);
+  --bz-fg-3:    rgba(30, 41, 59, 0.50);
+  --bg:         var(--bz-dawn);
+  --fg:         var(--bz-ink);
+  color-scheme: light;
+  /* B1: Surface tokens not previously overridden in morning recipe */
+  --panel:            var(--bz-parchment);
+  --panel2:           var(--bz-ink-06);
+  --card:             var(--bz-ink-08);
+  --border:           var(--bz-ink-18);
+  --text:             var(--bz-ink);
+  --text-muted:       var(--bz-ink-60);
+  --text-strong:      var(--bz-ink);
+  --surface-elevated: var(--bz-ink-06);
+  --border-subtle:    var(--bz-ink-10);
+  --muted:            var(--bz-fg-3);
+  --gold-light:       var(--bz-gold-deep);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SPRINT K — RESPONSIVE BREAKPOINTS
+   Single source of truth for the mobile/tablet/desktop ladder. Pinned by
+   test/breakpoints.test.js so the CSS values cannot drift from the JS
+   constants in public/src/data/breakpoints.js.
+
+   Tier ladder (non-overlapping):
+     mobile  ≤ 480px
+     tablet  481–1024px
+     desktop ≥ 1025px
+
+   @media blocks below override spacing + typography tokens. Per-page
+   layout adjustments live in main.css and read these tokens — no page
+   needs to know the literal pixel values.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bz-bp-mobile-max:  480px;
+  --bz-bp-tablet-max:  1024px;
+
+  /* Responsive scale tokens (desktop defaults). main.css consumes these. */
+  --bz-space-hero:     2.5rem;
+  --bz-space-stack:    1.25rem;
+  --bz-font-hero:      2.5rem;
+  --bz-font-body:      1rem;
+}
+
+@media (max-width: 480px) {
+  :root {
+    --bz-space-hero:   1.5rem;
+    --bz-space-stack:  0.75rem;
+    --bz-font-hero:    1.5rem;
+    --bz-font-body:    0.95rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 1024px) {
+  :root {
+    --bz-space-hero:   2rem;
+    --bz-space-stack:  1rem;
+    --bz-font-hero:    2rem;
+    --bz-font-body:    1rem;
+  }
+}
