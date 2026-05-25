@@ -223,10 +223,10 @@ function buildTopMovements(profile) {
   const raw = Array.isArray(profile?.western?.aspects)
     ? profile.western.aspects
     : [];
-  // Limit to the same 12 salient aspects selectSalientAspects produces for
-  // the chart wheel — keeps payload small without losing the long tail.
-  const limited = raw.slice(0, 12);
-  return limited.map((a) => ({
+  // Rank first, then cap to keep parity with wheel salience logic and avoid
+  // data-order dependent truncation when upstream aspect arrays are unsorted.
+  const salient = selectSalientAspects(raw, 12);
+  return salient.map((a) => ({
     sourceKey: PLANET_DE_CLEAN[a.planet1] ?? a.planet1 ?? '?',
     targetKey: PLANET_DE_CLEAN[a.planet2] ?? a.planet2 ?? '?',
     typeDE:    (typeof a.type === 'string' && a.type) || 'aspekt',
