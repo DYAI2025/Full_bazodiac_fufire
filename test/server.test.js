@@ -250,6 +250,48 @@ test('/api/azodiac/profile orchestrates western + bazi + fusion + wuxing against
   }
 });
 
+
+
+test('/api/azodiac/profile returns 200 with partial data when fusion upstream fails', async () => {
+  const upstream = createServer((req, res) => {
+    if (req.url === '/calculate/fusion') {
+      res.writeHead(502, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'fusion down' }));
+    }
+    const responses = {
+      '/calculate/western': { bodies: {}, houses: [], aspects: [] },
+      '/calculate/bazi':    { pillars: {} },
+      '/calculate/wuxing':  { vector: {} },
+      '/info/wuxing-mapping': { planet_mapping: {} },
+    };
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(responses[req.url] ?? { ok: true }));
+  });
+  upstream.listen(0);
+  await once(upstream, 'listening');
+  const prev = process.env.FUFIRE_BASE_URL;
+  process.env.FUFIRE_BASE_URL = `http://127.0.0.1:${upstream.address().port}/`;
+
+  try {
+    await withServer(async (base) => {
+      const res = await fetch(`${base}/api/azodiac/profile`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: '1990-01-01', time: '12:00', lat: 48.0, lon: 11.0, tz: 'Europe/Berlin' }),
+      });
+      assert.equal(res.status, 200);
+      const json = await res.json();
+      assert.ok(json.western);
+      assert.ok(json.bazi);
+      assert.equal(json._meta.upstream_status.fusion, 'n/a');
+    });
+  } finally {
+    if (prev === undefined) delete process.env.FUFIRE_BASE_URL;
+    else process.env.FUFIRE_BASE_URL = prev;
+    upstream.close();
+    await once(upstream, 'close');
+  }
+});
 test('CORS allows * when FUFIRE_ALLOWED_ORIGINS is unset', async () => {
   const prev = process.env.FUFIRE_ALLOWED_ORIGINS;
   delete process.env.FUFIRE_ALLOWED_ORIGINS;
